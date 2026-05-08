@@ -1,11 +1,11 @@
-# Koin - Migration Plan to React Native + Expo
+# Piggnify - Migration Plan to React Native + Expo
 
-This document outlines a detailed, step-by-step technical plan to rewrite the Koin web application into a cross-platform mobile application using React Native and Expo.
+This document outlines a detailed, step-by-step technical plan to rewrite the Piggnify web application into a cross-platform mobile application using React Native and Expo.
 
 ## Phase 1: Project Initialization & Infrastructure
 
 1.  **Initialize Expo Project**
-    - [x] Create a new Expo project using the Expo Router template: `npx create-expo-app koin-mobile -t expo-template-blank-typescript`
+    - [x] Create a new Expo project using the Expo Router template: `npx create-expo-app piggnify-mobile -t expo-template-blank-typescript`
     - [x] Set up Expo Router for file-based routing.
 
 2.  **Configure Styling (NativeWind)**
@@ -97,7 +97,7 @@ Map the existing web pages to Expo Router file paths (`app/(tabs)/*` and `app/*`
 ## Phase 6: Build & Deployment
 
 1.  **App Configuration (`app.json`)**
-    - [x] Set the app name to "Koin".
+    - [x] Set the app name to "Piggnify".
     - [x] Configure the `bundleIdentifier` (iOS) and `package` (Android).
     - [x] Set up the app icon and splash screen assets.
 

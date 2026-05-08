@@ -189,7 +189,7 @@ export default function Profile() {
         {/* Footer info */}
         <View className="mb-12 items-center">
           <Text className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
-            Koin v{Constants.expoConfig?.version || '1.0.0'}
+            Piggnify v{Constants.expoConfig?.version || '1.0.0'}
           </Text>
           <Text className="text-[10px] text-on-surface-variant/30 mt-1">
             Device: {Constants.deviceName} • SB: {Constants.statusBarHeight}px

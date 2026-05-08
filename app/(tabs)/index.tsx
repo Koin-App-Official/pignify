@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Redirect } from 'expo-router';
 import { Plus, Flame, TrendingUp, ChevronRight } from 'lucide-react-native';
 import { ProgressRing } from '@/components/ProgressRing';
 import { useStore } from '@/lib/store';
@@ -26,11 +26,9 @@ export default function Dashboard() {
     setTodaySpend(calculateTodaySpend());
   }, [calculateTodaySpend]);
 
-  useEffect(() => {
-    if (!profile.onboardingCompleted) {
-      router.replace('/onboarding');
-    }
-  }, [profile.onboardingCompleted, router]);
+  if (!profile.onboardingCompleted) {
+    return <Redirect href="/onboarding" />;
+  }
 
   const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
   const progress = primaryGoal
@@ -54,10 +52,6 @@ export default function Dashboard() {
     return 'Good evening';
   };
 
-  if (!profile.onboardingCompleted) {
-    return null;
-  }
-
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
@@ -68,7 +62,7 @@ export default function Dashboard() {
               {greeting()}
               {profile.name ? `, ${profile.name}` : ''}
             </Text>
-            <Text className="text-3xl font-bold text-on-surface">Koin</Text>
+            <Text className="text-3xl font-bold text-on-surface">Piggnify</Text>
           </View>
           <View className="flex-row items-center gap-1.5 rounded-full bg-warning-container px-3.5 py-2">
             <Flame size={16} color="#fbbf24" />

@@ -135,7 +135,7 @@ export default function Onboarding() {
               className="flex-1 items-center justify-center min-h-[70vh]"
             >
               <Text className="mb-6 text-6xl">💰</Text>
-              <Text className="mb-3 text-4xl font-bold text-on-surface">Welcome to Koin</Text>
+              <Text className="mb-3 text-4xl font-bold text-on-surface">Welcome to Piggnify</Text>
               <Text className="mb-2 text-base font-medium text-on-surface-variant text-center">
                 Your journey to financial freedom starts with one goal.
               </Text>

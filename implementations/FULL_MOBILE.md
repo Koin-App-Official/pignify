@@ -1,6 +1,6 @@
-# Koin - Full Mobile Application Transition Plan
+# Piggnify - Full Mobile Application Transition Plan
 
-This document outlines the final steps to transform the Koin project from a hybrid web/mobile structure into a standalone, fully mobile application based on React Native and Expo.
+This document outlines the final steps to transform the Piggnify project from a hybrid web/mobile structure into a standalone, fully mobile application based on React Native and Expo.
 
 ## Objective
 Consolidate the codebase by making the root directory the primary Expo project, removing the legacy web infrastructure, and ensuring all assets and logic are fully ported to the mobile version.
@@ -10,12 +10,12 @@ Consolidate the codebase by making the root directory the primary Expo project, 
 ## Phase 1: Pre-Migration Audit
 
 - [x] 1. **Verify Logic Porting**
-   - [x] Ensure `src/lib/store.ts` (web) logic is fully captured in `koin-mobile/src/lib/store.ts` (mobile), specifically the XP calculation and goal tracking logic.
+   - [x] Ensure `src/lib/store.ts` (web) logic is fully captured in `piggnify-mobile/src/lib/store.ts` (mobile), specifically the XP calculation and goal tracking logic.
    - [x] Confirm that the AI Coach webhook URL and prompt logic are consistent.
 
 - [x] 2. **Asset Inventory**
-   - [x] Identify any unique images or icons in `public/` or `src/assets/` that are not yet in `koin-mobile/assets/`.
-   - [x] List custom fonts (if any) currently used in the web version to be registered in `koin-mobile/app/_layout.tsx`.
+   - [x] Identify any unique images or icons in `public/` or `src/assets/` that are not yet in `piggnify-mobile/assets/`.
+   - [x] List custom fonts (if any) currently used in the web version to be registered in `piggnify-mobile/app/_layout.tsx`.
 
 ---
 
@@ -32,11 +32,11 @@ Consolidate the codebase by making the root directory the primary Expo project, 
 32:      - `public/` (Web static assets)
 33: 
 34: - [x] 2. **Move Mobile Project to Root**
-35:    - [x] Move all contents of the `koin-mobile/` directory to the root directory.
-36:    - [x] Delete the now-empty `koin-mobile/` directory.
+35:    - [x] Move all contents of the `piggnify-mobile/` directory to the root directory.
+36:    - [x] Delete the now-empty `piggnify-mobile/` directory.
 37: 
 38: - [x] 3. **Update Gitignore**
-39:    - [x] Merge the `.gitignore` from `koin-mobile` into the root `.gitignore`.
+39:    - [x] Merge the `.gitignore` from `piggnify-mobile` into the root `.gitignore`.
 40:    - [x] Ensure mobile-specific patterns (e.g., `.expo/`, `dist/`, `ios/`, `android/`) are preserved.
 
 ---
@@ -44,7 +44,7 @@ Consolidate the codebase by making the root directory the primary Expo project, 
 ## Phase 3: Dependency & Configuration Consolidation
 
 - [x] 1. **Consolidate `package.json`**
-   - [x] Replace the root `package.json` dependencies and scripts with those from `koin-mobile/package.json`.
+   - [x] Replace the root `package.json` dependencies and scripts with those from `piggnify-mobile/package.json`.
    - [x] **Important**: Keep the project name and versioning consistent.
    - [x] Remove web-only dependencies:
      - `@radix-ui/*`

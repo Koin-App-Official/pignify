@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Welcome to Piggnify
 
-TODO: Document your project here
+A modern personal finance tracker and savings motivator.
