@@ -49,7 +49,7 @@ function getCoachResponse(input: string): string {
     return tips[Math.floor(Math.random() * tips.length)] + `\n\nYour current streak is **${profile.streak} days**. Let's keep it going!`;
   }
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hey there! 👋 I'm your Piggify coach. I'm here to help you save smarter and stay motivated.\n\nWhat would you like to know? I can help with saving tips, tracking progress, or getting back on track.`;
+    return `Hey there! 👋 I'm your Piggnify coach. I'm here to help you save smarter and stay motivated.\n\nWhat would you like to know? I can help with saving tips, tracking progress, or getting back on track.`;
   }
   return `That's a great point! 💙 Here's my advice:\n\n• **Stay consistent** — small daily actions beat big occasional efforts\n• **Celebrate progress** — you're Lv.${profile.level} already!\n• **Be kind to yourself** — financial growth is a journey, not a sprint\n\nWant me to help with something specific? Try asking about saving tips or your progress! 😊`;
 }
@@ -59,7 +59,7 @@ export default function AICoach() {
     {
       id: '1',
       role: 'coach',
-      content: "Hi! 👋 I'm your Piggify coach. I'm here to help you save smarter and reach your goals. What's on your mind today?",
+      content: "Hi! 👋 I'm your Piggnify coach. I'm here to help you save smarter and reach your goals. What's on your mind today?",
     },
   ]);
   const [input, setInput] = useState('');

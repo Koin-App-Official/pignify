@@ -181,7 +181,7 @@ export const EXPENSE_CATEGORIES = [
   { id: 'other', name: 'Other', icon: '📌' },
 ];
 
-export interface PiggifyState {
+export interface PiggnifyState {
   profile: UserProfile;
   goals: Goal[];
   missions: Mission[];
@@ -206,7 +206,7 @@ export interface PiggifyState {
   resetForDemo: () => void;
 }
 
-export const useStore = create<PiggifyState>()(
+export const useStore = create<PiggnifyState>()(
   persist(
     (set, get) => ({
       profile: DEFAULT_PROFILE,
@@ -260,7 +260,7 @@ export const useStore = create<PiggifyState>()(
       }),
     }),
     {
-      name: 'piggify-storage',
+      name: 'piggnify-storage',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

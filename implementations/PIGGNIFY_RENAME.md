@@ -23,12 +23,12 @@ These changes affect the identity of the application at the project and native l
 ## Phase 2: Code & UI Refactoring
 Updating internal references and user-facing text.
 
-- [ ] **Update `src/lib/store.ts`**
+- [x] **Update `src/lib/store.ts`**
   - Rename `KoinState` interface to `PiggnifyState`.
   - Update `name: 'koin-storage'` to `name: 'piggnify-storage'`.
   - *Note: Changing storage name will reset local state for existing users.*
 
-- [ ] **Update User Interface (Text)**
+- [x] **Update User Interface (Text)**
   - `app/(tabs)/coach.tsx`: Update "Koin coach" to "Piggnify coach".
   - `app/onboarding.tsx`: Update "Welcome to Koin" to "Welcome to Piggnify".
   - `app/(tabs)/profile.tsx`: Update "Koin v..." to "Piggnify v...".
