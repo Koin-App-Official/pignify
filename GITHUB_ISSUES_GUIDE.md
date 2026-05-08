@@ -1,6 +1,6 @@
 # GitHub Issues & Milestones Guide for AI Dev Agents
 
-This guide defines the mandatory workflow for all AI coding agents working on the **Piggify** project. Following these rules ensures project discipline, traceability, and clear progress tracking.
+This guide defines the mandatory workflow for all AI coding agents working on the **Piggnify** project. Following these rules ensures project discipline, traceability, and clear progress tracking.
 
 ---
 
