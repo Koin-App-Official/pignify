@@ -5,7 +5,7 @@ This document outlines the step-by-step process for renaming the **Koin** applic
 ## Phase 1: Core Configuration Updates
 These changes affect the identity of the application at the project and native levels.
 
-- [ ] **Update `app.json`**
+- [x] **Update `app.json`**
   - Change `"name": "Koin"` to `"name": "Piggnify"`
   - Change `"slug": "koin-mobile"` to `"slug": "piggnify-mobile"`
   - Change `"scheme": "koin"` to `"scheme": "piggnify"`
@@ -14,10 +14,10 @@ These changes affect the identity of the application at the project and native l
   - Change `"plugins[0].organization": "koin-gz"` to `"piggnify-gz"` (if applicable)
   - Change `"plugins[0].project": "koin"` to `"piggnify"`
 
-- [ ] **Update `package.json`**
+- [x] **Update `package.json`**
   - Change `"name": "koin"` to `"name": "piggnify"`
 
-- [ ] **Update `package-lock.json`**
+- [x] **Update `package-lock.json`**
   - Run `npm install` to synchronize the name change in the lock file.
 
 ## Phase 2: Code & UI Refactoring
