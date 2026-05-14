@@ -12,10 +12,10 @@ module.exports = function (api) {
           root: ["."],
           alias: {
             "@": "./src",
+            "react-native-worklets": "./node_modules/react-native-worklets",
           },
         },
       ],
-      "react-native-worklets/plugin",
     ],
   };
 };
