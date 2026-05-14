@@ -50,9 +50,9 @@ Systematically replace hardcoded hex colors with Tailwind theme classes or `hsl(
 - [x] **`app/onboarding.tsx`**: Search for step indicator and background colors.
 
 ## Phase 3: Validation & Polish
-- [ ] **Visual Review**: Walk through all screens to ensure the new palette feels premium and balanced.
-- [ ] **Accessibility Check**: Verify text contrast against new background/surface colors.
-- [ ] **Clean Up**: Remove any unused CSS variables or legacy color definitions.
+- [x] **Visual Review**: Walk through all screens to ensure the new palette feels premium and balanced.
+- [x] **Accessibility Check**: Verify text contrast against new background/surface colors.
+- [x] **Clean Up**: Remove any unused CSS variables or legacy color definitions.
 
 ---
 

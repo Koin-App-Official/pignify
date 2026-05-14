@@ -40,16 +40,8 @@
     --outline-variant: 214 32% 90%;
 
     /* Semantic - kept for compatibility */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
     --muted: 210 40% 94%;
     --muted-foreground: 215 16% 47%;
-
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
