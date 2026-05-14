@@ -6,8 +6,9 @@ import { MotiView, AnimatePresence } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, GOAL_TEMPLATES, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
-import { ArrowRight, ArrowLeft, Sparkles, Check } from 'lucide-react-native';
+import { ArrowRight, ArrowLeft, Sparkles, Check, Calendar as CalendarIcon } from 'lucide-react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import { CalendarModal } from '@/components/ui/calendar-modal';
 import { Picker } from '@react-native-picker/picker'; // Optional if not installed, I will use custom select or simple views
 
 const QUIZ_QUESTIONS = [
@@ -49,6 +50,7 @@ export default function Onboarding() {
   const [currentQuiz, setCurrentQuiz] = useState(0);
   const [personalityResult, setPersonalityResult] = useState('');
   const [confetti, setConfetti] = useState(false);
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
 
   const addGoal = useStore((state) => state.addGoal);
   const updateProfile = useStore((state) => state.updateProfile);
@@ -208,8 +210,16 @@ export default function Onboarding() {
                   <Input keyboardType="numeric" value={targetAmount} onChangeText={setTargetAmount} className="text-xl font-bold" placeholder="0" />
                 </View>
                 <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Target date (YYYY-MM-DD)</Text>
-                  <Input value={deadline} onChangeText={setDeadline} />
+                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Target date</Text>
+                  <TouchableOpacity 
+                    onPress={() => setIsCalendarVisible(true)}
+                    className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
+                  >
+                    <Text className="text-base text-on-surface">
+                      {deadline ? new Date(deadline).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Select target date'}
+                    </Text>
+                    <CalendarIcon size={20} color="#64748b" />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -379,6 +389,16 @@ export default function Onboarding() {
           )}
         </ScrollView>
         {confetti && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
+        
+        <CalendarModal
+          isVisible={isCalendarVisible}
+          onClose={() => setIsCalendarVisible(false)}
+          onConfirm={(date) => {
+            setDeadline(date);
+            setIsCalendarVisible(false);
+          }}
+          initialDate={deadline}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
