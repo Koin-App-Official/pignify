@@ -5,20 +5,20 @@ This document outlines the step-by-step process for updating the **Piggnify** co
 ## Phase 1: Core Style Definitions
 Update the global design system to incorporate the new HSL values.
 
-- [ ] **Update `global.css`**: Replace existing CSS variables in `:root` with the new theme values.
-    - [ ] Primary: `224 76% 48%`
-    - [ ] Secondary: `217 91% 60%`
-    - [ ] Success/Progress/Tertiary: `160 84% 39%`
-    - [ ] Neutral/Foreground: `222 47% 11%`
-    - [ ] Muted: `215 16% 47%`
-    - [ ] Border/Outline: `214 32% 84%`
-    - [ ] Background: `210 40% 98%`
-    - [ ] Surface: `0 0% 100%`
-    - [ ] Warning: `32 95% 44%`
-    - [ ] Error/Destructive: `0 74% 42%`
-- [ ] **Extend `tailwind.config.js`**: Ensure all semantic names used in the app are correctly mapped to these variables.
-    - [ ] Check mapping for `surface-container-low`, `warning-container`, etc.
-    - [ ] Add `chart-lighter` and `chart-subtle` tokens if necessary.
+- [x] **Update `global.css`**: Replace existing CSS variables in `:root` with the new theme values.
+    - [x] Primary: `224 76% 48%`
+    - [x] Secondary: `217 91% 60%`
+    - [x] Success/Progress/Tertiary: `160 84% 39%`
+    - [x] Neutral/Foreground: `222 47% 11%`
+    - [x] Muted: `215 16% 47%`
+    - [x] Border/Outline: `214 32% 84%`
+    - [x] Background: `210 40% 98%`
+    - [x] Surface: `0 0% 100%`
+    - [x] Warning: `32 95% 44%`
+    - [x] Error/Destructive: `0 74% 42%`
+- [x] **Extend `tailwind.config.js`**: Ensure all semantic names used in the app are correctly mapped to these variables.
+    - [x] Check mapping for `surface-container-low`, `warning-container`, etc.
+    - [x] Add `chart-lighter` and `chart-subtle` tokens if necessary.
 
 ## Phase 2: Component Audit & Refactoring
 Systematically replace hardcoded hex colors with Tailwind theme classes or `hsl(var(...))` calls.
