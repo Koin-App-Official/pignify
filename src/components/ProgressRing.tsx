@@ -41,7 +41,7 @@ export function ProgressRing({ progress, size = 180, strokeWidth = 12, children 
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#27272a" // surface-container
+            stroke="#A7F3D0" // chart-subtle
             strokeWidth={strokeWidth}
           />
           <AnimatedCircle
@@ -49,7 +49,7 @@ export function ProgressRing({ progress, size = 180, strokeWidth = 12, children 
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#10b981" // primary
+            stroke="#10B981" // chart-base
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}

@@ -46,7 +46,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-2xl font-bold text-on-surface">Add Expense</Text>
             <TouchableOpacity onPress={onClose} className="p-2 bg-surface-container-low rounded-full">
-              <X size={20} color="#a1a1aa" />
+              <X size={20} color="#64748B" />
             </TouchableOpacity>
           </View>
           

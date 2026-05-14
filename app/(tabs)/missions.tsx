@@ -46,7 +46,7 @@ export default function Missions() {
         <View className="mb-6 rounded-2xl bg-surface-container-low p-4">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
-              <Zap size={16} color="#10b981" />
+              <Zap size={16} color="#10B981" />
               <Text className="text-sm font-bold text-on-surface">Saver Lv.{profile.level}</Text>
             </View>
             <Text className="text-xs font-medium text-on-surface-variant">{profile.xp % 100}/100 XP</Text>
@@ -75,7 +75,7 @@ export default function Missions() {
               tab === 'achievements' ? 'bg-primary' : 'bg-transparent'
             }`}
           >
-            <Trophy size={14} color={tab === 'achievements' ? '#022c22' : '#a1a1aa'} />
+            <Trophy size={14} color={tab === 'achievements' ? '#FFFFFF' : '#64748B'} />
             <Text className={`text-sm font-bold ${tab === 'achievements' ? 'text-primary-foreground' : 'text-on-surface-variant'}`}>
               Badges
             </Text>
@@ -140,7 +140,7 @@ function MissionCard({ mission, onComplete, index = 0 }: { mission: Mission; onC
             : 'border-outline bg-transparent'
         }`}
       >
-        {mission.completed && <Check size={14} color="#064e3b" />}
+        {mission.completed && <Check size={14} color="#FFFFFF" />}
       </TouchableOpacity>
       <View className="flex-1">
         <Text className={`text-sm font-bold mb-1 ${mission.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>

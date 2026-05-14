@@ -66,7 +66,7 @@ export default function Profile() {
         {/* User card */}
         <View className="mb-6 rounded-3xl bg-primary-container p-6 items-center">
           <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-            <User size={28} color="#064e3b" />
+            <User size={28} color="#1D4ED8" />
           </View>
           
           {editingName ? (
@@ -82,7 +82,7 @@ export default function Profile() {
                 onPress={saveName}
                 className="h-8 w-8 items-center justify-center rounded-full bg-primary/20"
               >
-                <Check size={16} color="#064e3b" />
+                <Check size={16} color="#1D4ED8" />
               </TouchableOpacity>
             </View>
           ) : (
@@ -90,7 +90,7 @@ export default function Profile() {
               <Text className="text-xl font-bold text-on-primary-container">
                 {profile.name || 'Saver'} · Lv.{profile.level}
               </Text>
-              <Pencil size={14} color="#064e3b" />
+              <Pencil size={14} color="#1D4ED8" />
             </TouchableOpacity>
           )}
 
@@ -119,7 +119,7 @@ export default function Profile() {
         {/* Income */}
         <View className="mb-6 rounded-2xl bg-surface-container-low p-4">
           <View className="flex-row items-center gap-2 mb-3">
-            <CreditCard size={16} color="#a1a1aa" />
+            <CreditCard size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">Monthly Income</Text>
           </View>
           <Text className="text-2xl font-bold text-on-surface">${profile.monthlyIncome.toLocaleString()}</Text>
@@ -151,7 +151,7 @@ export default function Profile() {
         {/* Notifications */}
         <View className="mb-6 rounded-2xl bg-surface-container-low p-4">
           <View className="flex-row items-center gap-2 mb-4">
-            <Bell size={16} color="#a1a1aa" />
+            <Bell size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">Notifications</Text>
           </View>
           <View className="gap-4">
@@ -168,8 +168,8 @@ export default function Profile() {
                 <Switch
                   value={profile.notificationPrefs[key]}
                   onValueChange={() => toggleNotif(key)}
-                  trackColor={{ false: '#3f3f46', true: '#10b981' }}
-                  thumbColor={profile.notificationPrefs[key] ? '#064e3b' : '#a1a1aa'}
+                  trackColor={{ false: '#CBD5E1', true: '#1D4ED8' }}
+                  thumbColor={'#ffffff'}
                 />
               </View>
             ))}
@@ -182,7 +182,7 @@ export default function Profile() {
           onPress={handleReset} 
           className="mb-10 w-full flex-row items-center justify-center gap-2 border-outline/50"
         >
-          <RotateCcw size={14} color="#a1a1aa" />
+          <RotateCcw size={14} color="#64748B" />
           <Text className="text-sm font-bold text-on-surface-variant">Reset All Data (Demo)</Text>
         </Button>
 

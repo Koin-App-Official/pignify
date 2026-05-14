@@ -136,13 +136,13 @@ export default function AICoach() {
                   <Markdown
                     style={{
                       body: {
-                        color: m.role === 'user' ? '#022c22' : '#ffffff',
+                        color: m.role === 'user' ? '#0F172A' : '#0F172A',
                         fontSize: 14,
                         lineHeight: 20,
                       },
                       strong: {
                         fontWeight: 'bold',
-                        color: m.role === 'user' ? '#022c22' : '#ffffff',
+                        color: m.role === 'user' ? '#0F172A' : '#0F172A',
                       },
                       paragraph: {
                         marginTop: 0,
@@ -180,7 +180,7 @@ export default function AICoach() {
               value={input}
               onChangeText={setInput}
               placeholder="Ask your coach..."
-              placeholderTextColor="#a1a1aa"
+              placeholderTextColor="#64748B"
               className="flex-1 h-12 bg-surface rounded-xl px-4 text-sm font-medium text-on-surface"
               onSubmitEditing={() => {
                 if (input.trim()) send(input.trim());
@@ -193,7 +193,7 @@ export default function AICoach() {
               disabled={!input.trim()} 
               className="h-12 w-12 items-center justify-center p-0"
             >
-              <Send size={16} color={!input.trim() ? '#a1a1aa' : '#ffffff'} />
+              <Send size={16} color={!input.trim() ? '#64748B' : '#ffffff'} />
             </Button>
           </View>
         </View>

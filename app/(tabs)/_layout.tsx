@@ -8,7 +8,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1f1f22',
+          backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
@@ -17,8 +17,8 @@ export default function TabLayout() {
           paddingTop: 10,
         },
         tabBarShowLabel: true,
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: '#a1a1aa',
+        tabBarActiveTintColor: '#1D4ED8',
+        tabBarInactiveTintColor: '#64748B',
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
@@ -31,8 +31,8 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-[#064e3b]' : ''}`}>
-              <Home size={22} color={focused ? '#34d399' : color} strokeWidth={focused ? 2.2 : 1.6} />
+            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-primary-container' : ''}`}>
+              <Home size={22} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
             </View>
           ),
         }}
@@ -42,8 +42,8 @@ export default function TabLayout() {
         options={{
           title: 'Goals',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-[#064e3b]' : ''}`}>
-              <Target size={22} color={focused ? '#34d399' : color} strokeWidth={focused ? 2.2 : 1.6} />
+            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-primary-container' : ''}`}>
+              <Target size={22} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
             </View>
           ),
         }}
@@ -53,8 +53,8 @@ export default function TabLayout() {
         options={{
           title: 'Missions',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-[#064e3b]' : ''}`}>
-              <Zap size={22} color={focused ? '#34d399' : color} strokeWidth={focused ? 2.2 : 1.6} />
+            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-primary-container' : ''}`}>
+              <Zap size={22} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
             </View>
           ),
         }}
@@ -64,8 +64,8 @@ export default function TabLayout() {
         options={{
           title: 'Coach',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-[#064e3b]' : ''}`}>
-              <MessageCircle size={22} color={focused ? '#34d399' : color} strokeWidth={focused ? 2.2 : 1.6} />
+            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-primary-container' : ''}`}>
+              <MessageCircle size={22} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
             </View>
           ),
         }}
@@ -75,8 +75,8 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-[#064e3b]' : ''}`}>
-              <User size={22} color={focused ? '#34d399' : color} strokeWidth={focused ? 2.2 : 1.6} />
+            <View className={`w-16 h-8 items-center justify-center rounded-full ${focused ? 'bg-primary-container' : ''}`}>
+              <User size={22} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
             </View>
           ),
         }}

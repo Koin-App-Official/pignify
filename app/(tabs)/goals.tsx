@@ -112,7 +112,7 @@ export default function Goals() {
         >
           <ScrollView className="flex-1 px-5 py-6">
             <TouchableOpacity onPress={() => setViewGoal(null)} className="mb-4 flex-row items-center gap-1">
-              <ArrowLeft size={16} color="#a1a1aa" />
+              <ArrowLeft size={16} color="#64748B" />
               <Text className="text-sm font-medium text-on-surface-variant">Back</Text>
             </TouchableOpacity>
 
@@ -189,7 +189,7 @@ export default function Goals() {
         >
           <ScrollView className="flex-1 px-5 py-6">
             <TouchableOpacity onPress={() => setCreating(false)} className="mb-4 flex-row items-center gap-1">
-              <ArrowLeft size={16} color="#a1a1aa" />
+              <ArrowLeft size={16} color="#64748B" />
               <Text className="text-sm font-medium text-on-surface-variant">Cancel</Text>
             </TouchableOpacity>
 
@@ -264,7 +264,7 @@ export default function Goals() {
                 
                 <View className="mt-8 flex-row gap-3">
                   <Button variant="outline" onPress={() => setCreateStep(0)} className="w-14 items-center justify-center">
-                    <ArrowLeft size={16} color="#10b981" />
+                    <ArrowLeft size={16} color="#1D4ED8" />
                   </Button>
                   <Button 
                     onPress={finishCreate} 
@@ -343,7 +343,7 @@ export default function Goals() {
             onPress={startCreate}
             className="absolute bottom-6 right-5 z-40 h-14 w-14 items-center justify-center rounded-2xl bg-primary-container shadow-lg"
           >
-            <Plus size={24} color="#064e3b" />
+            <Plus size={24} color="#1D4ED8" />
           </TouchableOpacity>
         )}
       </View>

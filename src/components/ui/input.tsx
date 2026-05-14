@@ -11,7 +11,7 @@ const Input = React.forwardRef<React.ElementRef<typeof TextInput>, TextInputProp
           "flex h-14 w-full rounded-2xl bg-surface-container-low px-4 py-3 text-base text-on-surface",
           className
         )}
-        placeholderTextColor={placeholderTextColor ?? "#9ca3af"}
+        placeholderTextColor={placeholderTextColor ?? "#64748B"}
         {...props}
       />
     );

@@ -35,19 +35,19 @@ Systematically replace hardcoded hex colors with Tailwind theme classes or `hsl(
 - [ ] **`switch.tsx`**: Update track and thumb colors.
 
 ### 3. Feature Components
-- [ ] **`ProgressRing.tsx`**: Replace `#27272a` and `#10b981` with variables.
-- [ ] **`AddExpenseModal.tsx`**: Audit for hardcoded background or text colors.
+- [x] **`ProgressRing.tsx`**: Replace `#27272a` and `#10b981` with variables.
+- [x] **`AddExpenseModal.tsx`**: Audit for hardcoded background or text colors.
 
 ### 4. Screen-Level Audit
-- [ ] **`app/(tabs)/index.tsx` (Dashboard)**:
-    - [ ] Replace flame icon color `#fbbf24`.
-    - [ ] Replace trending up icon color `#10b981`.
-    - [ ] Replace chevron right color `#10b981`.
-- [ ] **`app/(tabs)/goals.tsx`**: Search for hardcoded goal/chart colors.
-- [ ] **`app/(tabs)/missions.tsx`**: Search for hardcoded reward/status colors.
-- [ ] **`app/(tabs)/coach.tsx`**: Search for chat bubble/avatar colors.
-- [ ] **`app/(tabs)/profile.tsx`**: Search for setting/logout colors.
-- [ ] **`app/onboarding.tsx`**: Search for step indicator and background colors.
+- [x] **`app/(tabs)/index.tsx` (Dashboard)**:
+    - [x] Replace flame icon color `#fbbf24`.
+    - [x] Replace trending up icon color `#10b981`.
+    - [x] Replace chevron right color `#10b981`.
+- [x] **`app/(tabs)/goals.tsx`**: Search for hardcoded goal/chart colors.
+- [x] **`app/(tabs)/missions.tsx`**: Search for hardcoded reward/status colors.
+- [x] **`app/(tabs)/coach.tsx`**: Search for chat bubble/avatar colors.
+- [x] **`app/(tabs)/profile.tsx`**: Search for setting/logout colors.
+- [x] **`app/onboarding.tsx`**: Search for step indicator and background colors.
 
 ## Phase 3: Validation & Polish
 - [ ] **Visual Review**: Walk through all screens to ensure the new palette feels premium and balanced.

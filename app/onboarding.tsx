@@ -179,7 +179,7 @@ export default function Onboarding() {
 
               <View className="mt-6 flex-row gap-3">
                 <Button variant="outline" onPress={() => setStep(0)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#10b981" />
+                  <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button onPress={() => setStep(2)} disabled={!selectedTemplate} className="flex-1 items-center justify-center flex-row gap-2">
                   <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
@@ -215,7 +215,7 @@ export default function Onboarding() {
 
               <View className="mt-6 flex-row gap-3">
                 <Button variant="outline" onPress={() => setStep(1)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#10b981" />
+                  <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button onPress={() => setStep(3)} disabled={!targetAmount || !deadline} className="flex-1 items-center justify-center flex-row gap-2">
                   <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
@@ -254,7 +254,7 @@ export default function Onboarding() {
 
               <View className="mt-6 flex-row gap-3">
                 <Button variant="outline" onPress={() => setStep(2)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#10b981" />
+                  <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button onPress={() => setStep(4)} disabled={!income || !userName.trim()} className="flex-1 items-center justify-center flex-row gap-2">
                   <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
@@ -307,7 +307,7 @@ export default function Onboarding() {
 
               <View className="mt-8 flex-row gap-3">
                 <Button variant="outline" onPress={() => setStep(3)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#10b981" />
+                  <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button
                   onPress={() => setStep(5)}
@@ -329,7 +329,7 @@ export default function Onboarding() {
               {!personalityResult ? (
                 <View>
                   <View className="mb-2 flex-row items-center gap-2">
-                    <Sparkles size={20} color="#10b981" />
+                    <Sparkles size={20} color="#10B981" />
                     <Text className="text-2xl font-bold text-on-surface">Quick money quiz</Text>
                   </View>
                   <Text className="mb-3 text-sm font-medium text-on-surface-variant">Question {currentQuiz + 1} of {QUIZ_QUESTIONS.length}</Text>
@@ -364,7 +364,7 @@ export default function Onboarding() {
 
                   <View className="w-full rounded-2xl bg-tertiary-container p-4 mb-8">
                     <View className="flex-row items-center justify-center gap-2">
-                      <Check size={18} color="#064e3b" />
+                      <Check size={18} color="#10B981" />
                       <Text className="text-sm font-bold text-on-tertiary-container">Achievement unlocked: Smart Saver 🧠</Text>
                     </View>
                   </View>

@@ -6,7 +6,7 @@ const Switch = React.forwardRef<React.ElementRef<typeof RNSwitch>, SwitchProps>(
     return (
       <RNSwitch
         ref={ref}
-        trackColor={{ false: "#3f3f46", true: "#10b981" }}
+        trackColor={{ false: "#CBD5E1", true: "#1D4ED8" }}
         thumbColor={"#ffffff"}
         {...props}
       />

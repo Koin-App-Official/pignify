@@ -65,7 +65,7 @@ export default function Dashboard() {
             <Text className="text-3xl font-bold text-on-surface">Piggnify</Text>
           </View>
           <View className="flex-row items-center gap-1.5 rounded-full bg-warning-container px-3.5 py-2">
-            <Flame size={16} color="#fbbf24" />
+            <Flame size={16} color="#D97706" />
             <Text className="text-sm font-bold text-warning">{profile.streak}</Text>
           </View>
         </View>
@@ -148,7 +148,7 @@ export default function Dashboard() {
         <View className="mb-5 rounded-2xl bg-surface-container-low p-4">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
-              <TrendingUp size={16} color="#10b981" />
+              <TrendingUp size={16} color="#10B981" />
               <Text className="text-sm font-bold text-on-surface">Saver Lv.{profile.level}</Text>
             </View>
             <Text className="text-xs font-medium text-on-surface-variant">
@@ -170,7 +170,7 @@ export default function Dashboard() {
               <Text className="text-base font-bold text-on-surface">Your Goals</Text>
               <TouchableOpacity onPress={() => router.push('/goals')} className="flex-row items-center gap-0.5">
                 <Text className="text-sm font-medium text-primary">See all</Text>
-                <ChevronRight size={16} color="#10b981" />
+                <ChevronRight size={16} color="#1D4ED8" />
               </TouchableOpacity>
             </View>
             <View className="gap-3">
