@@ -1,327 +1,399 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { MotiView, AnimatePresence } from 'moti';
+import { MotiView } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useStore, GOAL_TEMPLATES, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
-import { ArrowRight, ArrowLeft, Sparkles, Check, Calendar as CalendarIcon } from 'lucide-react-native';
+import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
+import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle, Sparkles } from 'lucide-react-native';
+import { formatCurrency } from '@/lib/store';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { CalendarModal } from '@/components/ui/calendar-modal';
-import { Picker } from '@react-native-picker/picker'; // Optional if not installed, I will use custom select or simple views
+import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
 
-const QUIZ_QUESTIONS = [
-  {
-    question: 'When you get extra money, what do you usually do?',
-    options: ['Spend it right away', 'Save some, spend some', 'Save most of it', 'Invest it'],
-  },
-  {
-    question: 'How do you feel about budgeting?',
-    options: ['I avoid it', 'I try but forget', 'I do it loosely', 'I track everything'],
-  },
-  {
-    question: 'What motivates you to save?',
-    options: ['A specific dream', 'Security & peace', 'Building wealth', 'Competing with myself'],
-  },
+const GOAL_CHIPS = [
+  { label: 'Vacation', emoji: '🏝️' },
+  { label: 'New Car', emoji: '🚗' },
+  { label: 'House Deposit', emoji: '🏠' },
+  { label: 'Emergency Fund', emoji: '💰' },
+  { label: 'Something Else', emoji: '✏️' },
 ];
 
-const PERSONALITY_TYPES: Record<string, { title: string; emoji: string; desc: string }> = {
-  dreamer: { title: 'The Dreamer', emoji: '✨', desc: 'You save best when you have a vivid goal to chase. Dream big!' },
-  builder: { title: 'The Builder', emoji: '🏗️', desc: 'You like structure and steady progress. One brick at a time!' },
-  challenger: { title: 'The Challenger', emoji: '⚡', desc: 'You thrive on competition and beating your own records!' },
-  guardian: { title: 'The Guardian', emoji: '🛡️', desc: 'Security drives you. You value stability and peace of mind.' },
-};
+const TIMELINE_CHIPS = [
+  { label: '6 months', months: 6 },
+  { label: '1 year', months: 12 },
+  { label: '2 years', months: 24 },
+  { label: '3 years', months: 36 },
+  { label: '5 years', months: 60 },
+];
+
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function monthDiff(from: Date, to: Date): number {
+  return Math.max(
+    1,
+    (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
+  );
+}
+
+function formatTargetDate(isoDate: string): string {
+  const d = new Date(isoDate);
+  return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+function getCurrencySymbol(currencyCode: string): string {
+  return CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
+}
+
+function detectLocaleCountry(): { country: string; currency: string } {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    const region = locale.split('-')[1]?.toUpperCase();
+    if (region) {
+      const match = COUNTRIES.find((c) => c.code === region);
+      if (match) return { country: match.code, currency: match.currency };
+    }
+  } catch {}
+  return { country: 'US', currency: 'USD' };
+}
+
+const TOTAL_STEPS = 6;
 
 export default function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [selectedTemplate, setSelectedTemplate] = useState('');
+
+  const [firstName, setFirstName] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [firstNameTouched, setFirstNameTouched] = useState(false);
+
+  const [country, setCountry] = useState('');
+  const [currency, setCurrency] = useState('');
+
   const [goalName, setGoalName] = useState('');
+  const [goalNameError, setGoalNameError] = useState('');
+
   const [targetAmount, setTargetAmount] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [income, setIncome] = useState('');
-  const [userName, setUserName] = useState('');
+  const [targetAmountError, setTargetAmountError] = useState('');
+
+  const [targetDate, setTargetDate] = useState('');
+  const [selectedChipLabel, setSelectedChipLabel] = useState('');
+
+  const [monthlyIncome, setMonthlyIncome] = useState('');
+  const [incomeSkipped, setIncomeSkipped] = useState(false);
+
   const [email, setEmail] = useState('');
-  const [country, setCountry] = useState('US');
-  const [currency, setCurrency] = useState('USD');
   const [emailError, setEmailError] = useState('');
-  const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
-  const [currentQuiz, setCurrentQuiz] = useState(0);
-  const [personalityResult, setPersonalityResult] = useState('');
-  const [confetti, setConfetti] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [networkError, setNetworkError] = useState('');
+
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
+  const [currencyPickerVisible, setCurrencyPickerVisible] = useState(false);
 
-  const addGoal = useStore((state) => state.addGoal);
-  const updateProfile = useStore((state) => state.updateProfile);
-  const unlockAchievement = useStore((state) => state.unlockAchievement);
+  const addGoal = useStore((s) => s.addGoal);
+  const updateProfile = useStore((s) => s.updateProfile);
+  const unlockAchievement = useStore((s) => s.unlockAchievement);
 
-  const template = GOAL_TEMPLATES.find((t) => t.id === selectedTemplate);
+  useEffect(() => {
+    const detected = detectLocaleCountry();
+    setCountry(detected.country);
+    setCurrency(detected.currency);
+  }, []);
 
-  const handleTemplateSelect = (id: string) => {
-    const t = GOAL_TEMPLATES.find((t) => t.id === id)!;
-    setSelectedTemplate(id);
-    setGoalName(t.name);
-    setTargetAmount(String(t.suggestedAmount));
-    const d = new Date();
-    d.setMonth(d.getMonth() + 6);
-    setDeadline(d.toISOString().split('T')[0]);
+  const currencySymbol = getCurrencySymbol(currency);
+  const countryName = COUNTRIES.find((c) => c.code === country)?.name ?? country;
+  const currencyName = CURRENCIES.find((c) => c.code === currency)?.name ?? currency;
+
+  const handleCountrySelect = (item: PickerItem) => {
+    setCountry(item.code);
+    const matched = COUNTRIES.find((c) => c.code === item.code);
+    if (matched) setCurrency(matched.currency);
   };
 
-  const handleQuizAnswer = (idx: number) => {
-    const newAnswers = [...quizAnswers, idx];
-    setQuizAnswers(newAnswers);
-    if (currentQuiz < QUIZ_QUESTIONS.length - 1) {
-      setCurrentQuiz(currentQuiz + 1);
-    } else {
-      const avg = newAnswers.reduce((a, b) => a + b, 0) / newAnswers.length;
-      const type = avg < 1 ? 'dreamer' : avg < 2 ? 'builder' : avg < 3 ? 'challenger' : 'guardian';
-      setPersonalityResult(type);
-      updateProfile({ personalityType: type });
-      unlockAchievement('a12');
+  const handleTimelineChip = (months: number, label: string) => {
+    const date = addMonths(new Date(), months);
+    setTargetDate(date.toISOString().split('T')[0]);
+    setSelectedChipLabel(label);
+  };
+
+  const handleSkipIncome = () => {
+    setIncomeSkipped(true);
+    setMonthlyIncome('');
+    setStep(6);
+  };
+
+  const totalMonths = targetDate ? monthDiff(new Date(), new Date(targetDate)) : 1;
+  const estimatedMonthlySavings = targetAmount ? Number(targetAmount) / totalMonths : 0;
+  const incomeNumber = Number(monthlyIncome);
+  const savingsExceedsIncome = !incomeSkipped && incomeNumber > 0 && estimatedMonthlySavings > incomeNumber;
+
+  const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+  const handleSubmit = async () => {
+    if (!isEmailValid(email)) {
+      setEmailTouched(true);
+      setEmailError('Please enter a valid email address 📧');
+      return;
+    }
+    setIsLoading(true);
+    setNetworkError('');
+
+    const payload = {
+      email,
+      firstName,
+      country,
+      currency,
+      goalName,
+      targetAmount: Number(targetAmount),
+      targetDate: new Date(targetDate).toISOString(),
+      monthlyIncome: incomeSkipped ? null : incomeNumber,
+      incomeSkipped,
+      estimatedMonthlySavings: Math.round(estimatedMonthlySavings * 100) / 100,
+    };
+
+    try {
+      const res = await fetch(
+        'https://n8n.piggnify.com/webhook-test/138736d6-32d8-48a8-9c1a-74de02aa9ecc',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const goal: Goal = {
+        id: Math.random().toString(36).substring(7),
+        template: '',
+        icon: '🎯',
+        name: goalName,
+        targetAmount: Number(targetAmount),
+        savedAmount: 0,
+        deadline: targetDate,
+        createdAt: new Date().toISOString(),
+        deposits: [],
+        isPrimary: true,
+      };
+      addGoal(goal);
+      updateProfile({
+        name: firstName,
+        email,
+        country,
+        currency,
+        monthlyIncome: incomeSkipped ? null : incomeNumber,
+        incomeSkipped,
+        onboardingCompleted: true,
+      });
+      unlockAchievement('a1');
+      setStep(8);
+    } catch {
+      setNetworkError(
+        "Oops! We had trouble connecting to the network. Please check your internet connection and try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const finishOnboarding = async () => {
-    const goal: Goal = {
-      id: Math.random().toString(36).substring(7),
-      template: selectedTemplate,
-      icon: template?.icon || '🎯',
-      name: goalName,
-      targetAmount: Number(targetAmount),
-      savedAmount: 0,
-      deadline,
-      createdAt: new Date().toISOString(),
-      deposits: [],
-      isPrimary: true,
-    };
-    addGoal(goal);
-    updateProfile({
-      name: userName,
-      email,
-      country,
-      currency,
-      monthlyIncome: Number(income),
-      onboardingCompleted: true,
-    });
-    unlockAchievement('a1');
+  const goBack = () => setStep((s) => s - 1);
 
-    setConfetti(true);
-    setTimeout(() => {
-      router.replace('/(tabs)');
-    }, 1500);
-  };
-
-  const projectedMonths = targetAmount && income
-    ? Math.ceil(Number(targetAmount) / (Number(income) * 0.2))
-    : null;
+  const showProgress = step < 6;
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <View className="flex-row justify-center gap-2 pt-6 pb-2">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <View
-              key={i}
-              className={`h-2 rounded-full ${i === step ? 'w-6 bg-primary' : i < step ? 'w-2 bg-primary/40' : 'w-2 bg-surface-container'
-                }`}
-            />
-          ))}
-        </View>
+        {showProgress && (
+          <View className="px-5 pt-6 pb-2">
+            <Text className="mb-2 text-xs font-medium text-on-surface-variant text-center">
+              Step {step + 1} of {TOTAL_STEPS}
+            </Text>
+            <View className="flex-row gap-1.5">
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                <View
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    i <= step ? 'bg-primary' : 'bg-surface-container'
+                  }`}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
-        <ScrollView className="flex-1 px-5 py-6">
+        <ScrollView className="flex-1 px-5 py-6" keyboardShouldPersistTaps="handled">
+          {/* Screen 0: Name */}
           {step === 0 && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              className="flex-1 items-center justify-center min-h-[70vh]"
-            >
-              <Text className="mb-6 text-6xl">💰</Text>
-              <Text className="mb-3 text-4xl font-bold text-on-surface">Welcome to Piggnify</Text>
-              <Text className="mb-2 text-base font-medium text-on-surface-variant text-center">
-                Your journey to financial freedom starts with one goal.
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                Welcome to Piggy!{'\n'}What should we call you?
               </Text>
-              <Text className="mb-8 text-sm font-medium text-on-surface-variant text-center">
-                Let's set up your first savings goal in 60 seconds.
+              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+                Let's make this personal.
               </Text>
+
+              <Input
+                value={firstName}
+                onChangeText={(v) => {
+                  setFirstName(v);
+                  if (firstNameTouched && v.trim().length >= 1) setFirstNameError('');
+                  if (firstNameTouched && v.trim().length === 0)
+                    setFirstNameError("Hey, we'd love to know your name! 😊");
+                }}
+                placeholder="Your first name"
+                maxLength={50}
+                autoCapitalize="words"
+              />
+              {firstNameError ? (
+                <Text className="mt-2 text-xs text-[#ef4444]">{firstNameError}</Text>
+              ) : null}
+
               <Button
-                onPress={() => setStep(1)}
-                className="w-full flex-row items-center justify-center gap-2 h-14"
+                onPress={() => {
+                  setFirstNameTouched(true);
+                  if (firstName.trim().length < 1) {
+                    setFirstNameError("Hey, we'd love to know your name! 😊");
+                    return;
+                  }
+                  setStep(1);
+                }}
+                className="mt-8 w-full flex-row items-center justify-center gap-2 h-14"
               >
-                <Text className="text-base font-bold text-primary-foreground">Start your first goal</Text>
+                <Text className="text-base font-bold text-primary-foreground">Next</Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
             </MotiView>
           )}
 
+          {/* Screen 1: Localization */}
           {step === 1 && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-            >
-              <Text className="mb-2 text-2xl font-bold text-on-surface">What are you saving for?</Text>
-              <Text className="mb-6 text-sm font-medium text-on-surface-variant">Pick a goal that excites you</Text>
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                Where are you based,{'\n'}{firstName}?
+              </Text>
+              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+                We'll use this to format currency and set helpful defaults.
+              </Text>
 
-              <View className="flex-row flex-wrap justify-between">
-                {GOAL_TEMPLATES.map((t) => (
+              <View className="gap-4">
+                <View>
+                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Country</Text>
                   <TouchableOpacity
-                    key={t.id}
-                    onPress={() => handleTemplateSelect(t.id)}
-                    className={`mb-3 w-[48%] flex-col items-center gap-2 rounded-2xl p-4 ${selectedTemplate === t.id
-                        ? 'bg-primary-container border-2 border-primary'
-                        : 'bg-surface-container-low'
-                      }`}
-                  >
-                    <Text className="text-3xl">{t.icon}</Text>
-                    <Text className={`text-sm font-bold ${selectedTemplate === t.id ? 'text-on-primary-container' : 'text-on-surface'
-                      }`}>{t.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View className="mt-6 flex-row gap-3">
-                <Button variant="outline" onPress={() => setStep(0)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button onPress={() => setStep(2)} disabled={!selectedTemplate} className="flex-1 items-center justify-center flex-row gap-2">
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
-            </MotiView>
-          )}
-
-          {step === 2 && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-            >
-              <Text className="mb-4 text-center text-4xl">{template?.icon}</Text>
-              <Text className="mb-2 text-2xl font-bold text-on-surface text-center">Set your {goalName} goal</Text>
-              <Text className="mb-6 text-sm font-medium text-on-surface-variant text-center">How much do you need?</Text>
-
-              <View className="gap-5">
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Goal name</Text>
-                  <Input value={goalName} onChangeText={setGoalName} />
-                </View>
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Target amount ($)</Text>
-                  <Input keyboardType="numeric" value={targetAmount} onChangeText={setTargetAmount} className="text-xl font-bold" placeholder="0" />
-                </View>
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Target date</Text>
-                  <TouchableOpacity 
-                    onPress={() => setIsCalendarVisible(true)}
+                    onPress={() => setCountryPickerVisible(true)}
                     className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
                   >
-                    <Text className="text-base text-on-surface">
-                      {deadline ? new Date(deadline).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Select target date'}
-                    </Text>
-                    <CalendarIcon size={20} color="#64748b" />
+                    <Text className="text-base text-on-surface">{countryName || 'Select country'}</Text>
+                    <ChevronDown size={18} color="#64748b" />
                   </TouchableOpacity>
-                </View>
-              </View>
-
-              <View className="mt-6 flex-row gap-3">
-                <Button variant="outline" onPress={() => setStep(1)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button onPress={() => setStep(3)} disabled={!targetAmount || !deadline} className="flex-1 items-center justify-center flex-row gap-2">
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
-            </MotiView>
-          )}
-
-          {step === 3 && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-            >
-              <Text className="mb-2 text-2xl font-bold text-on-surface">A little about you</Text>
-              <Text className="mb-6 text-sm font-medium text-on-surface-variant">This helps us personalize your experience</Text>
-
-              <View className="gap-5">
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Your name</Text>
-                  <Input value={userName} onChangeText={setUserName} placeholder="e.g. Alex" />
-                </View>
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Monthly income ($)</Text>
-                  <Input keyboardType="numeric" value={income} onChangeText={setIncome} placeholder="e.g. 3000" className="text-xl font-bold" />
-                </View>
-              </View>
-
-              {projectedMonths && Number(income) > 0 ? (
-                <View className="mt-6 rounded-2xl bg-tertiary-container p-4 items-center">
-                  <Text className="text-sm font-medium text-on-tertiary-container">Saving 20% monthly, you'll reach your goal in</Text>
-                  <Text className="mt-1 text-3xl font-bold text-on-tertiary-container">{projectedMonths} months</Text>
-                  <Text className="mt-1 text-xs text-on-tertiary-container/70">(${Math.round(Number(income) * 0.2)}/month toward your goal)</Text>
-                </View>
-              ) : null}
-
-              <View className="mt-6 flex-row gap-3">
-                <Button variant="outline" onPress={() => setStep(2)} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button onPress={() => setStep(4)} disabled={!income || !userName.trim()} className="flex-1 items-center justify-center flex-row gap-2">
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
-            </MotiView>
-          )}
-
-          {step === 4 && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-            >
-              <Text className="mb-2 text-2xl font-bold text-on-surface">Where are you based?</Text>
-              <Text className="mb-6 text-sm font-medium text-on-surface-variant">We'll use this to set your currency and reminders</Text>
-
-              <View className="gap-5">
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Email</Text>
-                  <Input
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={(t) => {
-                      setEmail(t);
-                      if (emailError) setEmailError('');
-                    }}
-                    onBlur={() => {
-                      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        setEmailError('Please enter a valid email');
-                      }
-                    }}
-                    placeholder="you@example.com"
-                  />
-                  {emailError ? <Text className="mt-1.5 text-xs text-[#ef4444]">{emailError}</Text> : null}
-                </View>
-
-                {/* Due to lacking @react-native-picker/picker, just a simple text input/button combo can work, but we'll use TextInput for simplicity since this is a demo. */}
-                <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Country (Code)</Text>
-                  <Input value={country} onChangeText={setCountry} placeholder="US" autoCapitalize="characters" />
                 </View>
 
                 <View>
                   <Text className="mb-2 text-xs font-medium text-on-surface-variant">Currency</Text>
-                  <Input value={currency} onChangeText={setCurrency} placeholder="USD" autoCapitalize="characters" />
+                  <TouchableOpacity
+                    onPress={() => setCurrencyPickerVisible(true)}
+                    className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
+                  >
+                    <Text className="text-base text-on-surface">
+                      {currency ? `${currencySymbol} — ${currencyName}` : 'Select currency'}
+                    </Text>
+                    <ChevronDown size={18} color="#64748b" />
+                  </TouchableOpacity>
                 </View>
               </View>
 
               <View className="mt-8 flex-row gap-3">
-                <Button variant="outline" onPress={() => setStep(3)} className="w-14 items-center justify-center">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
                   <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button
-                  onPress={() => setStep(5)}
-                  disabled={!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !country || !currency}
+                  onPress={() => setStep(2)}
+                  className="flex-1 items-center justify-center flex-row gap-2"
+                >
+                  <Text className="text-sm font-bold text-primary-foreground">Looks right, let's go!</Text>
+                  <ArrowRight size={16} color="#ffffff" />
+                </Button>
+              </View>
+            </MotiView>
+          )}
+
+          {/* Screen 2: Goal Declaration */}
+          {step === 2 && (
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                What are we saving for?
+              </Text>
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
+                Pick a goal or type your own below.
+              </Text>
+
+              <View className="flex-row flex-wrap gap-2 mb-5">
+                {GOAL_CHIPS.map((chip) => (
+                  <TouchableOpacity
+                    key={chip.label}
+                    onPress={() => {
+                      setGoalName(chip.label);
+                      setGoalNameError('');
+                    }}
+                    className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
+                      goalName === chip.label
+                        ? 'bg-primary-container border-primary'
+                        : 'bg-surface-container-low border-outline'
+                    }`}
+                  >
+                    <Text className="text-base">{chip.emoji}</Text>
+                    <Text
+                      className={`text-sm font-medium ${
+                        goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
+                      }`}
+                    >
+                      {chip.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Input
+                value={goalName}
+                onChangeText={(v) => {
+                  setGoalName(v);
+                  if (v.trim().length >= 1) setGoalNameError('');
+                }}
+                placeholder="I want to..."
+                autoFocus={false}
+              />
+              {goalNameError ? (
+                <Text className="mt-2 text-xs text-[#ef4444]">{goalNameError}</Text>
+              ) : null}
+
+              <View className="mt-8 flex-row gap-3">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                  <ArrowLeft size={16} color="#1D4ED8" />
+                </Button>
+                <Button
+                  onPress={() => {
+                    if (goalName.trim().length < 1) {
+                      setGoalNameError("Tell us what you're saving for! 🎯");
+                      return;
+                    }
+                    setStep(3);
+                  }}
                   className="flex-1 items-center justify-center flex-row gap-2"
                 >
                   <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
@@ -331,75 +403,379 @@ export default function Onboarding() {
             </MotiView>
           )}
 
+          {/* Screen 3: Target Amount */}
+          {step === 3 && (
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                How much do you need{'\n'}for your {goalName}?
+              </Text>
+              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+                Don't worry, you can always adjust this later.
+              </Text>
+
+              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline px-4 h-14">
+                <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
+                <TextInput
+                  className="flex-1 text-xl font-bold text-on-surface"
+                  value={targetAmount}
+                  onChangeText={(v) => {
+                    setTargetAmount(v.replace(/[^0-9.]/g, ''));
+                    if (targetAmountError) setTargetAmountError('');
+                  }}
+                  keyboardType="numeric"
+                  placeholder="0.00"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+              {targetAmountError ? (
+                <Text className="mt-2 text-xs text-[#ef4444]">{targetAmountError}</Text>
+              ) : null}
+
+              <View className="mt-8 flex-row gap-3">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                  <ArrowLeft size={16} color="#1D4ED8" />
+                </Button>
+                <Button
+                  onPress={() => {
+                    if (!(Number(targetAmount) > 0)) {
+                      setTargetAmountError('Please enter an amount greater than 0 💸');
+                      return;
+                    }
+                    setStep(4);
+                  }}
+                  className="flex-1 items-center justify-center flex-row gap-2"
+                >
+                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                  <ArrowRight size={16} color="#ffffff" />
+                </Button>
+              </View>
+            </MotiView>
+          )}
+
+          {/* Screen 4: Timeline */}
+          {step === 4 && (
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                When do you want{'\n'}to achieve this?
+              </Text>
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
+                Pick a timeframe or set a custom date.
+              </Text>
+
+              <View className="flex-row flex-wrap gap-2 mb-4">
+                {TIMELINE_CHIPS.map((chip) => (
+                  <TouchableOpacity
+                    key={chip.label}
+                    onPress={() => handleTimelineChip(chip.months, chip.label)}
+                    className={`rounded-full px-4 py-2.5 border ${
+                      selectedChipLabel === chip.label
+                        ? 'bg-primary-container border-primary'
+                        : 'bg-surface-container-low border-outline'
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${
+                        selectedChipLabel === chip.label
+                          ? 'text-on-primary-container'
+                          : 'text-on-surface'
+                      }`}
+                    >
+                      {chip.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => setIsCalendarVisible(true)}
+                  className={`rounded-full px-4 py-2.5 border ${
+                    selectedChipLabel === 'custom'
+                      ? 'bg-primary-container border-primary'
+                      : 'bg-surface-container-low border-outline'
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      selectedChipLabel === 'custom' ? 'text-on-primary-container' : 'text-on-surface'
+                    }`}
+                  >
+                    Custom Date
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {targetDate && selectedChipLabel === 'custom' ? (
+                <View className="rounded-2xl bg-surface-container-low p-4 mb-2">
+                  <Text className="text-sm text-on-surface-variant">Selected date</Text>
+                  <Text className="text-base font-bold text-on-surface mt-0.5">
+                    {new Date(targetDate).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </View>
+              ) : null}
+
+              <View className="mt-6 flex-row gap-3">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                  <ArrowLeft size={16} color="#1D4ED8" />
+                </Button>
+                <Button
+                  onPress={() => setStep(5)}
+                  disabled={!targetDate}
+                  className="flex-1 items-center justify-center flex-row gap-2"
+                >
+                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                  <ArrowRight size={16} color="#ffffff" />
+                </Button>
+              </View>
+            </MotiView>
+          )}
+
+          {/* Screen 5: Income */}
           {step === 5 && (
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                To build your roadmap,{'\n'}what is your average{'\n'}monthly income?
+              </Text>
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
+                We use this only to calculate how much you need to set aside. Your data is encrypted and completely private.
+              </Text>
+
+              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline px-4 h-14">
+                <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
+                <TextInput
+                  className="flex-1 text-xl font-bold text-on-surface"
+                  value={monthlyIncome}
+                  onChangeText={(v) => setMonthlyIncome(v.replace(/[^0-9.]/g, ''))}
+                  keyboardType="numeric"
+                  placeholder="0.00"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View className="mt-8 flex-row gap-3">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                  <ArrowLeft size={16} color="#1D4ED8" />
+                </Button>
+                <Button
+                  onPress={() => {
+                    setIncomeSkipped(false);
+                    setStep(6);
+                  }}
+                  disabled={!(Number(monthlyIncome) > 0)}
+                  className="flex-1 items-center justify-center flex-row gap-2"
+                >
+                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                  <ArrowRight size={16} color="#ffffff" />
+                </Button>
+              </View>
+
+              <TouchableOpacity onPress={handleSkipIncome} className="mt-4 items-center py-2">
+                <Text className="text-sm font-medium text-primary underline">
+                  I'd rather not say right now
+                </Text>
+              </TouchableOpacity>
+            </MotiView>
+          )}
+
+          {/* Screen 6: Blueprint Review */}
+          {step === 6 && (
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                Let's make this official!
+              </Text>
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
+                Here's your personal savings blueprint.
+              </Text>
+
+              <View className="rounded-3xl bg-surface-container-low p-5 gap-4 mb-4">
+                <Row label="Name" value={firstName} />
+                <Row label="Goal" value={goalName} />
+                <Row label="Target" value={formatCurrency(Number(targetAmount), currency)} />
+                <Row label="Deadline" value={formatTargetDate(targetDate)} />
+                <Row
+                  label="Monthly Income"
+                  value={incomeSkipped ? 'Not provided' : formatCurrency(Number(monthlyIncome), currency)}
+                />
+
+                <View className="h-px bg-outline-variant" />
+
+                <Row
+                  label="Est. monthly savings"
+                  value={formatCurrency(parseFloat(estimatedMonthlySavings.toFixed(2)), currency)}
+                  highlight
+                />
+              </View>
+
+              {savingsExceedsIncome && (
+                <View className="flex-row items-start gap-2 rounded-2xl bg-[#FEF3C7] p-4 mb-4">
+                  <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
+                  <Text className="flex-1 text-sm text-[#92400E]">
+                    This target requires saving more than your income. We can adjust this layout later!
+                  </Text>
+                </View>
+              )}
+
+              {incomeSkipped && (
+                <View className="rounded-2xl bg-surface-container p-4 mb-4">
+                  <Text className="text-xs text-on-surface-variant">
+                    Providing your income on the dashboard will unlock deep affordability insights tailored to your situation.
+                  </Text>
+                </View>
+              )}
+
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant text-center">
+                You're only {totalMonths} months away from your dream. Let's make it happen.
+              </Text>
+
+              <View className="flex-row gap-3">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                  <ArrowLeft size={16} color="#1D4ED8" />
+                </Button>
+                <Button
+                  onPress={() => setStep(7)}
+                  className="flex-1 items-center justify-center flex-row gap-2 h-14"
+                >
+                  <Text className="text-base font-bold text-primary-foreground">Create My Piggy Account</Text>
+                  <ArrowRight size={16} color="#ffffff" />
+                </Button>
+              </View>
+            </MotiView>
+          )}
+
+          {/* Screen 7: Account Finalization */}
+          {step === 7 && (
+            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Text className="mb-2 text-3xl font-bold text-on-surface">
+                Your Piggy Plan is ready!
+              </Text>
+              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+                Enter your email to lock in your plan and see how you can reach your {goalName} by {formatTargetDate(targetDate)}.
+              </Text>
+
+              <Input
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={(v) => {
+                  setEmail(v);
+                  if (emailTouched && isEmailValid(v)) setEmailError('');
+                  if (emailTouched && !isEmailValid(v))
+                    setEmailError('Please enter a valid email address 📧');
+                }}
+                onBlur={() => {
+                  if (email && !isEmailValid(email)) {
+                    setEmailTouched(true);
+                    setEmailError('Please enter a valid email address 📧');
+                  }
+                }}
+                placeholder="you@example.com"
+              />
+              {emailError ? (
+                <Text className="mt-2 text-xs text-[#ef4444]">{emailError}</Text>
+              ) : null}
+
+              {networkError ? (
+                <View className="mt-4 rounded-2xl bg-[#FEF2F2] p-4">
+                  <Text className="text-sm text-[#991B1B]">{networkError}</Text>
+                </View>
+              ) : null}
+
+              <View className="mt-8 flex-row gap-3">
+                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                  <ArrowLeft size={16} color="#1D4ED8" />
+                </Button>
+                <Button
+                  onPress={handleSubmit}
+                  disabled={isLoading || !isEmailValid(email)}
+                  className="flex-1 items-center justify-center flex-row gap-2 h-14"
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <>
+                      <Text className="text-base font-bold text-primary-foreground">Complete Registration</Text>
+                      <ArrowRight size={16} color="#ffffff" />
+                    </>
+                  )}
+                </Button>
+              </View>
+            </MotiView>
+          )}
+
+          {/* Screen 8: Success */}
+          {step === 8 && (
             <MotiView
               from={{ opacity: 0, translateY: 20 }}
               animate={{ opacity: 1, translateY: 0 }}
+              className="flex-1 items-center justify-center min-h-[70vh]"
             >
-              {!personalityResult ? (
-                <View>
-                  <View className="mb-2 flex-row items-center gap-2">
-                    <Sparkles size={20} color="#10B981" />
-                    <Text className="text-2xl font-bold text-on-surface">Quick money quiz</Text>
-                  </View>
-                  <Text className="mb-3 text-sm font-medium text-on-surface-variant">Question {currentQuiz + 1} of {QUIZ_QUESTIONS.length}</Text>
+              <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-tertiary-container">
+                <Sparkles size={36} color="#10B981" />
+              </View>
+              <Text className="mb-3 text-3xl font-bold text-on-surface text-center">
+                You're all set, {firstName}! 🎉
+              </Text>
+              <Text className="mb-2 text-base font-medium text-on-surface-variant text-center px-4">
+                Your Piggy Plan is live. Time to start saving for your {goalName}.
+              </Text>
+              <Text className="mb-10 text-sm text-on-surface-variant text-center px-6">
+                {formatTargetDate(targetDate)} is closer than you think.
+              </Text>
 
-                  <View className="mb-6 flex-row gap-1">
-                    {QUIZ_QUESTIONS.map((_, i) => (
-                      <View key={i} className={`h-1.5 flex-1 rounded-full ${i <= currentQuiz ? 'bg-primary' : 'bg-surface-container'}`} />
-                    ))}
-                  </View>
-
-                  <Text className="mb-6 text-xl font-bold text-on-surface">{QUIZ_QUESTIONS[currentQuiz].question}</Text>
-
-                  <View className="gap-3">
-                    {QUIZ_QUESTIONS[currentQuiz].options.map((opt, i) => (
-                      <TouchableOpacity
-                        key={i}
-                        onPress={() => handleQuizAnswer(i)}
-                        className="w-full rounded-2xl bg-surface-container-low p-4"
-                      >
-                        <Text className="text-base font-bold text-on-surface">{opt}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              ) : (
-                <View className="items-center pt-8">
-                  <Text className="mb-4 text-6xl">{PERSONALITY_TYPES[personalityResult].emoji}</Text>
-                  <Text className="mb-2 text-2xl font-bold text-on-surface">{PERSONALITY_TYPES[personalityResult].title}</Text>
-                  <Text className="mb-8 text-base font-medium text-on-surface-variant text-center">
-                    {PERSONALITY_TYPES[personalityResult].desc}
-                  </Text>
-
-                  <View className="w-full rounded-2xl bg-tertiary-container p-4 mb-8">
-                    <View className="flex-row items-center justify-center gap-2">
-                      <Check size={18} color="#10B981" />
-                      <Text className="text-sm font-bold text-on-tertiary-container">Achievement unlocked: Smart Saver 🧠</Text>
-                    </View>
-                  </View>
-
-                  <Button onPress={finishOnboarding} className="w-full flex-row items-center justify-center gap-2 h-14">
-                    <Text className="text-base font-bold text-primary-foreground">Let's go!</Text>
-                    <ArrowRight size={18} color="#ffffff" />
-                  </Button>
-                </View>
-              )}
+              <Button
+                onPress={() => router.replace('/(tabs)')}
+                className="w-full flex-row items-center justify-center gap-2 h-14"
+              >
+                <Text className="text-base font-bold text-primary-foreground">Go to my dashboard</Text>
+                <ArrowRight size={18} color="#ffffff" />
+              </Button>
             </MotiView>
           )}
         </ScrollView>
-        {confetti && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
-        
+
+        {step === 8 && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
+
         <CalendarModal
           isVisible={isCalendarVisible}
           onClose={() => setIsCalendarVisible(false)}
           onConfirm={(date) => {
-            setDeadline(date);
+            setTargetDate(date);
+            setSelectedChipLabel('custom');
             setIsCalendarVisible(false);
           }}
-          initialDate={deadline}
+          initialDate={targetDate}
+        />
+
+        <PickerModal
+          isVisible={countryPickerVisible}
+          onClose={() => setCountryPickerVisible(false)}
+          onSelect={handleCountrySelect}
+          items={COUNTRIES.map((c) => ({ code: c.code, name: c.name }))}
+          selectedCode={country}
+          title="Select Country"
+        />
+
+        <PickerModal
+          isVisible={currencyPickerVisible}
+          onClose={() => setCurrencyPickerVisible(false)}
+          onSelect={(item) => setCurrency(item.code)}
+          items={CURRENCIES.map((c) => ({ code: c.code, name: c.name, symbol: c.symbol }))}
+          selectedCode={currency}
+          title="Select Currency"
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <View className="flex-row items-center justify-between">
+      <Text className="text-sm text-on-surface-variant">{label}</Text>
+      <Text className={`text-sm font-bold ${highlight ? 'text-primary' : 'text-on-surface'}`}>
+        {value}
+      </Text>
+    </View>
   );
 }

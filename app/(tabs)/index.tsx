@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import { Plus, Flame, TrendingUp, ChevronRight } from 'lucide-react-native';
+import { Plus, Flame, TrendingUp, ChevronRight, Calendar } from 'lucide-react-native';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore } from '@/lib/store';
+import { useStore, formatCurrency } from '@/lib/store';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { Button } from '@/components/ui/button';
 
@@ -29,6 +29,17 @@ export default function Dashboard() {
   if (!profile.onboardingCompleted) {
     return <Redirect href="/onboarding" />;
   }
+
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = today.slice(0, 7);
+  const savedToday = goals.reduce(
+    (sum, g) => sum + g.deposits.filter((d) => d.date === today).reduce((s, d) => s + d.amount, 0),
+    0
+  );
+  const savedThisMonth = goals.reduce(
+    (sum, g) => sum + g.deposits.filter((d) => d.date.startsWith(thisMonth)).reduce((s, d) => s + d.amount, 0),
+    0
+  );
 
   const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
   const progress = primaryGoal
@@ -55,6 +66,13 @@ export default function Dashboard() {
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
+        {profile.incomeSkipped && (
+          <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: '#FEF3C7' }}>
+            <Text className="text-sm font-medium" style={{ color: '#92400E' }}>
+              💡 Add your monthly income to unlock personalised savings insights.
+            </Text>
+          </View>
+        )}
         {/* Header */}
         <View className="mb-6 flex-row items-center justify-between">
           <View>
@@ -62,7 +80,7 @@ export default function Dashboard() {
               {greeting()}
               {profile.name ? `, ${profile.name}` : ''}
             </Text>
-            <Text className="text-3xl font-bold text-on-surface">Piggnify</Text>
+            <Text className="text-3xl font-bold text-on-surface">Piggy</Text>
           </View>
           <View className="flex-row items-center gap-1.5 rounded-full bg-warning-container px-3.5 py-2">
             <Flame size={16} color="#D97706" />
@@ -79,7 +97,7 @@ export default function Dashboard() {
               <Text className="text-sm font-medium text-on-surface-variant mt-1">{primaryGoal.name}</Text>
             </ProgressRing>
             <Text className="mt-4 text-base font-medium text-tertiary">
-              ${primaryGoal.savedAmount.toLocaleString()} of ${primaryGoal.targetAmount.toLocaleString()}
+              {formatCurrency(primaryGoal.savedAmount, profile.currency)} of {formatCurrency(primaryGoal.targetAmount, profile.currency)}
             </Text>
             <Text className="text-sm text-on-surface-variant mt-1">{daysUntilDeadline} days left</Text>
           </View>
@@ -128,10 +146,32 @@ export default function Dashboard() {
           </View>
           <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
             <Text className="mb-1.5 text-xs font-medium text-on-surface-variant">Today's Spending</Text>
-            <Text className="text-2xl font-bold text-on-surface mb-1">${todaySpend.toFixed(0)}</Text>
+            <Text className="text-2xl font-bold text-on-surface mb-1">{formatCurrency(todaySpend, profile.currency)}</Text>
             <Text className="text-xs text-on-surface-variant">
               across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
               expenses
+            </Text>
+          </View>
+        </View>
+
+        {/* Saved Today + This Month */}
+        <View className="mb-5 flex-row gap-3">
+          <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <TrendingUp size={13} color="#10B981" />
+              <Text className="text-xs font-medium text-on-surface-variant">Saved Today</Text>
+            </View>
+            <Text className="text-2xl font-bold text-tertiary">
+              {formatCurrency(savedToday, profile.currency)}
+            </Text>
+          </View>
+          <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <Calendar size={13} color="#10B981" />
+              <Text className="text-xs font-medium text-on-surface-variant">Saved This Month</Text>
+            </View>
+            <Text className="text-2xl font-bold text-tertiary">
+              {formatCurrency(savedThisMonth, profile.currency)}
             </Text>
           </View>
         </View>

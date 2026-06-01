@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, ArrowLeft, ArrowRight } from 'lucide-react-native';
-import { MotiView, AnimatePresence } from 'moti';
+import { MotiView } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, GOAL_TEMPLATES, Goal } from '@/lib/store';
+import { useStore, GOAL_TEMPLATES, Goal, formatCurrency } from '@/lib/store';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
 export default function Goals() {
@@ -23,6 +23,7 @@ export default function Goals() {
   const [confetti, setConfetti] = useState<boolean>(false);
   const [smallConfetti, setSmallConfetti] = useState<boolean>(false);
 
+  const currency = useStore((state) => state.profile.currency);
   const addGoal = useStore((state) => state.addGoal);
   const updateGoal = useStore((state) => state.updateGoal);
   const addXP = useStore((state) => state.addXP);
@@ -123,7 +124,7 @@ export default function Goals() {
               </ProgressRing>
               <Text className="mt-4 text-xl font-bold text-on-surface">{g.name}</Text>
               <Text className="text-sm font-medium text-tertiary mt-1">
-                ${g.savedAmount.toLocaleString()} of ${g.targetAmount.toLocaleString()}
+                {formatCurrency(g.savedAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
               </Text>
             </View>
 
@@ -151,7 +152,7 @@ export default function Goals() {
                   >
                     <Text className="text-lg">{pct >= m ? '✅' : '⬜'}</Text>
                     <Text className="text-sm font-medium text-on-surface">
-                      {m}% — ${Math.round((g.targetAmount * m) / 100).toLocaleString()}
+                      {m}% — {formatCurrency(Math.round((g.targetAmount * m) / 100), currency)}
                     </Text>
                   </View>
                 ))}
@@ -323,7 +324,7 @@ export default function Goals() {
                           )}
                         </View>
                         <Text className="text-xs text-on-surface-variant mt-1">
-                          ${g.savedAmount.toLocaleString()} / ${g.targetAmount.toLocaleString()}
+                          {formatCurrency(g.savedAmount, currency)} / {formatCurrency(g.targetAmount, currency)}
                         </Text>
                         <View className="mt-3 h-1.5 w-full rounded-full bg-surface-container overflow-hidden">
                           <View className="h-1.5 rounded-full bg-tertiary" style={{ width: `${pct}%` }} />

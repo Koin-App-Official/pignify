@@ -47,7 +47,8 @@ export interface UserProfile {
   email: string;
   country: string;
   currency: string;
-  monthlyIncome: number;
+  monthlyIncome: number | null;
+  incomeSkipped: boolean;
   personalityType?: string;
   level: number;
   xp: number;
@@ -68,7 +69,8 @@ const DEFAULT_PROFILE: UserProfile = {
   email: '',
   country: '',
   currency: 'USD',
-  monthlyIncome: 0,
+  monthlyIncome: null,
+  incomeSkipped: false,
   level: 1,
   xp: 0,
   streak: 0,
@@ -149,25 +151,25 @@ export const COUNTRIES = [
 ];
 
 export const CURRENCIES = [
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
-  { code: 'MXN', symbol: 'MX$', name: 'Mexican Peso' },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-  { code: 'SEK', symbol: 'kr', name: 'Swedish Krona' },
-  { code: 'NOK', symbol: 'kr', name: 'Norwegian Krone' },
-  { code: 'DKK', symbol: 'kr', name: 'Danish Krone' },
-  { code: 'PLN', symbol: 'zł', name: 'Polish Złoty' },
-  { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
-  { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
-  { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+  { code: 'USD', symbol: '$',    name: 'US Dollar',          symbolAfter: false },
+  { code: 'EUR', symbol: '€',    name: 'Euro',               symbolAfter: false },
+  { code: 'GBP', symbol: '£',    name: 'British Pound',      symbolAfter: false },
+  { code: 'CAD', symbol: 'CA$',  name: 'Canadian Dollar',    symbolAfter: false },
+  { code: 'AUD', symbol: 'A$',   name: 'Australian Dollar',  symbolAfter: false },
+  { code: 'BRL', symbol: 'R$',   name: 'Brazilian Real',     symbolAfter: false },
+  { code: 'MXN', symbol: 'MX$',  name: 'Mexican Peso',       symbolAfter: false },
+  { code: 'JPY', symbol: '¥',    name: 'Japanese Yen',       symbolAfter: false },
+  { code: 'CNY', symbol: '¥',    name: 'Chinese Yuan',       symbolAfter: false },
+  { code: 'INR', symbol: '₹',    name: 'Indian Rupee',       symbolAfter: false },
+  { code: 'SGD', symbol: 'S$',   name: 'Singapore Dollar',   symbolAfter: false },
+  { code: 'CHF', symbol: 'CHF',  name: 'Swiss Franc',        symbolAfter: false },
+  { code: 'SEK', symbol: 'kr',   name: 'Swedish Krona',      symbolAfter: true  },
+  { code: 'NOK', symbol: 'kr',   name: 'Norwegian Krone',    symbolAfter: true  },
+  { code: 'DKK', symbol: 'kr',   name: 'Danish Krone',       symbolAfter: true  },
+  { code: 'PLN', symbol: 'zł',   name: 'Polish Złoty',       symbolAfter: true  },
+  { code: 'AED', symbol: 'د.إ',  name: 'UAE Dirham',         symbolAfter: false },
+  { code: 'ZAR', symbol: 'R',    name: 'South African Rand', symbolAfter: false },
+  { code: 'NZD', symbol: 'NZ$',  name: 'New Zealand Dollar', symbolAfter: false },
 ];
 
 export const EXPENSE_CATEGORIES = [
@@ -181,7 +183,7 @@ export const EXPENSE_CATEGORIES = [
   { id: 'other', name: 'Other', icon: '📌' },
 ];
 
-export interface PiggnifyState {
+export interface PiggyState {
   profile: UserProfile;
   goals: Goal[];
   missions: Mission[];
@@ -206,7 +208,7 @@ export interface PiggnifyState {
   resetForDemo: () => void;
 }
 
-export const useStore = create<PiggnifyState>()(
+export const useStore = create<PiggyState>()(
   persist(
     (set, get) => ({
       profile: DEFAULT_PROFILE,
@@ -260,37 +262,20 @@ export const useStore = create<PiggnifyState>()(
       }),
     }),
     {
-      name: 'piggnify-storage',
+      name: 'piggy-storage',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )
 );
 
-// Backward compatibility adapter for non-reactive accesses (like original store.getProfile())
-export const store = {
-  getProfile: () => useStore.getState().profile,
-  setProfile: (p: UserProfile) => useStore.getState().setProfile(p),
-  updateProfile: (updates: Partial<UserProfile>) => useStore.getState().updateProfile(updates),
-  
-  getGoals: () => useStore.getState().goals,
-  setGoals: (g: Goal[]) => useStore.getState().setGoals(g),
-  addGoal: (g: Goal) => useStore.getState().addGoal(g),
-  updateGoal: (id: string, updates: Partial<Goal>) => useStore.getState().updateGoal(id, updates),
-
-  getMissions: () => useStore.getState().missions,
-  setMissions: (m: Mission[]) => useStore.getState().setMissions(m),
-  completeMission: (id: string) => useStore.getState().completeMission(id),
-
-  getAchievements: () => useStore.getState().achievements,
-  setAchievements: (a: Achievement[]) => useStore.getState().setAchievements(a),
-  unlockAchievement: (id: string) => useStore.getState().unlockAchievement(id),
-
-  addExpense: (expense: Expense) => useStore.getState().addExpense(expense),
-  getTodaySpending: () => {
-    const today = new Date().toISOString().split('T')[0];
-    const p = useStore.getState().profile;
-    return p.expenses.filter((e) => e.date === today).reduce((sum, e) => sum + e.amount, 0);
-  },
-  addXP: (amount: number) => useStore.getState().addXP(amount),
-  resetForDemo: () => useStore.getState().resetForDemo(),
-};
+/**
+ * Format a numeric amount with the correct currency symbol and position.
+ * e.g. formatCurrency(1000, 'USD') → '$1,000'
+ *      formatCurrency(1000, 'PLN') → '1,000 zł'
+ */
+export function formatCurrency(amount: number, currencyCode: string): string {
+  const currency = CURRENCIES.find((c) => c.code === currencyCode);
+  const symbol = currency?.symbol ?? currencyCode;
+  const formatted = amount.toLocaleString();
+  return currency?.symbolAfter ? `${formatted} ${symbol}` : `${symbol}${formatted}`;
+}

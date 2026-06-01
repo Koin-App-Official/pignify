@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { Bell, CreditCard, User, RotateCcw, Pencil, Check } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
-import { useStore, EXPENSE_CATEGORIES } from '@/lib/store';
+import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 
 export default function Profile() {
@@ -122,7 +122,9 @@ export default function Profile() {
             <CreditCard size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">Monthly Income</Text>
           </View>
-          <Text className="text-2xl font-bold text-on-surface">${profile.monthlyIncome.toLocaleString()}</Text>
+          <Text className="text-2xl font-bold text-on-surface">
+            {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : 'Not provided'}
+          </Text>
         </View>
 
         {/* Expense breakdown */}
@@ -189,7 +191,7 @@ export default function Profile() {
         {/* Footer info */}
         <View className="mb-12 items-center">
           <Text className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
-            Piggnify v{Constants.expoConfig?.version || '1.0.0'}
+            Piggy v{Constants.expoConfig?.version || '1.0.0'}
           </Text>
           <Text className="text-[10px] text-on-surface-variant/30 mt-1">
             Device: {Constants.deviceName} • SB: {Constants.statusBarHeight}px
