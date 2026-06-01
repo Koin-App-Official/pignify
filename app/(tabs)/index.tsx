@@ -69,7 +69,7 @@ export default function Dashboard() {
               {greeting()}
               {profile.name ? `, ${profile.name}` : ''}
             </Text>
-            <Text className="text-3xl font-bold text-on-surface">Piggnify</Text>
+            <Text className="text-3xl font-bold text-on-surface">Piggy</Text>
           </View>
           <View className="flex-row items-center gap-1.5 rounded-full bg-warning-container px-3.5 py-2">
             <Flame size={16} color="#D97706" />

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Piggnify",
-    "slug": "piggnify-mobile",
-    "scheme": "piggnify",
+    "name": "Piggy",
+    "slug": "piggy-mobile",
+    "scheme": "piggy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.piggnify.app"
+      "bundleIdentifier": "com.piggy.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.piggnify.app"
+      "package": "com.piggy.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,8 +34,8 @@
       [
         "@sentry/react-native/expo",
         {
-          "organization": "piggnify-gz",
-          "project": "piggnify"
+          "organization": "piggy-gz",
+          "project": "piggy"
         }
       ],
       "@sentry/react-native",
