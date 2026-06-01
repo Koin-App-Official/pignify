@@ -99,7 +99,7 @@ export default function Dashboard() {
               <Text className="text-sm font-medium text-on-surface-variant mt-1">{primaryGoal.name}</Text>
             </ProgressRing>
             <Text className="mt-4 text-base font-medium text-tertiary">
-              ${primaryGoal.savedAmount.toLocaleString()} of ${primaryGoal.targetAmount.toLocaleString()}
+              {currencySymbol}{primaryGoal.savedAmount.toLocaleString()} of {currencySymbol}{primaryGoal.targetAmount.toLocaleString()}
             </Text>
             <Text className="text-sm text-on-surface-variant mt-1">{daysUntilDeadline} days left</Text>
           </View>
