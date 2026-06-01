@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle, Sparkles } from 'lucide-react-native';
+import { formatCurrency } from '@/lib/store';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { CalendarModal } from '@/components/ui/calendar-modal';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
@@ -590,21 +591,18 @@ export default function Onboarding() {
               <View className="rounded-3xl bg-surface-container-low p-5 gap-4 mb-4">
                 <Row label="Name" value={firstName} />
                 <Row label="Goal" value={goalName} />
-                <Row label="Target" value={`${currencySymbol}${Number(targetAmount).toLocaleString()}`} />
+                <Row label="Target" value={formatCurrency(Number(targetAmount), currency)} />
                 <Row label="Deadline" value={formatTargetDate(targetDate)} />
                 <Row
                   label="Monthly Income"
-                  value={incomeSkipped ? 'Not provided' : `${currencySymbol}${Number(monthlyIncome).toLocaleString()}`}
+                  value={incomeSkipped ? 'Not provided' : formatCurrency(Number(monthlyIncome), currency)}
                 />
 
                 <View className="h-px bg-outline-variant" />
 
                 <Row
                   label="Est. monthly savings"
-                  value={`${currencySymbol}${estimatedMonthlySavings.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`}
+                  value={formatCurrency(parseFloat(estimatedMonthlySavings.toFixed(2)), currency)}
                   highlight
                 />
               </View>

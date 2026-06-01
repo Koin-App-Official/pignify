@@ -54,7 +54,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
           
           <ScrollView className="space-y-4" keyboardShouldPersistTaps="handled">
             <View className="mb-4">
-              <Text className="mb-2 text-sm text-on-surface-variant font-medium">Amount ({currencySymbol})</Text>
+              <Text className="mb-2 text-sm text-on-surface-variant font-medium">Amount ({currencySymbol ?? currency})</Text>
               <Input 
                 keyboardType="numeric" 
                 value={amount} 

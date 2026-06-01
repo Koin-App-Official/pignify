@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
 import { Plus, Flame, TrendingUp, ChevronRight, Calendar } from 'lucide-react-native';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, CURRENCIES } from '@/lib/store';
+import { useStore, formatCurrency } from '@/lib/store';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { Button } from '@/components/ui/button';
 
@@ -32,8 +32,6 @@ export default function Dashboard() {
 
   const today = new Date().toISOString().split('T')[0];
   const thisMonth = today.slice(0, 7);
-  const currencySymbol = CURRENCIES.find((c) => c.code === profile.currency)?.symbol ?? profile.currency;
-
   const savedToday = goals.reduce(
     (sum, g) => sum + g.deposits.filter((d) => d.date === today).reduce((s, d) => s + d.amount, 0),
     0
@@ -99,7 +97,7 @@ export default function Dashboard() {
               <Text className="text-sm font-medium text-on-surface-variant mt-1">{primaryGoal.name}</Text>
             </ProgressRing>
             <Text className="mt-4 text-base font-medium text-tertiary">
-              {currencySymbol}{primaryGoal.savedAmount.toLocaleString()} of {currencySymbol}{primaryGoal.targetAmount.toLocaleString()}
+              {formatCurrency(primaryGoal.savedAmount, profile.currency)} of {formatCurrency(primaryGoal.targetAmount, profile.currency)}
             </Text>
             <Text className="text-sm text-on-surface-variant mt-1">{daysUntilDeadline} days left</Text>
           </View>
@@ -148,7 +146,7 @@ export default function Dashboard() {
           </View>
           <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
             <Text className="mb-1.5 text-xs font-medium text-on-surface-variant">Today's Spending</Text>
-            <Text className="text-2xl font-bold text-on-surface mb-1">${todaySpend.toFixed(0)}</Text>
+            <Text className="text-2xl font-bold text-on-surface mb-1">{formatCurrency(todaySpend, profile.currency)}</Text>
             <Text className="text-xs text-on-surface-variant">
               across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
               expenses
@@ -164,7 +162,7 @@ export default function Dashboard() {
               <Text className="text-xs font-medium text-on-surface-variant">Saved Today</Text>
             </View>
             <Text className="text-2xl font-bold text-tertiary">
-              {currencySymbol}{savedToday.toFixed(2)}
+              {formatCurrency(savedToday, profile.currency)}
             </Text>
           </View>
           <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
@@ -173,7 +171,7 @@ export default function Dashboard() {
               <Text className="text-xs font-medium text-on-surface-variant">Saved This Month</Text>
             </View>
             <Text className="text-2xl font-bold text-tertiary">
-              {currencySymbol}{savedThisMonth.toFixed(2)}
+              {formatCurrency(savedThisMonth, profile.currency)}
             </Text>
           </View>
         </View>

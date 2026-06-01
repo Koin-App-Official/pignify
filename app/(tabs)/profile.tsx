@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { Bell, CreditCard, User, RotateCcw, Pencil, Check } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
-import { useStore, EXPENSE_CATEGORIES } from '@/lib/store';
+import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 
 export default function Profile() {
@@ -123,7 +123,7 @@ export default function Profile() {
             <Text className="text-sm font-bold text-on-surface">Monthly Income</Text>
           </View>
           <Text className="text-2xl font-bold text-on-surface">
-            {profile.monthlyIncome != null ? `$${profile.monthlyIncome.toLocaleString()}` : 'Not provided'}
+            {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : 'Not provided'}
           </Text>
         </View>
 
