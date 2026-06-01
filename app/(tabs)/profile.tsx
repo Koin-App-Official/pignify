@@ -122,7 +122,9 @@ export default function Profile() {
             <CreditCard size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">Monthly Income</Text>
           </View>
-          <Text className="text-2xl font-bold text-on-surface">${profile.monthlyIncome.toLocaleString()}</Text>
+          <Text className="text-2xl font-bold text-on-surface">
+            {profile.monthlyIncome != null ? `$${profile.monthlyIncome.toLocaleString()}` : 'Not provided'}
+          </Text>
         </View>
 
         {/* Expense breakdown */}

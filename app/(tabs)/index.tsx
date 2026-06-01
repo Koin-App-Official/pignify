@@ -55,6 +55,13 @@ export default function Dashboard() {
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
+        {profile.incomeSkipped && (
+          <View className="mb-4 rounded-2xl p-4" style={{ backgroundColor: '#FEF3C7' }}>
+            <Text className="text-sm font-medium" style={{ color: '#92400E' }}>
+              💡 Add your monthly income to unlock personalised savings insights.
+            </Text>
+          </View>
+        )}
         {/* Header */}
         <View className="mb-6 flex-row items-center justify-between">
           <View>

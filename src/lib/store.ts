@@ -47,7 +47,8 @@ export interface UserProfile {
   email: string;
   country: string;
   currency: string;
-  monthlyIncome: number;
+  monthlyIncome: number | null;
+  incomeSkipped: boolean;
   personalityType?: string;
   level: number;
   xp: number;
@@ -68,7 +69,8 @@ const DEFAULT_PROFILE: UserProfile = {
   email: '',
   country: '',
   currency: 'USD',
-  monthlyIncome: 0,
+  monthlyIncome: null,
+  incomeSkipped: false,
   level: 1,
   xp: 0,
   streak: 0,
