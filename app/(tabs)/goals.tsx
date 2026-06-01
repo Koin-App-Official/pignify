@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, ArrowLeft, ArrowRight } from 'lucide-react-native';
-import { MotiView, AnimatePresence } from 'moti';
+import { MotiView } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProgressRing } from '@/components/ProgressRing';

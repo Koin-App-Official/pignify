@@ -267,32 +267,3 @@ export const useStore = create<PiggnifyState>()(
     }
   )
 );
-
-// Backward compatibility adapter for non-reactive accesses (like original store.getProfile())
-export const store = {
-  getProfile: () => useStore.getState().profile,
-  setProfile: (p: UserProfile) => useStore.getState().setProfile(p),
-  updateProfile: (updates: Partial<UserProfile>) => useStore.getState().updateProfile(updates),
-  
-  getGoals: () => useStore.getState().goals,
-  setGoals: (g: Goal[]) => useStore.getState().setGoals(g),
-  addGoal: (g: Goal) => useStore.getState().addGoal(g),
-  updateGoal: (id: string, updates: Partial<Goal>) => useStore.getState().updateGoal(id, updates),
-
-  getMissions: () => useStore.getState().missions,
-  setMissions: (m: Mission[]) => useStore.getState().setMissions(m),
-  completeMission: (id: string) => useStore.getState().completeMission(id),
-
-  getAchievements: () => useStore.getState().achievements,
-  setAchievements: (a: Achievement[]) => useStore.getState().setAchievements(a),
-  unlockAchievement: (id: string) => useStore.getState().unlockAchievement(id),
-
-  addExpense: (expense: Expense) => useStore.getState().addExpense(expense),
-  getTodaySpending: () => {
-    const today = new Date().toISOString().split('T')[0];
-    const p = useStore.getState().profile;
-    return p.expenses.filter((e) => e.date === today).reduce((sum, e) => sum + e.amount, 0);
-  },
-  addXP: (amount: number) => useStore.getState().addXP(amount),
-  resetForDemo: () => useStore.getState().resetForDemo(),
-};
