@@ -31,14 +31,6 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "@sentry/react-native/expo",
-        {
-          "organization": "piggy-gz",
-          "project": "piggy"
-        }
-      ],
-      "@sentry/react-native",
       "expo-font"
     ]
   }
