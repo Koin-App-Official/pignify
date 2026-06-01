@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import { Plus, Flame, TrendingUp, ChevronRight } from 'lucide-react-native';
+import { Plus, Flame, TrendingUp, ChevronRight, Calendar } from 'lucide-react-native';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore } from '@/lib/store';
+import { useStore, CURRENCIES } from '@/lib/store';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { Button } from '@/components/ui/button';
 
@@ -29,6 +29,19 @@ export default function Dashboard() {
   if (!profile.onboardingCompleted) {
     return <Redirect href="/onboarding" />;
   }
+
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonth = today.slice(0, 7);
+  const currencySymbol = CURRENCIES.find((c) => c.code === profile.currency)?.symbol ?? profile.currency;
+
+  const savedToday = goals.reduce(
+    (sum, g) => sum + g.deposits.filter((d) => d.date === today).reduce((s, d) => s + d.amount, 0),
+    0
+  );
+  const savedThisMonth = goals.reduce(
+    (sum, g) => sum + g.deposits.filter((d) => d.date.startsWith(thisMonth)).reduce((s, d) => s + d.amount, 0),
+    0
+  );
 
   const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
   const progress = primaryGoal
@@ -139,6 +152,28 @@ export default function Dashboard() {
             <Text className="text-xs text-on-surface-variant">
               across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
               expenses
+            </Text>
+          </View>
+        </View>
+
+        {/* Saved Today + This Month */}
+        <View className="mb-5 flex-row gap-3">
+          <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <TrendingUp size={13} color="#10B981" />
+              <Text className="text-xs font-medium text-on-surface-variant">Saved Today</Text>
+            </View>
+            <Text className="text-2xl font-bold text-tertiary">
+              {currencySymbol}{savedToday.toFixed(2)}
+            </Text>
+          </View>
+          <View className="flex-1 rounded-2xl bg-surface-container-low p-4">
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <Calendar size={13} color="#10B981" />
+              <Text className="text-xs font-medium text-on-surface-variant">Saved This Month</Text>
+            </View>
+            <Text className="text-2xl font-bold text-tertiary">
+              {currencySymbol}{savedThisMonth.toFixed(2)}
             </Text>
           </View>
         </View>
