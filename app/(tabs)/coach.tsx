@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Send } from 'lucide-react-native';
-import Markdown from 'react-native-markdown-display';
+import { SimpleMarkdown } from '@/components/ui/simple-markdown';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/store';
 
@@ -133,25 +133,9 @@ export default function AICoach() {
                       : 'bg-surface-container-low rounded-3xl rounded-bl-lg'
                   }`}
                 >
-                  <Markdown
-                    style={{
-                      body: {
-                        color: m.role === 'user' ? '#0F172A' : '#0F172A',
-                        fontSize: 14,
-                        lineHeight: 20,
-                      },
-                      strong: {
-                        fontWeight: 'bold',
-                        color: m.role === 'user' ? '#0F172A' : '#0F172A',
-                      },
-                      paragraph: {
-                        marginTop: 0,
-                        marginBottom: 10,
-                      },
-                    }}
-                  >
+                  <SimpleMarkdown color="#0F172A" fontSize={14} lineHeight={20}>
                     {m.content}
-                  </Markdown>
+                  </SimpleMarkdown>
                 </View>
               </View>
             ))}
