@@ -17,10 +17,10 @@
     --on-secondary-container: 217 50% 25%;
 
     /* M3 Tertiary (accent/progress green) */
-    --tertiary: 160 84% 39%;
+    --tertiary: 142 71% 45%;
     --tertiary-foreground: 0 0% 100%;
-    --tertiary-container: 152 60% 90%;
-    --on-tertiary-container: 160 60% 18%;
+    --tertiary-container: 142 80% 92%;
+    --on-tertiary-container: 142 60% 18%;
 
     /* M3 Surfaces */
     --background: 210 40% 98%;
@@ -46,21 +46,21 @@
     --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 32 95% 44%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --warning-container: 38 90% 92%;
+    --warning-container: 38 100% 93%;
 
-    --success: 160 84% 39%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --progress: 160 84% 39%;
-    --progress-light: 158 64% 52%;
-    --progress-subtle: 152 69% 80%;
+    --progress: 142 71% 45%;
+    --progress-light: 142 60% 58%;
+    --progress-subtle: 142 75% 85%;
 
     --border: 214 32% 84%;
     --input: 214 32% 84%;
     --ring: 224 76% 48%;
 
-    --radius: 16px;
+    --radius: 20px;
   }
 }

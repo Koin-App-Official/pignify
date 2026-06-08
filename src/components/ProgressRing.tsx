@@ -12,7 +12,7 @@ interface ProgressRingProps {
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-export function ProgressRing({ progress, size = 180, strokeWidth = 12, children }: ProgressRingProps) {
+export function ProgressRing({ progress, size = 180, strokeWidth = 16, children }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   
@@ -41,7 +41,7 @@ export function ProgressRing({ progress, size = 180, strokeWidth = 12, children 
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#A7F3D0" // chart-subtle
+            stroke="#BBF7D0" // chart-subtle
             strokeWidth={strokeWidth}
           />
           <AnimatedCircle
@@ -49,7 +49,7 @@ export function ProgressRing({ progress, size = 180, strokeWidth = 12, children 
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#10B981" // chart-base
+            stroke="#22C55E" // chart-base
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}

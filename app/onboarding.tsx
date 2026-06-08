@@ -15,11 +15,12 @@ import { MotiView } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
-import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle, Sparkles } from 'lucide-react-native';
+import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { CalendarModal } from '@/components/ui/calendar-modal';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
+import { PLACEHOLDER_COLOR } from '@/lib/utils';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -161,6 +162,7 @@ export default function Onboarding() {
       country,
       currency,
       goalName,
+      goal_name: goalName,
       targetAmount: Number(targetAmount),
       targetDate: new Date(targetDate).toISOString(),
       monthlyIncome: incomeSkipped ? null : incomeNumber,
@@ -180,6 +182,9 @@ export default function Onboarding() {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+      const data = await res.json().catch(() => ({}));
+      const userID: string | undefined = data?.userID;
+
       const goal: Goal = {
         id: Math.random().toString(36).substring(7),
         template: '',
@@ -194,6 +199,7 @@ export default function Onboarding() {
       };
       addGoal(goal);
       updateProfile({
+        ...(userID ? { userID } : {}),
         name: firstName,
         email,
         country,
@@ -222,14 +228,14 @@ export default function Onboarding() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         {showProgress && (
           <View className="px-5 pt-6 pb-2">
-            <Text className="mb-2 text-xs font-medium text-on-surface-variant text-center">
+            <Text className="mb-2 text-xs font-semibold text-on-surface-variant text-center">
               Step {step + 1} of {TOTAL_STEPS}
             </Text>
             <View className="flex-row gap-1.5">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                 <View
                   key={i}
-                  className={`h-1.5 flex-1 rounded-full ${
+                  className={`h-2.5 flex-1 rounded-full ${
                     i <= step ? 'bg-primary' : 'bg-surface-container'
                   }`}
                 />
@@ -242,7 +248,8 @@ export default function Onboarding() {
           {/* Screen 0: Name */}
           {step === 0 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="text-6xl text-center mb-4">🐷</Text>
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 Welcome to Piggy!{'\n'}What should we call you?
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
@@ -262,7 +269,7 @@ export default function Onboarding() {
                 autoCapitalize="words"
               />
               {firstNameError ? (
-                <Text className="mt-2 text-xs text-[#ef4444]">{firstNameError}</Text>
+                <Text className="mt-2 text-xs text-destructive">{firstNameError}</Text>
               ) : null}
 
               <Button
@@ -285,7 +292,7 @@ export default function Onboarding() {
           {/* Screen 1: Localization */}
           {step === 1 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 Where are you based,{'\n'}{firstName}?
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
@@ -294,26 +301,26 @@ export default function Onboarding() {
 
               <View className="gap-4">
                 <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Country</Text>
+                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">Country</Text>
                   <TouchableOpacity
                     onPress={() => setCountryPickerVisible(true)}
                     className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
                   >
-                    <Text className="text-base text-on-surface">{countryName || 'Select country'}</Text>
-                    <ChevronDown size={18} color="#64748b" />
+                    <Text className="text-base font-medium text-on-surface">{countryName || 'Select country'}</Text>
+                    <ChevronDown size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
 
                 <View>
-                  <Text className="mb-2 text-xs font-medium text-on-surface-variant">Currency</Text>
+                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">Currency</Text>
                   <TouchableOpacity
                     onPress={() => setCurrencyPickerVisible(true)}
                     className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
                   >
-                    <Text className="text-base text-on-surface">
+                    <Text className="text-base font-medium text-on-surface">
                       {currency ? `${currencySymbol} — ${currencyName}` : 'Select currency'}
                     </Text>
-                    <ChevronDown size={18} color="#64748b" />
+                    <ChevronDown size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -336,7 +343,7 @@ export default function Onboarding() {
           {/* Screen 2: Goal Declaration */}
           {step === 2 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 What are we saving for?
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
@@ -353,13 +360,13 @@ export default function Onboarding() {
                     }}
                     className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
                       goalName === chip.label
-                        ? 'bg-primary-container border-primary'
+                        ? 'bg-primary-container border-2 border-primary'
                         : 'bg-surface-container-low border-outline'
                     }`}
                   >
-                    <Text className="text-base">{chip.emoji}</Text>
+                    <Text className="text-lg">{chip.emoji}</Text>
                     <Text
-                      className={`text-sm font-medium ${
+                      className={`text-sm font-semibold ${
                         goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
                       }`}
                     >
@@ -379,7 +386,7 @@ export default function Onboarding() {
                 autoFocus={false}
               />
               {goalNameError ? (
-                <Text className="mt-2 text-xs text-[#ef4444]">{goalNameError}</Text>
+                <Text className="mt-2 text-xs text-destructive">{goalNameError}</Text>
               ) : null}
 
               <View className="mt-8 flex-row gap-3">
@@ -406,14 +413,14 @@ export default function Onboarding() {
           {/* Screen 3: Target Amount */}
           {step === 3 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 How much do you need{'\n'}for your {goalName}?
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
                 Don't worry, you can always adjust this later.
               </Text>
 
-              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline px-4 h-14">
+              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
                 <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
                 <TextInput
                   className="flex-1 text-xl font-bold text-on-surface"
@@ -424,11 +431,11 @@ export default function Onboarding() {
                   }}
                   keyboardType="numeric"
                   placeholder="0.00"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={PLACEHOLDER_COLOR}
                 />
               </View>
               {targetAmountError ? (
-                <Text className="mt-2 text-xs text-[#ef4444]">{targetAmountError}</Text>
+                <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text>
               ) : null}
 
               <View className="mt-8 flex-row gap-3">
@@ -455,7 +462,7 @@ export default function Onboarding() {
           {/* Screen 4: Timeline */}
           {step === 4 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 When do you want{'\n'}to achieve this?
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
@@ -469,12 +476,12 @@ export default function Onboarding() {
                     onPress={() => handleTimelineChip(chip.months, chip.label)}
                     className={`rounded-full px-4 py-2.5 border ${
                       selectedChipLabel === chip.label
-                        ? 'bg-primary-container border-primary'
+                        ? 'bg-primary-container border-2 border-primary'
                         : 'bg-surface-container-low border-outline'
                     }`}
                   >
                     <Text
-                      className={`text-sm font-medium ${
+                      className={`text-sm font-semibold ${
                         selectedChipLabel === chip.label
                           ? 'text-on-primary-container'
                           : 'text-on-surface'
@@ -488,12 +495,12 @@ export default function Onboarding() {
                   onPress={() => setIsCalendarVisible(true)}
                   className={`rounded-full px-4 py-2.5 border ${
                     selectedChipLabel === 'custom'
-                      ? 'bg-primary-container border-primary'
+                      ? 'bg-primary-container border-2 border-primary'
                       : 'bg-surface-container-low border-outline'
                   }`}
                 >
                   <Text
-                    className={`text-sm font-medium ${
+                    className={`text-sm font-semibold ${
                       selectedChipLabel === 'custom' ? 'text-on-primary-container' : 'text-on-surface'
                     }`}
                   >
@@ -534,14 +541,14 @@ export default function Onboarding() {
           {/* Screen 5: Income */}
           {step === 5 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 To build your roadmap,{'\n'}what is your average{'\n'}monthly income?
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
                 We use this only to calculate how much you need to set aside. Your data is encrypted and completely private.
               </Text>
 
-              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline px-4 h-14">
+              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
                 <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
                 <TextInput
                   className="flex-1 text-xl font-bold text-on-surface"
@@ -549,7 +556,7 @@ export default function Onboarding() {
                   onChangeText={(v) => setMonthlyIncome(v.replace(/[^0-9.]/g, ''))}
                   keyboardType="numeric"
                   placeholder="0.00"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={PLACEHOLDER_COLOR}
                 />
               </View>
 
@@ -581,14 +588,14 @@ export default function Onboarding() {
           {/* Screen 6: Blueprint Review */}
           {step === 6 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 Let's make this official!
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
                 Here's your personal savings blueprint.
               </Text>
 
-              <View className="rounded-3xl bg-surface-container-low p-5 gap-4 mb-4">
+              <View className="rounded-3xl bg-surface p-6 gap-4 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4 }}>
                 <Row label="Name" value={firstName} />
                 <Row label="Goal" value={goalName} />
                 <Row label="Target" value={formatCurrency(Number(targetAmount), currency)} />
@@ -608,9 +615,9 @@ export default function Onboarding() {
               </View>
 
               {savingsExceedsIncome && (
-                <View className="flex-row items-start gap-2 rounded-2xl bg-[#FEF3C7] p-4 mb-4">
+                <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mb-4">
                   <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
-                  <Text className="flex-1 text-sm text-[#92400E]">
+                  <Text className="flex-1 text-sm text-warning">
                     This target requires saving more than your income. We can adjust this layout later!
                   </Text>
                 </View>
@@ -646,7 +653,8 @@ export default function Onboarding() {
           {/* Screen 7: Account Finalization */}
           {step === 7 && (
             <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-bold text-on-surface">
+              <Text className="text-6xl text-center mb-4">🐷</Text>
+              <Text className="mb-2 text-3xl font-black text-on-surface">
                 Your Piggy Plan is ready!
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
@@ -672,12 +680,12 @@ export default function Onboarding() {
                 placeholder="you@example.com"
               />
               {emailError ? (
-                <Text className="mt-2 text-xs text-[#ef4444]">{emailError}</Text>
+                <Text className="mt-2 text-xs text-destructive">{emailError}</Text>
               ) : null}
 
               {networkError ? (
-                <View className="mt-4 rounded-2xl bg-[#FEF2F2] p-4">
-                  <Text className="text-sm text-[#991B1B]">{networkError}</Text>
+                <View className="mt-4 rounded-2xl bg-destructive/10 p-4">
+                  <Text className="text-sm text-destructive">{networkError}</Text>
                 </View>
               ) : null}
 
@@ -710,10 +718,8 @@ export default function Onboarding() {
               animate={{ opacity: 1, translateY: 0 }}
               className="flex-1 items-center justify-center min-h-[70vh]"
             >
-              <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-tertiary-container">
-                <Sparkles size={36} color="#10B981" />
-              </View>
-              <Text className="mb-3 text-3xl font-bold text-on-surface text-center">
+              <Text className="text-7xl text-center mb-6">🐷</Text>
+              <Text className="mb-3 text-3xl font-black text-on-surface text-center">
                 You're all set, {firstName}! 🎉
               </Text>
               <Text className="mb-2 text-base font-medium text-on-surface-variant text-center px-4">
@@ -772,7 +778,7 @@ export default function Onboarding() {
 function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <View className="flex-row items-center justify-between">
-      <Text className="text-sm text-on-surface-variant">{label}</Text>
+      <Text className="text-sm font-medium text-on-surface-variant">{label}</Text>
       <Text className={`text-sm font-bold ${highlight ? 'text-primary' : 'text-on-surface'}`}>
         {value}
       </Text>

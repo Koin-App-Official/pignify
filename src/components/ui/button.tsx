@@ -34,7 +34,7 @@ const buttonVariants = cva(
 );
 
 const buttonTextVariants = cva(
-  "text-center font-medium",
+  "text-center font-bold tracking-wide",
   {
     variants: {
       variant: {
@@ -60,6 +60,12 @@ const buttonTextVariants = cva(
   }
 );
 
+const VARIANT_BOTTOM_BORDERS: Record<string, { borderBottomWidth: number; borderBottomColor: string }> = {
+  default: { borderBottomWidth: 4, borderBottomColor: '#1E3A8A' },
+  destructive: { borderBottomWidth: 4, borderBottomColor: '#7F1D1D' },
+  tonal: { borderBottomWidth: 4, borderBottomColor: '#166534' },
+};
+
 export interface ButtonProps
   extends PressableProps,
     VariantProps<typeof buttonVariants> {
@@ -70,22 +76,27 @@ export interface ButtonProps
 const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
   ({ className, textClassName, variant, size, label, children, onPressIn, onPressOut, style, ...props }, ref) => {
     const scale = useSharedValue(1);
+    const translateY = useSharedValue(0);
 
     const animatedStyle = useAnimatedStyle(() => {
       return {
-        transform: [{ scale: scale.value }],
+        transform: [{ scale: scale.value }, { translateY: translateY.value }],
       };
     });
 
     const handlePressIn = (e: any) => {
-      scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
+      scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+      translateY.value = withSpring(3, { damping: 15, stiffness: 300 });
       if (onPressIn) onPressIn(e);
     };
 
     const handlePressOut = (e: any) => {
       scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+      translateY.value = withSpring(0, { damping: 15, stiffness: 300 });
       if (onPressOut) onPressOut(e);
     };
+
+    const borderBottomStyle = variant ? VARIANT_BOTTOM_BORDERS[variant] ?? {} : {};
 
     return (
       <AnimatedPressable
@@ -93,7 +104,7 @@ const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>
         ref={ref}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={[animatedStyle, style as any]}
+        style={[animatedStyle, borderBottomStyle, style as any]}
         {...props}
       >
         {label ? (

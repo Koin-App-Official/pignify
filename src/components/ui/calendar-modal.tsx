@@ -98,21 +98,21 @@ export const CalendarModal = ({ isVisible, onClose, onConfirm, initialDate }: Ca
                       [selectedDate]: { 
                         selected: true, 
                         disableTouchEvent: true, 
-                        selectedColor: '#1D47D7',
+                        selectedColor: '#1D4ED8',
                         selectedTextColor: '#FFFFFF'
                       }
                     }}
                     theme={{
                       calendarBackground: 'transparent',
                       textSectionTitleColor: '#475569', // Darkened for better contrast (Slate 600)
-                      selectedDayBackgroundColor: '#1D47D7',
+                      selectedDayBackgroundColor: '#1D4ED8',
                       selectedDayTextColor: '#FFFFFF',
-                      todayTextColor: '#1D47D7',
+                      todayTextColor: '#1D4ED8',
                       dayTextColor: '#1e293b',
                       textDisabledColor: '#94a3b8', // Darkened for better contrast (Slate 400)
-                      arrowColor: '#1D47D7',
+                      arrowColor: '#1D4ED8',
                       monthTextColor: '#0f172a',
-                      indicatorColor: '#1D47D7',
+                      indicatorColor: '#1D4ED8',
                       textDayFontWeight: '400',
                       textMonthFontWeight: '700',
                       textDayHeaderFontWeight: '600',

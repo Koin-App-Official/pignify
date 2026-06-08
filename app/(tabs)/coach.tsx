@@ -4,7 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Send } from 'lucide-react-native';
 import { SimpleMarkdown } from '@/components/ui/simple-markdown';
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/lib/store';
+import { useStore, PLAN_MESSAGE_LIMITS } from '@/lib/store';
+import { PLACEHOLDER_COLOR } from '@/lib/utils';
+import { ScreenTransition } from '@/components/ScreenTransition';
 
 interface Message {
   id: string;
@@ -65,16 +67,25 @@ export default function AICoach() {
   const [input, setInput] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const plan = useStore((s) => s.profile.plan ?? 'free');
+  const coachMessagesUsed = useStore((s) => {
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    return s.coachMessagesMonth === thisMonth ? s.coachMessagesUsed : 0;
+  });
+  const incrementCoachMessages = useStore((s) => s.incrementCoachMessages);
+  const messageLimit = PLAN_MESSAGE_LIMITS[plan];
+
   const send = (text: string) => {
+    incrementCoachMessages();
     const userMsg: Message = { id: Math.random().toString(36).substring(7), role: 'user', content: text };
-    
+
     setMessages((prev) => {
       const updated = [...prev, userMsg];
       const last10 = updated.slice(-10).map((m) => ({
         role: m.role === 'coach' ? 'assistant' : 'user',
         message: m.content,
       }));
-      
+
       fetch('https://n8n1.neuralops.pl/webhook-test/533526a8-8261-4bed-8202-809c7563a81e', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,42 +93,55 @@ export default function AICoach() {
         // @ts-ignore
         mode: 'no-cors',
       }).catch((err) => console.error('Coach webhook failed:', err));
-      
+
       return updated;
     });
-    
+
     setInput('');
 
     setTimeout(() => {
-      const coachMsg: Message = { 
-        id: Math.random().toString(36).substring(7), 
-        role: 'coach', 
-        content: getCoachResponse(text) 
+      const coachMsg: Message = {
+        id: Math.random().toString(36).substring(7),
+        role: 'coach',
+        content: getCoachResponse(text)
       };
       setMessages((prev) => [...prev, coachMsg]);
     }, 600);
   };
 
   return (
+    <ScreenTransition>
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {/* Header */}
         <View className="bg-surface-container-low px-5 py-4 border-b border-surface-container flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-full bg-primary-container">
-            <Text className="text-xl">🤖</Text>
+          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary-container">
+            <Text className="text-2xl">🐷</Text>
           </View>
-          <View>
-            <Text className="text-base font-bold text-on-surface">AI Coach</Text>
-            <Text className="text-xs font-medium text-tertiary">Online • Ready to help</Text>
+          <View className="flex-1">
+            <Text className="text-base font-black text-on-surface">AI Coach</Text>
+            <View className="flex-row items-center gap-1.5 mt-0.5">
+              <View className="h-2 w-2 rounded-full bg-tertiary" />
+              <Text className="text-xs font-semibold text-tertiary">Online • Ready to help</Text>
+            </View>
+          </View>
+          <View className="items-end">
+            {plan === 'free' ? (
+              <Text className="text-xs font-bold text-destructive">Upgrade your plan</Text>
+            ) : (
+              <Text className="text-xs font-bold text-on-surface">
+                {Math.max(0, messageLimit - coachMessagesUsed)} messages left
+              </Text>
+            )}
           </View>
         </View>
 
         {/* Messages */}
-        <ScrollView 
+        <ScrollView
           ref={scrollViewRef}
           className="flex-1 px-5 py-4"
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -126,7 +150,7 @@ export default function AICoach() {
           <View className="gap-4">
             {messages.map((m) => (
               <View key={m.id} className={`flex-row ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <View 
+                <View
                   className={`max-w-[85%] px-4 py-3 ${
                     m.role === 'user'
                       ? 'bg-primary-container rounded-3xl rounded-br-lg'
@@ -148,9 +172,9 @@ export default function AICoach() {
                 <TouchableOpacity
                   key={s}
                   onPress={() => send(s)}
-                  className="rounded-full border border-outline bg-transparent px-4 py-2"
+                  className="rounded-full border-2 border-primary/30 bg-primary-container/50 px-4 py-2.5"
                 >
-                  <Text className="text-sm font-medium text-on-surface-variant">{s}</Text>
+                  <Text className="text-sm font-semibold text-primary">{s}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -164,17 +188,17 @@ export default function AICoach() {
               value={input}
               onChangeText={setInput}
               placeholder="Ask your coach..."
-              placeholderTextColor="#64748B"
-              className="flex-1 h-12 bg-surface rounded-xl px-4 text-sm font-medium text-on-surface"
+              placeholderTextColor={PLACEHOLDER_COLOR}
+              className="flex-1 h-12 bg-surface rounded-2xl px-4 text-sm font-medium text-on-surface"
               onSubmitEditing={() => {
                 if (input.trim()) send(input.trim());
               }}
             />
-            <Button 
+            <Button
               onPress={() => {
                 if (input.trim()) send(input.trim());
-              }} 
-              disabled={!input.trim()} 
+              }}
+              disabled={!input.trim()}
               className="h-12 w-12 items-center justify-center p-0"
             >
               <Send size={16} color={!input.trim() ? '#64748B' : '#ffffff'} />
@@ -183,5 +207,6 @@ export default function AICoach() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenTransition>
   );
 }

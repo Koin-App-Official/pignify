@@ -103,7 +103,7 @@ export const PickerModal = ({ isVisible, onClose, onSelect, items, selectedCode,
                           <Text className="text-xs text-on-surface-variant">{item.code}</Text>
                         </View>
                       </View>
-                      {selectedCode === item.code && <Check size={18} color="#1D4ED8" />}
+                      {selectedCode === item.code && <Check size={18} color="#22C55E" />}
                     </TouchableOpacity>
                   )}
                   ItemSeparatorComponent={() => <View className="h-px bg-outline-variant/40 mx-5" />}

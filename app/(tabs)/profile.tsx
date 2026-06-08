@@ -2,12 +2,21 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native';
+import { ScreenTransition } from '@/components/ScreenTransition';
 import { useRouter } from 'expo-router';
-import { Bell, CreditCard, User, RotateCcw, Pencil, Check } from 'lucide-react-native';
+import { Bell, CreditCard, RotateCcw, Pencil, Check } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
 import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
 import { Button } from '@/components/ui/button';
+
+const CARD_SHADOW = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.07,
+  shadowRadius: 8,
+  elevation: 4,
+};
 
 export default function Profile() {
   const router = useRouter();
@@ -61,20 +70,21 @@ export default function Profile() {
   };
 
   return (
+    <ScreenTransition>
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
         {/* User card */}
-        <View className="mb-6 rounded-3xl bg-primary-container p-6 items-center">
-          <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-            <User size={28} color="#1D4ED8" />
+        <View className="mb-6 rounded-3xl bg-primary-container p-6 items-center" style={CARD_SHADOW}>
+          <View className="mb-4 h-18 w-18 items-center justify-center rounded-full bg-primary/20" style={{ width: 72, height: 72 }}>
+            <Text className="text-4xl">🐷</Text>
           </View>
-          
+
           {editingName ? (
             <View className="flex-row items-center justify-center gap-2 mb-2">
               <TextInput
                 value={nameInput}
                 onChangeText={setNameInput}
-                className="w-32 h-10 text-center bg-primary/10 rounded-lg text-on-primary-container font-bold"
+                className="w-36 h-10 text-center bg-primary/10 rounded-xl text-on-primary-container font-bold"
                 autoFocus
                 onSubmitEditing={saveName}
               />
@@ -86,13 +96,19 @@ export default function Profile() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => setEditingName(true)} className="flex-row items-center justify-center gap-2 mb-2">
-              <Text className="text-xl font-bold text-on-primary-container">
-                {profile.name || 'Saver'} · Lv.{profile.level}
+            <TouchableOpacity onPress={() => setEditingName(true)} className="flex-row items-center justify-center gap-2 mb-1">
+              <Text className="text-2xl font-black text-on-primary-container">
+                {profile.name || 'Saver'}
               </Text>
               <Pencil size={14} color="#1D4ED8" />
             </TouchableOpacity>
           )}
+
+          <View className="flex-row items-center gap-2 mb-2">
+            <View className="bg-primary/20 rounded-full px-3 py-0.5">
+              <Text className="text-sm font-bold text-on-primary-container">Lv.{profile.level}</Text>
+            </View>
+          </View>
 
           <Text className="text-sm font-medium text-on-primary-container/70 mb-5">
             {profile.personalityType
@@ -102,35 +118,35 @@ export default function Profile() {
 
           <View className="w-full flex-row justify-between px-2">
             <View className="items-center">
-              <Text className="text-xl font-bold text-on-primary-container">${totalSaved}</Text>
-              <Text className="text-[11px] font-medium text-on-primary-container/60 mt-1">Total Saved</Text>
+              <Text className="text-xl font-black text-on-primary-container">{formatCurrency(totalSaved, profile.currency)}</Text>
+              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">Total Saved</Text>
             </View>
             <View className="items-center">
-              <Text className="text-xl font-bold text-on-primary-container">{goals.length}</Text>
-              <Text className="text-[11px] font-medium text-on-primary-container/60 mt-1">Goals</Text>
+              <Text className="text-xl font-black text-on-primary-container">{goals.length}</Text>
+              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">Goals</Text>
             </View>
             <View className="items-center">
-              <Text className="text-xl font-bold text-on-primary-container">{unlockedBadges}</Text>
-              <Text className="text-[11px] font-medium text-on-primary-container/60 mt-1">Badges</Text>
+              <Text className="text-xl font-black text-on-primary-container">{unlockedBadges}</Text>
+              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">Badges</Text>
             </View>
           </View>
         </View>
 
         {/* Income */}
-        <View className="mb-6 rounded-2xl bg-surface-container-low p-4">
+        <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-3">
             <CreditCard size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">Monthly Income</Text>
           </View>
-          <Text className="text-2xl font-bold text-on-surface">
+          <Text className="text-3xl font-black text-on-surface">
             {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : 'Not provided'}
           </Text>
         </View>
 
         {/* Expense breakdown */}
         {Object.keys(expensesByCategory).length > 0 && (
-          <View className="mb-6 rounded-2xl bg-surface-container-low p-4">
-            <Text className="mb-4 text-sm font-bold text-on-surface">Expense Breakdown</Text>
+          <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
+            <Text className="mb-4 text-base font-bold text-on-surface">Expense Breakdown</Text>
             <View className="gap-3">
               {Object.entries(expensesByCategory)
                 .sort(([, a], [, b]) => b - a)
@@ -140,9 +156,9 @@ export default function Profile() {
                     <View key={cat} className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-3">
                         <Text className="text-xl">{c?.icon || '📌'}</Text>
-                        <Text className="text-sm font-medium text-on-surface">{c?.name || cat}</Text>
+                        <Text className="text-sm font-semibold text-on-surface">{c?.name || cat}</Text>
                       </View>
-                      <Text className="text-sm font-bold text-on-surface">${amount}</Text>
+                      <Text className="text-sm font-bold text-on-surface">{formatCurrency(amount, profile.currency)}</Text>
                     </View>
                   );
                 })}
@@ -151,7 +167,7 @@ export default function Profile() {
         )}
 
         {/* Notifications */}
-        <View className="mb-6 rounded-2xl bg-surface-container-low p-4">
+        <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-4">
             <Bell size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">Notifications</Text>
@@ -166,7 +182,7 @@ export default function Profile() {
               ] as const
             ).map(([key, label]) => (
               <View key={key} className="flex-row items-center justify-between">
-                <Text className="text-sm font-medium text-on-surface">{label}</Text>
+                <Text className="text-sm font-semibold text-on-surface">{label}</Text>
                 <Switch
                   value={profile.notificationPrefs[key]}
                   onValueChange={() => toggleNotif(key)}
@@ -179,9 +195,9 @@ export default function Profile() {
         </View>
 
         {/* Reset */}
-        <Button 
-          variant="outline" 
-          onPress={handleReset} 
+        <Button
+          variant="outline"
+          onPress={handleReset}
           className="mb-10 w-full flex-row items-center justify-center gap-2 border-outline/50"
         >
           <RotateCcw size={14} color="#64748B" />
@@ -199,5 +215,6 @@ export default function Profile() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ScreenTransition>
   );
 }

@@ -42,11 +42,21 @@ export interface Achievement {
   unlockedAt?: string;
 }
 
+export type UserPlan = 'free' | 'medium' | 'family';
+
+export const PLAN_MESSAGE_LIMITS: Record<UserPlan, number> = {
+  free: 0,
+  medium: 6,
+  family: 20,
+};
+
 export interface UserProfile {
+  userID?: string;
   name: string;
   email: string;
   country: string;
   currency: string;
+  plan: UserPlan;
   monthlyIncome: number | null;
   incomeSkipped: boolean;
   personalityType?: string;
@@ -69,6 +79,7 @@ const DEFAULT_PROFILE: UserProfile = {
   email: '',
   country: '',
   currency: 'USD',
+  plan: 'free',
   monthlyIncome: null,
   incomeSkipped: false,
   level: 1,
@@ -188,24 +199,43 @@ export interface PiggyState {
   goals: Goal[];
   missions: Mission[];
   achievements: Achievement[];
-  
+  lastDailyReset: string;
+  lastWeeklyReset: string;
+  coachMessagesUsed: number;
+  coachMessagesMonth: string;
+  lastProfileSync: string;
+
   setProfile: (p: UserProfile) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
-  
+
   setGoals: (g: Goal[]) => void;
   addGoal: (g: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
 
   setMissions: (m: Mission[]) => void;
   completeMission: (id: string) => void;
+  checkAndResetMissions: () => void;
 
   setAchievements: (a: Achievement[]) => void;
   unlockAchievement: (id: string) => void;
 
   addExpense: (expense: Expense) => void;
   addXP: (amount: number) => void;
-  
+  incrementCoachMessages: () => void;
+  setLastProfileSync: (ts: string) => void;
+
   resetForDemo: () => void;
+}
+
+function getTodayString() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getWeekMondayString() {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d.toISOString().split('T')[0];
 }
 
 export const useStore = create<PiggyState>()(
@@ -215,6 +245,11 @@ export const useStore = create<PiggyState>()(
       goals: [],
       missions: DEFAULT_MISSIONS,
       achievements: DEFAULT_ACHIEVEMENTS,
+      lastDailyReset: getTodayString(),
+      lastWeeklyReset: getWeekMondayString(),
+      coachMessagesUsed: 0,
+      coachMessagesMonth: getTodayString().slice(0, 7),
+      lastProfileSync: '',
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({ profile: { ...state.profile, ...updates } })),
@@ -234,6 +269,26 @@ export const useStore = create<PiggyState>()(
           m.id === id ? { ...m, completed: true, completedAt: new Date().toISOString() } : m
         ),
       })),
+      checkAndResetMissions: () => {
+        const today = getTodayString();
+        const thisMonday = getWeekMondayString();
+        const { lastDailyReset, lastWeeklyReset, missions } = get();
+
+        const dailyDue = lastDailyReset !== today;
+        const weeklyDue = lastWeeklyReset !== thisMonday;
+        if (!dailyDue && !weeklyDue) return;
+
+        set({
+          missions: missions.map((m) => {
+            if ((m.type === 'daily' && dailyDue) || (m.type === 'weekly' && weeklyDue)) {
+              return { ...m, completed: false, completedAt: undefined };
+            }
+            return m;
+          }),
+          ...(dailyDue ? { lastDailyReset: today } : {}),
+          ...(weeklyDue ? { lastWeeklyReset: thisMonday } : {}),
+        });
+      },
 
       setAchievements: (achievements) => set({ achievements }),
       unlockAchievement: (id) => set((state) => ({
@@ -246,6 +301,14 @@ export const useStore = create<PiggyState>()(
         profile: { ...state.profile, expenses: [...state.profile.expenses, expense] },
       })),
 
+      setLastProfileSync: (ts) => set({ lastProfileSync: ts }),
+
+      incrementCoachMessages: () => set((state) => {
+        const thisMonth = getTodayString().slice(0, 7);
+        const used = state.coachMessagesMonth === thisMonth ? state.coachMessagesUsed : 0;
+        return { coachMessagesUsed: used + 1, coachMessagesMonth: thisMonth };
+      }),
+
       addXP: (amount) => set((state) => {
         const p = { ...state.profile };
         p.xp += amount;
@@ -254,12 +317,13 @@ export const useStore = create<PiggyState>()(
         return { profile: p };
       }),
 
-      resetForDemo: () => set({
-        profile: DEFAULT_PROFILE,
+      resetForDemo: () => set((state) => ({
+        // XP and level are lifetime achievements — never reset under any circumstances.
+        profile: { ...DEFAULT_PROFILE, xp: state.profile.xp, level: state.profile.level },
         goals: [],
         missions: DEFAULT_MISSIONS,
         achievements: DEFAULT_ACHIEVEMENTS,
-      }),
+      })),
     }),
     {
       name: 'piggy-storage',
