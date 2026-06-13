@@ -15,6 +15,8 @@ import { MotiView } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
+import { useAuthLock } from '@/lib/authLock';
+import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
 import ConfettiCannon from 'react-native-confetti-cannon';
@@ -101,6 +103,13 @@ export default function Onboarding() {
   const [emailError, setEmailError] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
 
+  // Email OTP (primary account auth). The emailed code here is NOT the device PIN.
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpUserId, setOtpUserId] = useState('');
+  const [code, setCode] = useState('');
+  // Session captured at verification, handed to the lock state machine on finish.
+  const [pendingSession, setPendingSession] = useState<{ userId: string; secret: string } | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [networkError, setNetworkError] = useState('');
 
@@ -111,6 +120,7 @@ export default function Onboarding() {
   const addGoal = useStore((s) => s.addGoal);
   const updateProfile = useStore((s) => s.updateProfile);
   const unlockAchievement = useStore((s) => s.unlockAchievement);
+  const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
 
   useEffect(() => {
     const detected = detectLocaleCountry();
@@ -147,7 +157,8 @@ export default function Onboarding() {
 
   const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-  const handleSubmit = async () => {
+  // Step 1: validate email and send the Appwrite Email OTP (creates the account).
+  const handleRequestCode = async () => {
     if (!isEmailValid(email)) {
       setEmailTouched(true);
       setEmailError('Please enter a valid email address 📧');
@@ -155,22 +166,47 @@ export default function Onboarding() {
     }
     setIsLoading(true);
     setNetworkError('');
+    try {
+      const { userId } = await requestEmailOtp(email.trim());
+      setOtpUserId(userId);
+      setOtpSent(true);
+    } catch {
+      setNetworkError(
+        "Oops! We couldn't send your code. Please check your connection and try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const payload = {
-      email,
-      firstName,
-      country,
-      currency,
-      goalName,
-      goal_name: goalName,
-      targetAmount: Number(targetAmount),
-      targetDate: new Date(targetDate).toISOString(),
-      monthlyIncome: incomeSkipped ? null : incomeNumber,
-      incomeSkipped,
-      estimatedMonthlySavings: Math.round(estimatedMonthlySavings * 100) / 100,
-    };
+  // Step 2: verify the OTP (establishes the session), then provision the profile
+  // via the n8n webhook keyed off the canonical Appwrite account id.
+  const handleVerifyAndCreate = async () => {
+    if (code.length !== 6) {
+      setNetworkError('Enter the 6-digit code from your email.');
+      return;
+    }
+    setIsLoading(true);
+    setNetworkError('');
 
     try {
+      const { userId, secret } = await verifyEmailOtp(otpUserId, code.trim());
+
+      const payload = {
+        userID: userId, // canonical id = Appwrite account $id
+        email,
+        firstName,
+        country,
+        currency,
+        goalName,
+        goal_name: goalName,
+        targetAmount: Number(targetAmount),
+        targetDate: new Date(targetDate).toISOString(),
+        monthlyIncome: incomeSkipped ? null : incomeNumber,
+        incomeSkipped,
+        estimatedMonthlySavings: Math.round(estimatedMonthlySavings * 100) / 100,
+      };
+
       const res = await fetch(
         'https://n8n.piggnify.com/webhook/138736d6-32d8-48a8-9c1a-74de02aa9ecc',
         {
@@ -179,11 +215,7 @@ export default function Onboarding() {
           body: JSON.stringify(payload),
         }
       );
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json().catch(() => ({}));
-      const userID: string | undefined = data?.userID;
 
       const goal: Goal = {
         id: Math.random().toString(36).substring(7),
@@ -199,7 +231,7 @@ export default function Onboarding() {
       };
       addGoal(goal);
       updateProfile({
-        ...(userID ? { userID } : {}),
+        userID: userId,
         name: firstName,
         email,
         country,
@@ -209,11 +241,15 @@ export default function Onboarding() {
         onboardingCompleted: true,
       });
       unlockAchievement('a1');
+      // Hold the session; hand it to the lock machine after the success screen so
+      // the user is routed into PIN setup.
+      setPendingSession({ userId, secret });
       setStep(8);
     } catch {
       setNetworkError(
-        "Oops! We had trouble connecting to the network. Please check your internet connection and try again."
+        'That code is incorrect or expired, or the network failed. Request a new code and try again.'
       );
+      setCode('');
     } finally {
       setIsLoading(false);
     }
@@ -658,12 +694,15 @@ export default function Onboarding() {
                 Your Piggy Plan is ready!
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                Enter your email to lock in your plan and see how you can reach your {goalName} by {formatTargetDate(targetDate)}.
+                {otpSent
+                  ? `Enter the 6-digit code we emailed to ${email} to finish setting up your account.`
+                  : `Enter your email — we'll send a sign-in code to lock in your plan for your ${goalName} by ${formatTargetDate(targetDate)}.`}
               </Text>
 
               <Input
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={!otpSent}
                 value={email}
                 onChangeText={(v) => {
                   setEmail(v);
@@ -678,10 +717,35 @@ export default function Onboarding() {
                   }
                 }}
                 placeholder="you@example.com"
+                className={otpSent ? 'opacity-60' : ''}
               />
               {emailError ? (
                 <Text className="mt-2 text-xs text-destructive">{emailError}</Text>
               ) : null}
+
+              {otpSent && (
+                <View className="mt-4">
+                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">
+                    Sign-in code (this is not your app PIN)
+                  </Text>
+                  <TextInput
+                    value={code}
+                    onChangeText={(v) => {
+                      setCode(v.replace(/[^0-9]/g, '').slice(0, 6));
+                      if (networkError) setNetworkError('');
+                    }}
+                    keyboardType="number-pad"
+                    placeholder="••••••"
+                    placeholderTextColor={PLACEHOLDER_COLOR}
+                    className="h-16 rounded-2xl border border-outline bg-surface-container-low text-center text-3xl font-bold tracking-[12px] text-on-surface"
+                    maxLength={6}
+                    autoFocus
+                  />
+                  <TouchableOpacity onPress={handleRequestCode} disabled={isLoading} className="mt-3 items-center py-1">
+                    <Text className="text-sm font-semibold text-primary underline">Resend code</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {networkError ? (
                 <View className="mt-4 rounded-2xl bg-destructive/10 p-4">
@@ -690,19 +754,25 @@ export default function Onboarding() {
               ) : null}
 
               <View className="mt-8 flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                <Button
+                  variant="outline"
+                  onPress={otpSent ? () => { setOtpSent(false); setCode(''); setNetworkError(''); } : goBack}
+                  className="w-14 items-center justify-center"
+                >
                   <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button
-                  onPress={handleSubmit}
-                  disabled={isLoading || !isEmailValid(email)}
+                  onPress={otpSent ? handleVerifyAndCreate : handleRequestCode}
+                  disabled={isLoading || (otpSent ? code.length !== 6 : !isEmailValid(email))}
                   className="flex-1 items-center justify-center flex-row gap-2 h-14"
                 >
                   {isLoading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
                     <>
-                      <Text className="text-base font-bold text-primary-foreground">Complete Registration</Text>
+                      <Text className="text-base font-bold text-primary-foreground">
+                        {otpSent ? 'Verify & Create Account' : 'Send Code'}
+                      </Text>
                       <ArrowRight size={16} color="#ffffff" />
                     </>
                   )}
@@ -730,7 +800,14 @@ export default function Onboarding() {
               </Text>
 
               <Button
-                onPress={() => router.replace('/(tabs)')}
+                onPress={() => {
+                  if (pendingSession) {
+                    // → needs_pin_setup; AuthGate swaps to the set-PIN screen.
+                    onLoggedIn(pendingSession.userId, pendingSession.secret);
+                  } else {
+                    router.replace('/(tabs)');
+                  }
+                }}
                 className="w-full flex-row items-center justify-center gap-2 h-14"
               >
                 <Text className="text-base font-bold text-primary-foreground">Go to my dashboard</Text>
