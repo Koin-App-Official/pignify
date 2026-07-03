@@ -31,7 +31,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Piggy to unlock the app with Face ID."
+        }
+      ]
     ]
   }
 }

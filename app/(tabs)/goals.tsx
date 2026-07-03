@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { useFocusKey } from '@/hooks/useFocusKey';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Plus, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarModal } from '@/components/ui/calendar-modal';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, CURRENCIES, Goal, formatCurrency } from '@/lib/store';
+import { useStore, CURRENCIES, Goal, UserPlan, formatCurrency } from '@/lib/store';
+import { useEntitlements } from '@/hooks/useEntitlements';
+import { gateInfo, type GateInfo } from '@/lib/entitlements';
+import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { ScreenTransition } from '@/components/ScreenTransition';
@@ -66,8 +70,11 @@ function formatTargetDate(isoDate: string): string {
 const TOTAL_STEPS = 4;
 
 export default function Goals() {
+  const router = useRouter();
   const goals = useStore((state) => state.goals);
   const currency = useStore((state) => state.profile.currency);
+  const { plan, goals: goalQuota } = useEntitlements();
+  const [gate, setGate] = useState<GateInfo | null>(null);
   const animKey = useFocusKey();
   const monthlyIncome = useStore((state) => state.profile.monthlyIncome);
   const addGoal = useStore((state) => state.addGoal);
@@ -110,6 +117,12 @@ export default function Goals() {
   const goalIcon = GOAL_ICONS[goalName] ?? '🎯';
 
   const startCreate = () => {
+    // Goal quota gate (C6/C13): if the active-goal limit is reached, keep the
+    // create button visible but open the upgrade popup instead of the flow.
+    if (!goalQuota.allowed) {
+      setGate(gateInfo('goals', plan));
+      return;
+    }
     setCreating(true);
     setCreateStep(0);
     setGoalName('');
@@ -542,6 +555,16 @@ export default function Goals() {
         )}
       </View>
       {confetti && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
+
+      <UpgradeModal
+        isVisible={gate !== null}
+        gate={gate}
+        onClose={() => setGate(null)}
+        onUpgrade={(target: UserPlan) => {
+          setGate(null);
+          router.push(`/plans?highlight=${target}`);
+        }}
+      />
     </SafeAreaView>
     </ScreenTransition>
   );

@@ -13,6 +13,12 @@ export interface Goal {
   createdAt: string;
   deposits: { date: string; amount: number }[];
   isPrimary: boolean;
+  /**
+   * Archived goals stay visible (never auto-deleted, constraint C4) but do NOT
+   * count toward plan goal limits (constraint C7). On downgrade, goals the user
+   * does not keep are archived rather than removed.
+   */
+  archived?: boolean;
 }
 
 export interface Expense {
@@ -44,11 +50,29 @@ export interface Achievement {
 
 export type UserPlan = 'free' | 'medium' | 'family';
 
+/**
+ * Ascending tier rank. Used to decide upgrade (immediate) vs downgrade
+ * (next-cycle) transitions. Kept here (not in entitlements.ts) so the store can
+ * use it without importing the entitlements module — entitlements imports this.
+ */
+export const PLAN_RANK: Record<UserPlan, number> = {
+  free: 0,
+  medium: 1,
+  family: 2,
+};
+
+/**
+ * @deprecated Per-plan AI message limits now live in `entitlements.ts`
+ * (PLAN_CONFIG[plan].quotas.aiMessages). Kept temporarily for backward compat
+ * with existing imports; prefer the entitlements module.
+ */
 export const PLAN_MESSAGE_LIMITS: Record<UserPlan, number> = {
   free: 0,
   medium: 6,
   family: 20,
 };
+
+export type PlanStatus = 'active' | 'trialing' | 'canceled';
 
 export interface UserProfile {
   userID?: string;
@@ -57,6 +81,18 @@ export interface UserProfile {
   country: string;
   currency: string;
   plan: UserPlan;
+  /** Subscription lifecycle state. */
+  planStatus: PlanStatus;
+  /**
+   * Scheduled lower-tier plan that takes effect at the next billing cycle.
+   * null when no downgrade is pending. Downgrades never apply immediately
+   * (constraint C2) and never auto-delete data (C4).
+   */
+  pendingPlan: UserPlan | null;
+  /** ISO timestamp when the current paid period ends (cancel/downgrade boundary). */
+  currentPeriodEnd: string | null;
+  /** ISO timestamp the current plan began — basis for loyalty tenure (C18/C19). */
+  planSince: string | null;
   monthlyIncome: number | null;
   incomeSkipped: boolean;
   personalityType?: string;
@@ -80,6 +116,10 @@ const DEFAULT_PROFILE: UserProfile = {
   country: '',
   currency: 'USD',
   plan: 'free',
+  planStatus: 'active',
+  pendingPlan: null,
+  currentPeriodEnd: null,
+  planSince: null,
   monthlyIncome: null,
   incomeSkipped: false,
   level: 1,
@@ -208,6 +248,23 @@ export interface PiggyState {
   setProfile: (p: UserProfile) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
 
+  /**
+   * Apply a plan change. Upgrades (higher rank) take effect immediately (C1);
+   * downgrades (lower rank) are scheduled for the next billing cycle (C2) and
+   * stored in `pendingPlan` without mutating the active plan or any data (C4).
+   *
+   * NOTE: In production this state is authoritative on the backend and driven by
+   * a Stripe webhook -> Appwrite sync, not the client. This client action is the
+   * local apply point for the vertical slice (see entitlements.ts header).
+   */
+  changePlan: (target: UserPlan) => void;
+  /** Cancel renewal; plan stays active until currentPeriodEnd (C3). */
+  cancelPlan: () => void;
+  /** Clear a scheduled downgrade before it takes effect. */
+  clearPendingPlan: () => void;
+  /** Apply a pending downgrade (called at cycle rollover; webhook-driven in prod). */
+  applyPendingPlan: () => void;
+
   setGoals: (g: Goal[]) => void;
   addGoal: (g: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
@@ -253,6 +310,57 @@ export const useStore = create<PiggyState>()(
 
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) => set((state) => ({ profile: { ...state.profile, ...updates } })),
+
+      changePlan: (target) => set((state) => {
+        const current = state.profile.plan;
+        if (target === current) {
+          // Re-selecting the active plan cancels any pending downgrade.
+          return { profile: { ...state.profile, pendingPlan: null, planStatus: 'active' } };
+        }
+        if (PLAN_RANK[target] > PLAN_RANK[current]) {
+          // Upgrade — immediate (C1). Resets loyalty tenure and clears pending state.
+          const now = new Date();
+          const periodEnd = new Date(now);
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+          return {
+            profile: {
+              ...state.profile,
+              plan: target,
+              planStatus: 'active',
+              pendingPlan: null,
+              planSince: now.toISOString(),
+              currentPeriodEnd: periodEnd.toISOString(),
+            },
+          };
+        }
+        // Downgrade — scheduled for next cycle (C2); active plan and data untouched (C4).
+        return { profile: { ...state.profile, pendingPlan: target } };
+      }),
+
+      cancelPlan: () => set((state) => ({
+        profile: { ...state.profile, planStatus: 'canceled' },
+      })),
+
+      clearPendingPlan: () => set((state) => ({
+        profile: { ...state.profile, pendingPlan: null },
+      })),
+
+      applyPendingPlan: () => set((state) => {
+        const { pendingPlan } = state.profile;
+        if (!pendingPlan) return {};
+        const now = new Date();
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+        return {
+          profile: {
+            ...state.profile,
+            plan: pendingPlan,
+            pendingPlan: null,
+            planSince: now.toISOString(),
+            currentPeriodEnd: periodEnd.toISOString(),
+          },
+        };
+      }),
 
       setGoals: (goals) => set({ goals }),
       addGoal: (g) => set((state) => {

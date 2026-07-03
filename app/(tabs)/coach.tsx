@@ -1,10 +1,14 @@
 import { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Send } from 'lucide-react-native';
 import { SimpleMarkdown } from '@/components/ui/simple-markdown';
 import { Button } from '@/components/ui/button';
-import { useStore, PLAN_MESSAGE_LIMITS } from '@/lib/store';
+import { useStore, UserPlan } from '@/lib/store';
+import { useEntitlements } from '@/hooks/useEntitlements';
+import { gateInfo, type GateInfo } from '@/lib/entitlements';
+import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
 
@@ -66,16 +70,36 @@ export default function AICoach() {
   ]);
   const [input, setInput] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
+  const router = useRouter();
 
-  const plan = useStore((s) => s.profile.plan ?? 'free');
-  const coachMessagesUsed = useStore((s) => {
-    const thisMonth = new Date().toISOString().slice(0, 7);
-    return s.coachMessagesMonth === thisMonth ? s.coachMessagesUsed : 0;
-  });
+  const { plan, config, aiMessages, has } = useEntitlements();
   const incrementCoachMessages = useStore((s) => s.incrementCoachMessages);
-  const messageLimit = PLAN_MESSAGE_LIMITS[plan];
+  const messageLimit = typeof config.quotas.aiMessages === 'number' ? config.quotas.aiMessages : Infinity;
+  const coachMessagesUsed = aiMessages.used;
 
+  const [gate, setGate] = useState<GateInfo | null>(null);
+
+  const openGate = (g: GateInfo) => setGate(g);
+  const closeGate = () => setGate(null);
+  const goUpgrade = (target: UserPlan) => {
+    setGate(null);
+    router.push(`/plans?highlight=${target}`);
+  };
+
+  // Quota/feature gate (C13): the coach stays visible; blocked sends open the
+  // "Upgrade your plan" popup instead of silently failing.
   const send = (text: string) => {
+    if (!has('aiCoach')) {
+      openGate(gateInfo('aiCoach', plan));
+      return;
+    }
+    if (!aiMessages.allowed) {
+      // Quota exhausted (C6). Add-on message purchase (C10) is a separate flow;
+      // for now we route to the upgrade path.
+      openGate(gateInfo('aiMessages', plan));
+      return;
+    }
+
     incrementCoachMessages();
     const userMsg: Message = { id: Math.random().toString(36).substring(7), role: 'user', content: text };
 
@@ -129,15 +153,15 @@ export default function AICoach() {
               <Text className="text-xs font-semibold text-tertiary">Online • Ready to help</Text>
             </View>
           </View>
-          <View className="items-end">
-            {plan === 'free' ? (
+          <TouchableOpacity className="items-end" onPress={() => !has('aiCoach') && openGate(gateInfo('aiCoach', plan))}>
+            {!has('aiCoach') ? (
               <Text className="text-xs font-bold text-destructive">Upgrade your plan</Text>
             ) : (
               <Text className="text-xs font-bold text-on-surface">
                 {Math.max(0, messageLimit - coachMessagesUsed)} messages left
               </Text>
             )}
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Messages */}
@@ -206,6 +230,8 @@ export default function AICoach() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <UpgradeModal isVisible={gate !== null} gate={gate} onClose={closeGate} onUpgrade={goUpgrade} />
     </SafeAreaView>
     </ScreenTransition>
   );

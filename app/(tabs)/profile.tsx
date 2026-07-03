@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useRouter } from 'expo-router';
-import { Bell, CreditCard, RotateCcw, Pencil, Check } from 'lucide-react-native';
+import { Bell, CreditCard, RotateCcw, Pencil, Check, Crown, ChevronRight } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
 import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
+import { getPlanConfig, formatUSD } from '@/lib/entitlements';
 import { Button } from '@/components/ui/button';
 
 const CARD_SHADOW = {
@@ -131,6 +132,41 @@ export default function Profile() {
             </View>
           </View>
         </View>
+
+        {/* Subscription */}
+        {(() => {
+          const planConfig = getPlanConfig(profile.plan);
+          const pendingConfig = profile.pendingPlan ? getPlanConfig(profile.pendingPlan) : null;
+          return (
+            <TouchableOpacity
+              onPress={() => router.push('/plans')}
+              className="mb-6 rounded-2xl bg-surface-container-low p-5"
+              style={CARD_SHADOW}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center gap-3 flex-1">
+                  <View className="h-10 w-10 items-center justify-center rounded-2xl bg-primary-container">
+                    <Crown size={18} color="#1D4ED8" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm font-bold text-on-surface">{planConfig.displayName} plan</Text>
+                    <Text className="text-xs font-medium text-on-surface-variant mt-0.5">
+                      {profile.planStatus === 'canceled'
+                        ? 'Canceled — active until period end'
+                        : pendingConfig
+                          ? `Switching to ${pendingConfig.displayName} next cycle`
+                          : `${formatUSD(planConfig.priceUSD)}/mo`}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center gap-1">
+                  <Text className="text-xs font-bold text-primary">Manage</Text>
+                  <ChevronRight size={16} color="#1D4ED8" />
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })()}
 
         {/* Income */}
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
