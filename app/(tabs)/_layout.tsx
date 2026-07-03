@@ -4,7 +4,7 @@ import { Home, Target, Zap, MessageCircle, User } from 'lucide-react-native';
 import { AppState, View } from 'react-native';
 import { useStore } from '@/lib/store';
 
-const SYNC_URL = 'https://n8n.piggnify.com/webhook-test/a7e90df7-8362-4f62-ac3e-e555164c14e1';
+const SYNC_URL = 'https://n8n.piggnify.com/webhook/claude-plan';
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export default function TabLayout() {

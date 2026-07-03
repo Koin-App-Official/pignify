@@ -208,7 +208,7 @@ export default function Onboarding() {
       };
 
       const res = await fetch(
-        'https://n8n.piggnify.com/webhook/138736d6-32d8-48a8-9c1a-74de02aa9ecc',
+        'https://n8n.piggnify.com/webhook/claude-onboarding',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

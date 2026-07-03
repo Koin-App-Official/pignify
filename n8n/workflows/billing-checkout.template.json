@@ -1,0 +1,76 @@
+{
+  "name": "billing-checkout",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "billing-checkout",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-in",
+      "name": "Webhook (POST billing-checkout)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resolve Stripe price by plan + country currency, and trial for Family.\n// PLAN_PRICES is a JSON env you set in n8n, e.g.\n//   { \"family\": { \"USD\": \"price_...\", \"PLN\": \"price_...\", \"HUF\": \"price_...\" }, ... }\nconst body = $json.body || $json;\nconst plan = body.plan;\nconst userId = body.userId;\nconst country = (body.country || 'US').toUpperCase();\nconst currency = country === 'PL' ? 'PLN' : country === 'HU' ? 'HUF' : 'USD';\nconst prices = JSON.parse($env.PLAN_PRICES || '{}');\nconst priceId = ((prices[plan] || {})[currency]) || null;\nif (!userId || !plan || !priceId) {\n  throw new Error('Missing userId/plan or no price for ' + plan + '/' + currency);\n}\nreturn [{ json: { userId, plan, country, currency, priceId, trialDays: plan === 'family' ? 7 : 0 } }];"
+      },
+      "id": "pick-price",
+      "name": "Pick Price + Trial",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/checkout/sessions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "stripeApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "mode", "value": "subscription" },
+            { "name": "line_items[0][price]", "value": "={{ $json.priceId }}" },
+            { "name": "line_items[0][quantity]", "value": "1" },
+            { "name": "subscription_data[trial_period_days]", "value": "={{ $json.trialDays || '' }}" },
+            { "name": "subscription_data[metadata][user_id]", "value": "={{ $json.userId }}" },
+            { "name": "automatic_tax[enabled]", "value": "true" },
+            { "name": "client_reference_id", "value": "={{ $json.userId }}" },
+            { "name": "success_url", "value": "={{ $env.CHECKOUT_SUCCESS_URL }}" },
+            { "name": "cancel_url", "value": "={{ $env.CHECKOUT_CANCEL_URL }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "stripe-session",
+      "name": "Stripe Create Checkout Session",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"url\": $json.url } }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond { url }",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Webhook (POST billing-checkout)": { "main": [[{ "node": "Pick Price + Trial", "type": "main", "index": 0 }]] },
+    "Pick Price + Trial": { "main": [[{ "node": "Stripe Create Checkout Session", "type": "main", "index": 0 }]] },
+    "Stripe Create Checkout Session": { "main": [[{ "node": "Respond { url }", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}
