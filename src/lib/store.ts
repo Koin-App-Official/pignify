@@ -14,6 +14,17 @@ export interface Goal {
   deposits: { date: string; amount: number }[];
   isPrimary: boolean;
   /**
+   * How this goal's deadline was set. Undefined on pre-flip goals — treat as
+   * 'deadline' at read time, since `deadline` was always picked directly then.
+   */
+  planningMode?: 'contribution' | 'deadline';
+  /**
+   * The monthly amount chosen (contribution mode) or derived (deadline mode)
+   * for this goal. Undefined on pre-flip goals; fall back to deriving it from
+   * `targetAmount`/`deadline` at read time.
+   */
+  monthlyContribution?: number;
+  /**
    * Archived goals stay visible (never auto-deleted, constraint C4) but do NOT
    * count toward plan goal limits (constraint C7). On downgrade, goals the user
    * does not keep are archived rather than removed.
@@ -95,6 +106,24 @@ export interface UserProfile {
   planSince: string | null;
   monthlyIncome: number | null;
   incomeSkipped: boolean;
+  /**
+   * How the user planned their goal: 'contribution' (set aside $X/month, date
+   * derived) or 'deadline' (picked a date, contribution derived). Pre-flip
+   * accounts have no value persisted here — treat missing as 'deadline' at
+   * read time, since that was the only mode that existed before.
+   */
+  planningMode: 'contribution' | 'deadline';
+  /**
+   * The monthly amount the user chose to set aside in contribution mode.
+   * null until they've gone through the contribution-first flow.
+   */
+  monthlyContribution: number | null;
+  /**
+   * @deprecated Alias for the chosen monthly contribution, kept for backward
+   * compat with pre-flip data and code that hasn't migrated to
+   * `monthlyContribution` yet. Revisit in Phase 4.
+   */
+  estimatedMonthlySavings: number | null;
   personalityType?: string;
   level: number;
   xp: number;
@@ -122,6 +151,9 @@ const DEFAULT_PROFILE: UserProfile = {
   planSince: null,
   monthlyIncome: null,
   incomeSkipped: false,
+  planningMode: 'contribution',
+  monthlyContribution: null,
+  estimatedMonthlySavings: null,
   level: 1,
   xp: 0,
   streak: 0,

@@ -12,7 +12,8 @@
     "build:prod:ios": "eas build --platform ios",
     "build:prod:android": "eas build --platform android",
     "appwrite:plan": "node scripts/appwrite/setup.mjs",
-    "appwrite:apply": "node scripts/appwrite/setup.mjs --apply"
+    "appwrite:apply": "node scripts/appwrite/setup.mjs --apply",
+    "test": "vitest run"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -58,7 +59,8 @@
     "babel-plugin-module-resolver": "^5.0.3",
     "dotenv": "^17.4.2",
     "node-appwrite": "^26.2.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.9"
   },
   "private": true,
   "overrides": {
