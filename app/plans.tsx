@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,7 +15,8 @@ import {
   quotaLabel,
   type PlanConfig,
 } from '@/lib/entitlements';
-import { startCheckout } from '@/lib/billing';
+import { startCheckout, requestSubscriptionSync } from '@/lib/billing';
+import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -49,11 +50,13 @@ function planHighlights(c: PlanConfig): string[] {
 
 export default function Plans() {
   const router = useRouter();
-  const { highlight } = useLocalSearchParams<{ highlight?: string }>();
+  const { highlight, checkout } = useLocalSearchParams<{ highlight?: string; checkout?: string }>();
 
   const profile = useStore((s) => s.profile);
   const changePlan = useStore((s) => s.changePlan);
+  const updateProfile = useStore((s) => s.updateProfile);
   const [busy, setBusy] = useState<UserPlan | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const currentPlan = profile.plan;
   const pendingPlan = profile.pendingPlan;
@@ -73,6 +76,41 @@ export default function Plans() {
     Alert.alert('Plan updated', `You're now on the ${name} plan. Enjoy your new features! 🎉`);
   };
 
+  // Returning from hosted Stripe Checkout. `checkout=success` does NOT by
+  // itself mean payment succeeded (the browser can also send this on a
+  // same-tab redirect the user backed out of) — the plan is only applied
+  // after reading the actual synced subscription row from Appwrite.
+  useEffect(() => {
+    if (checkout !== 'success' || !profile.userID) return;
+    (async () => {
+      setSyncing(true);
+      try {
+        await requestSubscriptionSync(profile.userID!);
+        const row = await tablesDB.getRow({
+          databaseId: DATABASE_ID,
+          tableId: 'subscriptions',
+          rowId: profile.userID!,
+        });
+        const plan = (row as any).plan_id as UserPlan | undefined;
+        const status = (row as any).status as string | undefined;
+        if (plan && status && ['active', 'trialing'].includes(status) && plan !== currentPlan) {
+          updateProfile({
+            plan,
+            planStatus: status === 'trialing' ? 'active' : (status as any),
+            pendingPlan: null,
+            currentPeriodEnd: (row as any).current_period_end ?? null,
+          });
+          Alert.alert('Plan updated', `You're now on the ${getPlanConfig(plan).displayName} plan. Enjoy your new features! 🎉`);
+        }
+      } catch (err) {
+        console.warn('[plans] Failed to sync subscription after checkout return:', err);
+      } finally {
+        setSyncing(false);
+        router.setParams({ checkout: undefined });
+      }
+    })();
+  }, [checkout, profile.userID]);
+
   const onSelectPlan = async (target: UserPlan) => {
     if (target === currentPlan && !pendingPlan) return;
 
@@ -84,14 +122,13 @@ export default function Plans() {
     }
 
     if (isUpgrade(currentPlan, target)) {
-      // Upgrade — immediate (C1), paid via Stripe Checkout (web/external, P1).
+      // Upgrade — paid via Stripe Checkout (web/external, P1). The plan is
+      // applied only after a confirmed return + sync (see effect above), not
+      // when the browser merely opens.
       setBusy(target);
       try {
         const result = await startCheckout(target, profile.userID);
-        if (result.status === 'completed') {
-          // In production the plan flips via webhook sync; applied locally here.
-          applyChange(target);
-        } else if (result.status === 'unavailable') {
+        if (result.status === 'unavailable') {
           Alert.alert(
             'Checkout not configured',
             `Stripe Checkout isn't set up in this build. Simulate a successful payment for ${getPlanConfig(target).displayName}?`,
@@ -101,6 +138,7 @@ export default function Plans() {
             ]
           );
         }
+        // 'completed' → browser opened; wait for the checkout=success return.
         // 'canceled' → do nothing.
       } finally {
         setBusy(null);
@@ -126,7 +164,7 @@ export default function Plans() {
       <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
         <View className="px-5 pt-4 pb-2 flex-row items-center gap-3">
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
             className="h-10 w-10 items-center justify-center rounded-full bg-surface-container-low"
           >
             <ArrowLeft size={18} color="#64748B" />
@@ -135,6 +173,13 @@ export default function Plans() {
         </View>
 
         <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 16, paddingBottom: 40 }}>
+          {syncing && (
+            <View className="mb-4 rounded-2xl bg-surface-container-low p-4">
+              <Text className="text-sm font-semibold text-on-surface-variant">
+                Confirming your purchase…
+              </Text>
+            </View>
+          )}
           {pendingPlan && (
             <View className="mb-4 rounded-2xl bg-warning-container p-4">
               <Text className="text-sm font-semibold text-warning">
