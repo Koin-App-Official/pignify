@@ -1,16 +1,18 @@
-import { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Send } from 'lucide-react-native';
 import { SimpleMarkdown } from '@/components/ui/simple-markdown';
 import { Button } from '@/components/ui/button';
 import { useStore, UserPlan } from '@/lib/store';
 import { useEntitlements } from '@/hooks/useEntitlements';
-import { gateInfo, type GateInfo } from '@/lib/entitlements';
+import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
+import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
+import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 
 interface Message {
   id: string;
@@ -71,36 +73,86 @@ export default function AICoach() {
   const [input, setInput] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+  const { addon } = useLocalSearchParams<{ addon?: string }>();
 
   const { plan, config, aiMessages, has } = useEntitlements();
   const incrementCoachMessages = useStore((s) => s.incrementCoachMessages);
+  const setAddonMessageBalance = useStore((s) => s.setAddonMessageBalance);
+  const userID = useStore((s) => s.profile.userID);
   const messageLimit = typeof config.quotas.aiMessages === 'number' ? config.quotas.aiMessages : Infinity;
-  const coachMessagesUsed = aiMessages.used;
+  const canBuyMore = config.extraMessagePriceUSD != null;
 
   const [gate, setGate] = useState<GateInfo | null>(null);
+  const [gateKey, setGateKey] = useState<GateKey | null>(null);
 
-  const openGate = (g: GateInfo) => setGate(g);
-  const closeGate = () => setGate(null);
+  const openGate = (key: GateKey) => {
+    setGateKey(key);
+    setGate(gateInfo(key, plan));
+  };
+  const closeGate = () => {
+    setGate(null);
+    setGateKey(null);
+  };
   const goUpgrade = (target: UserPlan) => {
     setGate(null);
     router.push(`/plans?highlight=${target}`);
   };
 
+  const buyMore = async () => {
+    setGate(null);
+    const result = await startAddonCheckout(userID);
+    if (result.status === 'unavailable') {
+      Alert.alert(
+        'Checkout not configured',
+        'Stripe Checkout isn’t set up in this build. Simulate a successful purchase of 1 extra message?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Simulate purchase',
+            onPress: () => setAddonMessageBalance(useStore.getState().addonMessageBalance + 1),
+          },
+        ]
+      );
+    }
+  };
+
+  // Returning from the hosted Stripe Checkout for an add-on purchase: refresh
+  // the authoritative balance from Appwrite (we can't know the exact quantity
+  // purchased from the redirect alone since quantity is adjustable on Stripe's page).
+  useEffect(() => {
+    if (addon !== 'success' || !userID) return;
+    (async () => {
+      await requestSubscriptionSync(userID);
+      try {
+        const row = await tablesDB.getRow({
+          databaseId: DATABASE_ID,
+          tableId: 'subscriptions',
+          rowId: userID,
+        });
+        const balance = (row as any).addon_balance;
+        if (typeof balance === 'number') setAddonMessageBalance(balance);
+      } catch (err) {
+        console.error('Failed to refresh addon balance:', err);
+      }
+      router.setParams({ addon: undefined });
+    })();
+  }, [addon, userID]);
+
   // Quota/feature gate (C13): the coach stays visible; blocked sends open the
   // "Upgrade your plan" popup instead of silently failing.
   const send = (text: string) => {
     if (!has('aiCoach')) {
-      openGate(gateInfo('aiCoach', plan));
+      openGate('aiCoach');
       return;
     }
     if (!aiMessages.allowed) {
-      // Quota exhausted (C6). Add-on message purchase (C10) is a separate flow;
-      // for now we route to the upgrade path.
-      openGate(gateInfo('aiMessages', plan));
+      // Quota exhausted (C6). Medium/family can buy more messages via a
+      // secondary CTA on the same gate; Beginner has no add-on option.
+      openGate('aiMessages');
       return;
     }
 
-    incrementCoachMessages();
+    incrementCoachMessages(messageLimit);
     const userMsg: Message = { id: Math.random().toString(36).substring(7), role: 'user', content: text };
 
     setMessages((prev) => {
@@ -153,12 +205,12 @@ export default function AICoach() {
               <Text className="text-xs font-semibold text-tertiary">Online • Ready to help</Text>
             </View>
           </View>
-          <TouchableOpacity className="items-end" onPress={() => !has('aiCoach') && openGate(gateInfo('aiCoach', plan))}>
+          <TouchableOpacity className="items-end" onPress={() => !has('aiCoach') && openGate('aiCoach')}>
             {!has('aiCoach') ? (
               <Text className="text-xs font-bold text-destructive">Upgrade your plan</Text>
             ) : (
               <Text className="text-xs font-bold text-on-surface">
-                {Math.max(0, messageLimit - coachMessagesUsed)} messages left
+                {aiMessages.unlimited ? 'Unlimited' : `${aiMessages.remaining} messages left`}
               </Text>
             )}
           </TouchableOpacity>
@@ -231,7 +283,17 @@ export default function AICoach() {
         </View>
       </KeyboardAvoidingView>
 
-      <UpgradeModal isVisible={gate !== null} gate={gate} onClose={closeGate} onUpgrade={goUpgrade} />
+      <UpgradeModal
+        isVisible={gate !== null}
+        gate={gate}
+        onClose={closeGate}
+        onUpgrade={goUpgrade}
+        secondaryAction={
+          gateKey === 'aiMessages' && canBuyMore
+            ? { label: 'Buy 1 more message · $2.99', onPress: buyMore }
+            : undefined
+        }
+      />
     </SafeAreaView>
     </ScreenTransition>
   );

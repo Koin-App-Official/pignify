@@ -20,9 +20,17 @@ interface UpgradeModalProps {
   onClose: () => void;
   /** Called with the suggested plan when the user chooses to upgrade. */
   onUpgrade: (targetPlan: NonNullable<GateInfo['requiredPlan']>) => void;
+  /** Optional lower-emphasis action rendered below the main upgrade CTA. */
+  secondaryAction?: { label: string; onPress: () => void };
 }
 
-export function UpgradeModal({ isVisible, gate, onClose, onUpgrade }: UpgradeModalProps) {
+export function UpgradeModal({
+  isVisible,
+  gate,
+  onClose,
+  onUpgrade,
+  secondaryAction,
+}: UpgradeModalProps) {
   const insets = useSafeAreaInsets();
   const requiredPlan = gate?.requiredPlan ?? null;
   const targetConfig = requiredPlan ? getPlanConfig(requiredPlan) : null;
@@ -36,6 +44,12 @@ export function UpgradeModal({ isVisible, gate, onClose, onUpgrade }: UpgradeMod
     if (!requiredPlan) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     onUpgrade(requiredPlan);
+  };
+
+  const handleSecondary = () => {
+    if (!secondaryAction) return;
+    Haptics.selectionAsync();
+    secondaryAction.onPress();
   };
 
   return (
@@ -108,6 +122,15 @@ export function UpgradeModal({ isVisible, gate, onClose, onUpgrade }: UpgradeMod
                   />
                 ) : (
                   <Button onPress={handleClose} label="You're on the top plan" disabled className="w-full" />
+                )}
+
+                {secondaryAction && (
+                  <Button
+                    onPress={handleSecondary}
+                    label={secondaryAction.label}
+                    variant="outline"
+                    className="w-full mt-3"
+                  />
                 )}
 
                 <Pressable onPress={handleClose} className="mt-3 items-center py-2">

@@ -139,7 +139,7 @@ export interface UserProfile {
   };
 }
 
-const DEFAULT_PROFILE: UserProfile = {
+export const DEFAULT_PROFILE: UserProfile = {
   name: '',
   email: '',
   country: '',
@@ -275,6 +275,8 @@ export interface PiggyState {
   lastWeeklyReset: string;
   coachMessagesUsed: number;
   coachMessagesMonth: string;
+  /** Purchased extra AI messages, not tied to a billing period (roll over indefinitely). */
+  addonMessageBalance: number;
   lastProfileSync: string;
 
   setProfile: (p: UserProfile) => void;
@@ -310,7 +312,9 @@ export interface PiggyState {
 
   addExpense: (expense: Expense) => void;
   addXP: (amount: number) => void;
-  incrementCoachMessages: () => void;
+  /** Draws from the plan's monthly quota first, then `addonMessageBalance`. */
+  incrementCoachMessages: (messageLimit: number) => void;
+  setAddonMessageBalance: (balance: number) => void;
   setLastProfileSync: (ts: string) => void;
 
   resetForDemo: () => void;
@@ -338,6 +342,7 @@ export const useStore = create<PiggyState>()(
       lastWeeklyReset: getWeekMondayString(),
       coachMessagesUsed: 0,
       coachMessagesMonth: getTodayString().slice(0, 7),
+      addonMessageBalance: 0,
       lastProfileSync: '',
 
       setProfile: (profile) => set({ profile }),
@@ -443,11 +448,21 @@ export const useStore = create<PiggyState>()(
 
       setLastProfileSync: (ts) => set({ lastProfileSync: ts }),
 
-      incrementCoachMessages: () => set((state) => {
+      incrementCoachMessages: (messageLimit) => set((state) => {
         const thisMonth = getTodayString().slice(0, 7);
         const used = state.coachMessagesMonth === thisMonth ? state.coachMessagesUsed : 0;
-        return { coachMessagesUsed: used + 1, coachMessagesMonth: thisMonth };
+        if (used < messageLimit) {
+          return { coachMessagesUsed: used + 1, coachMessagesMonth: thisMonth };
+        }
+        // Plan quota exhausted — draw from the purchased add-on balance instead.
+        return {
+          coachMessagesUsed: used,
+          coachMessagesMonth: thisMonth,
+          addonMessageBalance: Math.max(0, state.addonMessageBalance - 1),
+        };
       }),
+
+      setAddonMessageBalance: (balance) => set({ addonMessageBalance: balance }),
 
       addXP: (amount) => set((state) => {
         const p = { ...state.profile };
