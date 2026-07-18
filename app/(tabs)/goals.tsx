@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, useWindowDimensions } from 'react-native';
 import { useFocusKey } from '@/hooks/useFocusKey';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react-native';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -13,10 +13,15 @@ import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
-import ConfettiCannon from 'react-native-confetti-cannon';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { resolveMonthlyContribution } from '@/lib/goalMath';
+import { FadeInStagger } from '@/components/animation/FadeInStagger';
+import { PressableScale } from '@/components/animation/PressableScale';
+import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
+import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
+import { useCelebrate } from '@/components/animation/useCelebrate';
+import { springPresets } from '@/lib/springPresets';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -59,11 +64,14 @@ const TOTAL_STEPS = 4;
 
 export default function Goals() {
   const router = useRouter();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const goals = useStore((state) => state.goals);
   const currency = useStore((state) => state.profile.currency);
   const { plan, goals: goalQuota } = useEntitlements();
   const [gate, setGate] = useState<GateInfo | null>(null);
   const animKey = useFocusKey();
+  const { confettiProgress: depositConfettiProgress, celebrate: celebrateDeposit } = useCelebrate();
+  const { confettiProgress: creationConfettiProgress, celebrate: celebrateCreation } = useCelebrate();
   const monthlyIncome = useStore((state) => state.profile.monthlyIncome);
   const addGoal = useStore((state) => state.addGoal);
   const updateGoal = useStore((state) => state.updateGoal);
@@ -95,8 +103,6 @@ export default function Goals() {
   const [viewGoal, setViewGoal] = useState<Goal | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
 
-  const [confetti, setConfetti] = useState(false);
-  const [smallConfetti, setSmallConfetti] = useState(false);
 
   // Derived
   // Multiple-goals reality check: sum what every other active goal already
@@ -147,7 +153,7 @@ export default function Goals() {
     };
     addGoal(goal);
     setCreating(false);
-    triggerConfetti();
+    celebrateCreation();
     addXP(20);
   };
 
@@ -163,7 +169,7 @@ export default function Goals() {
     setViewGoal(newGoal);
     setDepositAmount('');
     addXP(10);
-    triggerSmallConfetti();
+    celebrateDeposit();
     const pct = (newGoal.savedAmount / newGoal.targetAmount) * 100;
     if (pct >= 25) unlockAchievement('a5');
     if (pct >= 50) unlockAchievement('a6');
@@ -171,8 +177,6 @@ export default function Goals() {
     if (pct >= 100) unlockAchievement('a8');
   };
 
-  const triggerConfetti = () => { setConfetti(true); setTimeout(() => setConfetti(false), 3000); };
-  const triggerSmallConfetti = () => { setSmallConfetti(true); setTimeout(() => setSmallConfetti(false), 2000); };
 
   // ─── Goal detail view ────────────────────────────────────────────────────────
   if (viewGoal) {
@@ -246,7 +250,7 @@ export default function Goals() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-        {smallConfetti && <ConfettiCannon count={50} origin={{ x: -10, y: 0 }} fallSpeed={3000} />}
+        <SkiaConfetti progress={depositConfettiProgress} width={windowWidth} height={windowHeight} />
       </SafeAreaView>
       </ScreenTransition>
     );
@@ -265,7 +269,7 @@ export default function Goals() {
             </Text>
             <View className="flex-row gap-1.5">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                <View key={i} className={`h-2.5 flex-1 rounded-full ${i <= createStep ? 'bg-primary' : 'bg-surface-container'}`} />
+                <ProgressSegment key={i} active={i <= createStep} />
               ))}
             </View>
           </View>
@@ -274,26 +278,29 @@ export default function Goals() {
 
             {/* Step 0: What are we saving for? */}
             {createStep === CreateStep.GoalDeclaration && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">What are we saving for?</Text>
                 <Text className="mb-6 text-sm font-medium text-on-surface-variant">Pick a goal or type your own below.</Text>
 
                 <View className="flex-row flex-wrap gap-2 mb-5">
                   {GOAL_CHIPS.map((chip) => (
-                    <TouchableOpacity
+                    <PressableScale
                       key={chip.label}
                       onPress={() => { setGoalName(chip.label); setGoalNameError(''); }}
-                      className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
-                        goalName === chip.label
-                          ? 'bg-primary-container border-2 border-primary'
-                          : 'bg-surface-container-low border-outline'
-                      }`}
                     >
-                      <Text className="text-lg">{chip.emoji}</Text>
-                      <Text className={`text-sm font-semibold ${goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'}`}>
-                        {chip.label}
-                      </Text>
-                    </TouchableOpacity>
+                      <View
+                        className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
+                          goalName === chip.label
+                            ? 'bg-primary-container border-2 border-primary'
+                            : 'bg-surface-container-low border-outline'
+                        }`}
+                      >
+                        <Text className="text-lg">{chip.emoji}</Text>
+                        <Text className={`text-sm font-semibold ${goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'}`}>
+                          {chip.label}
+                        </Text>
+                      </View>
+                    </PressableScale>
                   ))}
                 </View>
 
@@ -319,12 +326,12 @@ export default function Goals() {
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
-              </MotiView>
+              </Animated.View>
             )}
 
             {/* Step 1: Target amount */}
             {createStep === CreateStep.TargetAmount && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">
                   How much do you need{'\n'}for your {goalName}?
                 </Text>
@@ -360,12 +367,12 @@ export default function Goals() {
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
-              </MotiView>
+              </Animated.View>
             )}
 
             {/* Step 2: Contribution (shared with onboarding) */}
             {createStep === CreateStep.Contribution && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Animated.View entering={FadeInDown.springify()}>
                 <ContributionStep
                   currency={currency}
                   targetAmount={Number(targetAmount)}
@@ -385,12 +392,12 @@ export default function Goals() {
                     setCreateStep(CreateStep.Review);
                   }}
                 />
-              </MotiView>
+              </Animated.View>
             )}
 
             {/* Step 3: Review */}
             {createStep === CreateStep.Review && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+              <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">Looks good!</Text>
                 <Text className="mb-6 text-sm font-medium text-on-surface-variant">
                   Here's your savings plan at a glance.
@@ -428,7 +435,7 @@ export default function Goals() {
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
-              </MotiView>
+              </Animated.View>
             )}
           </ScrollView>
         </KeyboardAvoidingView>
@@ -459,12 +466,7 @@ export default function Goals() {
               {goals.map((g, index) => {
                 const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
                 return (
-                  <MotiView
-                    key={g.id}
-                    from={{ opacity: 0, translateY: 20 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ delay: index * 100 }}
-                  >
+                  <FadeInStagger key={g.id} index={index} delayStep={100}>
                     <TouchableOpacity onPress={() => setViewGoal(g)} className="w-full rounded-3xl bg-surface p-4" style={CARD_SHADOW}>
                       <View className="flex-row items-center gap-4">
                         <Text className="text-3xl">{g.icon}</Text>
@@ -480,13 +482,13 @@ export default function Goals() {
                           <Text className="text-xs text-on-surface-variant mt-1">
                             {formatCurrency(g.savedAmount, currency)} / {formatCurrency(g.targetAmount, currency)}
                           </Text>
-                          <View className="mt-3 h-2.5 w-full rounded-full bg-surface-container overflow-hidden">
-                            <View className="h-2.5 rounded-full bg-tertiary" style={{ width: `${pct}%` }} />
+                          <View className="mt-3">
+                            <AnimatedProgressBar progress={pct / 100} color="#22C55E" />
                           </View>
                         </View>
                       </View>
                     </TouchableOpacity>
-                  </MotiView>
+                  </FadeInStagger>
                 );
               })}
             </View>
@@ -503,7 +505,7 @@ export default function Goals() {
           </TouchableOpacity>
         )}
       </View>
-      {confetti && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
+      <SkiaConfetti progress={creationConfettiProgress} width={windowWidth} height={windowHeight} />
 
       <UpgradeModal
         isVisible={gate !== null}
@@ -516,6 +518,27 @@ export default function Goals() {
       />
     </SafeAreaView>
     </ScreenTransition>
+  );
+}
+
+function ProgressSegment({ active }: { active: boolean }) {
+  const fill = useSharedValue(active ? 1 : 0);
+
+  useEffect(() => {
+    fill.value = withSpring(active ? 1 : 0, springPresets.press);
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
+
+  return (
+    <View className="h-2.5 flex-1 rounded-full bg-surface-container overflow-hidden">
+      <Animated.View
+        className="h-full w-full rounded-full bg-primary"
+        style={[{ transformOrigin: 'left' }, style]}
+      />
+    </View>
   );
 }
 
