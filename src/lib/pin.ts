@@ -11,9 +11,14 @@
  * Lockout (5 failures → escalating timed lockout → forced re-login) lives here
  * too because it gates verifyPin; state is persisted so killing the app cannot
  * reset it.
+ *
+ * PBKDF2 runs natively (react-native-quick-crypto, JSI/Nitro, hardware-backed
+ * SHA-256) rather than in pure JS. Same 150,000 iterations either way — this
+ * is purely a speed win from hardware acceleration, not a security tradeoff;
+ * the pure-JS version was taking 5-10s on-device with no way to show real
+ * progress, native execution brings that to well under a second.
  */
-import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
-import { sha256 } from '@noble/hashes/sha2.js';
+import { pbkdf2 as nativePbkdf2 } from 'react-native-quick-crypto';
 import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { gcm } from '@noble/ciphers/aes.js';
 import { bytesToUtf8 } from '@noble/ciphers/utils.js';
@@ -25,6 +30,7 @@ import {
   deleteItem,
   getJSON,
   setJSON,
+  type SecureKey,
 } from './secureStorage';
 
 // ── Tuning ──────────────────────────────────────────────────────────────────
@@ -47,11 +53,13 @@ interface SessionBlob {
   ct: string; // hex (ciphertext + GCM tag)
 }
 
-/** Derive the AES key from a PIN + salt. Async so it doesn't jank the UI thread. */
+/** Derive the AES key from a PIN + salt, via native (hardware-backed) PBKDF2. */
 async function deriveKey(pin: string, salt: Uint8Array): Promise<Uint8Array> {
-  return pbkdf2Async(sha256, utf8ToBytes(pin), salt, {
-    c: PBKDF2_ITERATIONS,
-    dkLen: KEY_LEN,
+  return new Promise((resolve, reject) => {
+    nativePbkdf2(utf8ToBytes(pin), salt, PBKDF2_ITERATIONS, KEY_LEN, 'sha256', (err, derivedKey) => {
+      if (err || !derivedKey) return reject(err ?? new Error('pbkdf2 failed'));
+      resolve(Uint8Array.from(derivedKey));
+    });
   });
 }
 
@@ -74,6 +82,9 @@ export async function setPin(pin: string, sessionSecret: string): Promise<Uint8A
   };
   await setJSON(SecureKeys.SESSION_BLOB, blob);
   await resetLockout();
+  // Any pending reuse-check blob (from a forgot-PIN reset) is now moot — a new
+  // PIN has just been committed, so there's nothing left to compare against.
+  await deleteItem(SecureKeys.STALE_SESSION_BLOB);
   return key;
 }
 
@@ -120,11 +131,51 @@ export async function hasPin(): Promise<boolean> {
   return (await getItem(SecureKeys.SESSION_BLOB)) != null;
 }
 
-/** Wipe the PIN/session entirely (forgot-PIN, lockout exhaustion, logout). */
+/** Wipe the PIN/session entirely (dead/expired server session — nothing worth keeping). */
 export async function clearPin(): Promise<void> {
   await deleteItem(SecureKeys.SESSION_BLOB);
   await deleteItem(SecureKeys.BIOMETRIC_KEY);
   await resetLockout();
+}
+
+/**
+ * Demote the live PIN blob to a temporary slot instead of deleting it outright
+ * (forgot-PIN / forced re-login). hasPin() reads only SESSION_BLOB, so this still
+ * routes the app to login exactly like clearPin() would — but the ciphertext
+ * survives long enough for isPinReused() to reject a new PIN identical to the
+ * one just discarded. setPin() always deletes the stale slot once a new PIN is
+ * actually committed, so nothing lingers past one login cycle.
+ */
+export async function demoteToStale(): Promise<void> {
+  const raw = await getItem(SecureKeys.SESSION_BLOB);
+  if (raw != null) await setItem(SecureKeys.STALE_SESSION_BLOB, raw);
+  await deleteItem(SecureKeys.SESSION_BLOB);
+  await deleteItem(SecureKeys.BIOMETRIC_KEY);
+  await resetLockout();
+}
+
+async function pinDecryptsBlob(pin: string, key: SecureKey): Promise<boolean> {
+  const blob = await getJSON<SessionBlob>(key);
+  if (!blob) return false;
+  try {
+    const derivedKey = await deriveKey(pin, hexToBytes(blob.salt));
+    gcm(derivedKey, hexToBytes(blob.nonce)).decrypt(hexToBytes(blob.ct));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export type PinReuseSource =
+  /** Change-PIN flow: the live blob hasn't been overwritten yet. */
+  | 'current'
+  /** Forgot-PIN flow: the old blob was demoted by demoteToStale(). */
+  | 'stale';
+
+/** Whether `pin` matches the PIN being replaced, per the given source. */
+export async function isPinReused(pin: string, source: PinReuseSource): Promise<boolean> {
+  const key = source === 'current' ? SecureKeys.SESSION_BLOB : SecureKeys.STALE_SESSION_BLOB;
+  return pinDecryptsBlob(pin, key);
 }
 
 // ── PIN strength ──────────────────────────────────────────────────────────────

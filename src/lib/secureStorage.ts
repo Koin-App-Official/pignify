@@ -2,13 +2,19 @@
  * Typed wrapper over expo-secure-store (iOS Keychain / Android Keystore).
  *
  * Everything security-sensitive that must survive app restarts lives here:
- *   - SESSION_BLOB  : the Appwrite session secret, encrypted with the PIN-derived
- *                     key (see pin.ts). Confidential at rest twice over (OS keychain
- *                     + PIN encryption).
- *   - BIOMETRIC_KEY : the raw PIN-derived key, stored behind a biometric gate so
- *                     Face/Touch ID can decrypt the session without the PIN.
- *   - LOCKOUT_STATE : failed-attempt counter + lockout deadline (survives app kill).
- *   - DEVICE_ID     : stable per-install device id fallback.
+ *   - SESSION_BLOB       : the Appwrite session secret, encrypted with the
+ *                          PIN-derived key (see pin.ts). Confidential at rest
+ *                          twice over (OS keychain + PIN encryption).
+ *   - STALE_SESSION_BLOB : a PIN blob demoted out of SESSION_BLOB by a
+ *                          forgot-PIN reset, kept only long enough to reject a
+ *                          new PIN that matches the old one (pin.ts), then
+ *                          discarded the moment any new PIN is committed.
+ *   - BIOMETRIC_KEY      : the raw PIN-derived key, stored behind a biometric
+ *                          gate so Face/Touch ID can decrypt the session
+ *                          without the PIN.
+ *   - LOCKOUT_STATE      : failed-attempt counter + lockout deadline (survives
+ *                          app kill).
+ *   - DEVICE_ID          : stable per-install device id fallback.
  *
  * NOTE: the session secret in memory and the derived key are NEVER written to the
  * zustand persist store (AsyncStorage) — only here, only encrypted.
@@ -17,6 +23,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export const SecureKeys = {
   SESSION_BLOB: 'piggy.session_blob',
+  STALE_SESSION_BLOB: 'piggy.stale_session_blob',
   BIOMETRIC_KEY: 'piggy.biometric_key',
   LOCKOUT_STATE: 'piggy.lockout_state',
   DEVICE_ID: 'piggy.device_id',

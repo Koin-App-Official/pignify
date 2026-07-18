@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useRouter } from 'expo-router';
-import { Bell, CreditCard, RotateCcw, Pencil, Check, Crown, ChevronRight } from 'lucide-react-native';
+import { Bell, CreditCard, RotateCcw, Pencil, Check, Crown, ChevronRight, Lock } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
 import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
+import { useAuthLock } from '@/lib/authLock';
 import { getPlanConfig, formatUSD } from '@/lib/entitlements';
 import { Button } from '@/components/ui/button';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
@@ -27,6 +28,7 @@ export default function Profile() {
   const achievements = useStore((state) => state.achievements);
   const updateProfile = useStore((state) => state.updateProfile);
   const resetForDemo = useStore((state) => state.resetForDemo);
+  const resetLock = useAuthLock((state) => state.resetToLogin);
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile.name);
@@ -52,8 +54,12 @@ export default function Profile() {
         {
           text: 'Reset',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             resetForDemo();
+            // Keychain-backed PIN/session data lives outside the zustand/AsyncStorage
+            // profile and outlives both resetForDemo() and even a full app delete on
+            // iOS — must be wiped explicitly or the next launch re-locks to a dead PIN.
+            await resetLock();
             router.replace('/onboarding');
           },
         },
@@ -241,8 +247,20 @@ export default function Profile() {
         </View>
         </FadeInStagger>
 
-        {/* Reset */}
+        {/* Change PIN */}
         <FadeInStagger index={5} delayStep={60}>
+        <Button
+          variant="outline"
+          onPress={() => router.push('/change-pin')}
+          className="mb-3 w-full flex-row items-center justify-center gap-2 border-outline/50"
+        >
+          <Lock size={14} color="#64748B" />
+          <Text className="text-sm font-bold text-on-surface-variant">Change PIN</Text>
+        </Button>
+        </FadeInStagger>
+
+        {/* Reset */}
+        <FadeInStagger index={6} delayStep={60}>
         <Button
           variant="outline"
           onPress={handleReset}
@@ -254,7 +272,7 @@ export default function Profile() {
         </FadeInStagger>
 
         {/* Footer info */}
-        <FadeInStagger index={6} delayStep={60}>
+        <FadeInStagger index={7} delayStep={60}>
         <View className="mb-12 items-center">
           <Text className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
             Piggy v{Constants.expoConfig?.version || '1.0.0'}
