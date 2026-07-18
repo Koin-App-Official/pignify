@@ -8,6 +8,7 @@ import {
   Platform,
   ActivityIndicator,
   TextInput,
+  Linking,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +38,37 @@ const GOAL_CHIPS = [
   { label: 'Emergency Fund', emoji: '💰' },
   { label: 'Something Else', emoji: '✏️' },
 ];
+
+const LEGAL_LINK_STYLE = 'text-primary underline';
+
+function LegalLinksNote() {
+  const open = (url: string) => Linking.openURL(url);
+  return (
+    <Text className="mt-6 text-xs leading-5 text-on-surface-variant text-center">
+      By creating an account, you accept our{' '}
+      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/privacy-policy')}>
+        Privacy Policy
+      </Text>
+      ,{' '}
+      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/terms-of-service')}>
+        Terms of Service
+      </Text>
+      ,{' '}
+      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/ai-transparency')}>
+        AI Transparency
+      </Text>
+      ,{' '}
+      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/services')}>
+        Services
+      </Text>{' '}
+      and{' '}
+      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/ai-feature-access')}>
+        AI &amp; Feature Access
+      </Text>{' '}
+      terms.
+    </Text>
+  );
+}
 
 /**
  * Named steps instead of raw indices — reordering (income now before the
@@ -250,7 +282,12 @@ export default function Onboarding() {
         planningMode,
         monthlyContribution,
         estimatedMonthlySavings: monthlyContribution,
-        onboardingCompleted: true,
+        // NOT onboardingCompleted yet — AuthGate treats "onboardingCompleted +
+        // status unauthenticated" as a returning user and shows LoginGate. Session
+        // handoff (onLoggedIn) is deferred to the success screen's button so the
+        // user sees the summary first; flipping this flag early would open a
+        // window where AuthGate hijacks the still-unauthenticated success screen
+        // into a second login round-trip. Set together with onLoggedIn below.
       });
       unlockAchievement('a1');
       // Hold the session; hand it to the lock machine after the success screen so
@@ -710,6 +747,8 @@ export default function Onboarding() {
                 </View>
               ) : null}
 
+              <LegalLinksNote />
+
               <View className="mt-8 flex-row gap-3">
                 <Button
                   variant="outline"
@@ -758,6 +797,11 @@ export default function Onboarding() {
               <Button
                 onPress={() => {
                   if (pendingSession) {
+                    // Flip onboardingCompleted in the same tick as the status
+                    // transition below, so AuthGate never observes "completed +
+                    // unauthenticated" (which it reads as a returning user needing
+                    // LoginGate).
+                    updateProfile({ onboardingCompleted: true });
                     // → needs_pin_setup; AuthGate swaps to the set-PIN screen.
                     onLoggedIn(pendingSession.userId, pendingSession.secret);
                   } else {
@@ -766,7 +810,7 @@ export default function Onboarding() {
                 }}
                 className="w-full flex-row items-center justify-center gap-2 h-14"
               >
-                <Text className="text-base font-bold text-primary-foreground">Go to my dashboard</Text>
+                <Text className="text-base font-bold text-primary-foreground">Secure my account</Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
             </Animated.View>
