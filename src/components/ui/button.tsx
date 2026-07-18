@@ -1,10 +1,17 @@
 import * as React from "react";
-import { Pressable, Text, type PressableProps } from "react-native";
+import { Text, View, type PressableProps } from "react-native";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import Animated, {
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import * as Haptics from "expo-haptics";
+import { springPresets } from "@/lib/springPresets";
 
 const buttonVariants = cva(
   "flex-row items-center justify-center gap-2 rounded-full disabled:opacity-50",
@@ -67,52 +74,55 @@ const VARIANT_BOTTOM_BORDERS: Record<string, { borderBottomWidth: number; border
 };
 
 export interface ButtonProps
-  extends PressableProps,
+  extends Pick<PressableProps, "disabled" | "style">,
     VariantProps<typeof buttonVariants> {
+  onPress?: () => void;
   label?: string;
   textClassName?: string;
+  className?: string;
+  children?: React.ReactNode;
 }
 
-const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
-  ({ className, textClassName, variant, size, label, children, onPressIn, onPressOut, style, ...props }, ref) => {
-    const scale = useSharedValue(1);
-    const translateY = useSharedValue(0);
+const Button = React.forwardRef<React.ElementRef<typeof View>, ButtonProps>(
+  ({ className, textClassName, variant, size, label, children, onPress, disabled, style }, ref) => {
+    const pressed = useSharedValue(0);
 
-    const animatedStyle = useAnimatedStyle(() => {
-      return {
-        transform: [{ scale: scale.value }, { translateY: translateY.value }],
-      };
-    });
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [
+        { scale: interpolate(pressed.value, [0, 1], [1, 0.97]) },
+        { translateY: interpolate(pressed.value, [0, 1], [0, 3]) },
+      ],
+    }));
 
-    const handlePressIn = (e: any) => {
-      scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-      translateY.value = withSpring(3, { damping: 15, stiffness: 300 });
-      if (onPressIn) onPressIn(e);
-    };
-
-    const handlePressOut = (e: any) => {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-      translateY.value = withSpring(0, { damping: 15, stiffness: 300 });
-      if (onPressOut) onPressOut(e);
-    };
+    const tap = Gesture.Tap()
+      .enabled(!disabled)
+      .onBegin(() => {
+        pressed.value = withSpring(1, springPresets.press);
+      })
+      .onFinalize(() => {
+        pressed.value = withSpring(0, springPresets.press);
+      })
+      .onEnd(() => {
+        runOnJS(Haptics.selectionAsync)();
+        if (onPress) runOnJS(onPress)();
+      });
 
     const borderBottomStyle = variant ? VARIANT_BOTTOM_BORDERS[variant] ?? {} : {};
 
     return (
-      <AnimatedPressable
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        style={[animatedStyle, borderBottomStyle, style as any]}
-        {...props}
-      >
-        {label ? (
-          <Text className={cn(buttonTextVariants({ variant, size, className: textClassName }))}>
-            {label}
-          </Text>
-        ) : children}
-      </AnimatedPressable>
+      <GestureDetector gesture={tap}>
+        <Animated.View
+          className={cn(buttonVariants({ variant, size, className }), disabled && "opacity-50")}
+          ref={ref}
+          style={[animatedStyle, borderBottomStyle, style as any]}
+        >
+          {label ? (
+            <Text className={cn(buttonTextVariants({ variant, size, className: textClassName }))}>
+              {label}
+            </Text>
+          ) : children}
+        </Animated.View>
+      </GestureDetector>
     );
   }
 );

@@ -2,34 +2,31 @@ import { useCallback } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  Easing,
+  withSpring,
+  interpolate,
 } from 'react-native-reanimated';
 import { useFocusEffect } from 'expo-router';
+import { springPresets } from '@/lib/springPresets';
 
 interface Props {
   children: React.ReactNode;
 }
 
 export function ScreenTransition({ children }: Props) {
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.97);
+  const progress = useSharedValue(0);
 
   useFocusEffect(
     useCallback(() => {
-      const config = { duration: 220, easing: Easing.out(Easing.ease) };
-      opacity.value = withTiming(1, config);
-      scale.value = withTiming(1, config);
+      progress.value = withSpring(1, springPresets.sheet);
       return () => {
-        opacity.value = 0;
-        scale.value = 0.97;
+        progress.value = 0;
       };
     }, [])
   );
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    opacity: progress.value,
+    transform: [{ scale: interpolate(progress.value, [0, 1], [0.97, 1]) }],
   }));
 
   return (
