@@ -1,8 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Send } from 'lucide-react-native';
+import Animated, {
+  FadeInDown,
+  LinearTransition,
+  runOnUI,
+  scrollTo,
+  useAnimatedRef,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { SimpleMarkdown } from '@/components/ui/simple-markdown';
 import { Button } from '@/components/ui/button';
 import { useStore, UserPlan } from '@/lib/store';
@@ -11,6 +24,7 @@ import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
+import { PressableScale } from '@/components/animation/PressableScale';
 import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 
@@ -71,7 +85,8 @@ export default function AICoach() {
     },
   ]);
   const [input, setInput] = useState('');
-  const scrollViewRef = useRef<ScrollView>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const router = useRouter();
   const { addon } = useLocalSearchParams<{ addon?: string }>();
 
@@ -174,6 +189,7 @@ export default function AICoach() {
     });
 
     setInput('');
+    setIsTyping(true);
 
     setTimeout(() => {
       const coachMsg: Message = {
@@ -181,8 +197,16 @@ export default function AICoach() {
         role: 'coach',
         content: getCoachResponse(text)
       };
+      setIsTyping(false);
       setMessages((prev) => [...prev, coachMsg]);
     }, 600);
+  };
+
+  const handleContentSizeChange = (_width: number, height: number) => {
+    runOnUI((h: number) => {
+      'worklet';
+      scrollTo(scrollRef, 0, h, true);
+    })(height);
   };
 
   return (
@@ -217,15 +241,20 @@ export default function AICoach() {
         </View>
 
         {/* Messages */}
-        <ScrollView
-          ref={scrollViewRef}
+        <Animated.ScrollView
+          ref={scrollRef}
           className="flex-1 px-5 py-4"
           contentContainerStyle={{ paddingBottom: 20 }}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          onContentSizeChange={handleContentSizeChange}
         >
           <View className="gap-4">
             {messages.map((m) => (
-              <View key={m.id} className={`flex-row ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <Animated.View
+                key={m.id}
+                entering={FadeInDown.springify()}
+                layout={LinearTransition.springify()}
+                className={`flex-row ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
                 <View
                   className={`max-w-[85%] px-4 py-3 ${
                     m.role === 'user'
@@ -237,25 +266,24 @@ export default function AICoach() {
                     {m.content}
                   </SimpleMarkdown>
                 </View>
-              </View>
+              </Animated.View>
             ))}
+            {isTyping && <TypingIndicator />}
           </View>
 
           {/* Starters */}
           {messages.length <= 1 && (
             <View className="mt-6 flex-row flex-wrap gap-2">
               {STARTERS.map((s) => (
-                <TouchableOpacity
-                  key={s}
-                  onPress={() => send(s)}
-                  className="rounded-full border-2 border-primary/30 bg-primary-container/50 px-4 py-2.5"
-                >
-                  <Text className="text-sm font-semibold text-primary">{s}</Text>
-                </TouchableOpacity>
+                <PressableScale key={s} onPress={() => send(s)}>
+                  <View className="rounded-full border-2 border-primary/30 bg-primary-container/50 px-4 py-2.5">
+                    <Text className="text-sm font-semibold text-primary">{s}</Text>
+                  </View>
+                </PressableScale>
               ))}
             </View>
           )}
-        </ScrollView>
+        </Animated.ScrollView>
 
         {/* Input */}
         <View className="bg-surface-container-low p-4 pb-6">
@@ -296,5 +324,32 @@ export default function AICoach() {
       />
     </SafeAreaView>
     </ScreenTransition>
+  );
+}
+
+function TypingDot({ delay }: { delay: number }) {
+  const opacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    opacity.value = withDelay(
+      delay,
+      withRepeat(withSequence(withTiming(1, { duration: 400 }), withTiming(0.3, { duration: 400 })), -1, true)
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#94A3B8' }, style]} />;
+}
+
+function TypingIndicator() {
+  return (
+    <Animated.View entering={FadeInDown.springify()} layout={LinearTransition.springify()} className="flex-row justify-start">
+      <View className="flex-row items-center gap-1.5 max-w-[85%] px-4 py-3 bg-surface-container-low rounded-3xl rounded-bl-lg">
+        <TypingDot delay={0} />
+        <TypingDot delay={150} />
+        <TypingDot delay={300} />
+      </View>
+    </Animated.View>
   );
 }
