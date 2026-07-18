@@ -8,10 +8,12 @@ import {
   Platform,
   ActivityIndicator,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { springPresets } from '@/lib/springPresets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
@@ -19,8 +21,11 @@ import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
-import ConfettiCannon from 'react-native-confetti-cannon';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
+import { PressableScale } from '@/components/animation/PressableScale';
+import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
+import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
+import { useCelebrate } from '@/components/animation/useCelebrate';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { monthDiff } from '@/lib/goalMath';
@@ -75,7 +80,9 @@ function detectLocaleCountry(): { country: string; currency: string } {
 
 export default function Onboarding() {
   const router = useRouter();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.Name);
+  const { confettiProgress, celebrate } = useCelebrate();
 
   const [firstName, setFirstName] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
@@ -127,6 +134,10 @@ export default function Onboarding() {
     setCountry(detected.country);
     setCurrency(detected.currency);
   }, []);
+
+  useEffect(() => {
+    if (step === OnboardingStep.Success) celebrate();
+  }, [step]);
 
   const currencySymbol = getCurrencySymbol(currency);
   const countryName = COUNTRIES.find((c) => c.code === country)?.name ?? country;
@@ -270,12 +281,7 @@ export default function Onboarding() {
             </Text>
             <View className="flex-row gap-1.5">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                <View
-                  key={i}
-                  className={`h-2.5 flex-1 rounded-full ${
-                    i <= step ? 'bg-primary' : 'bg-surface-container'
-                  }`}
-                />
+                <ProgressSegment key={i} active={i <= step} />
               ))}
             </View>
           </View>
@@ -284,7 +290,7 @@ export default function Onboarding() {
         <ScrollView className="flex-1 px-5 py-6" keyboardShouldPersistTaps="handled">
           {/* Screen 0: Name */}
           {step === OnboardingStep.Name && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Welcome to Piggy!{'\n'}What should we call you?
@@ -323,12 +329,12 @@ export default function Onboarding() {
                 <Text className="text-base font-bold text-primary-foreground">Next</Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 1: Localization */}
           {step === OnboardingStep.Localization && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Where are you based,{'\n'}{firstName}?
               </Text>
@@ -374,12 +380,12 @@ export default function Onboarding() {
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 2: Goal Declaration */}
           {step === OnboardingStep.GoalDeclaration && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 What are we saving for?
               </Text>
@@ -389,27 +395,30 @@ export default function Onboarding() {
 
               <View className="flex-row flex-wrap gap-2 mb-5">
                 {GOAL_CHIPS.map((chip) => (
-                  <TouchableOpacity
+                  <PressableScale
                     key={chip.label}
                     onPress={() => {
                       setGoalName(chip.label);
                       setGoalNameError('');
                     }}
-                    className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
-                      goalName === chip.label
-                        ? 'bg-primary-container border-2 border-primary'
-                        : 'bg-surface-container-low border-outline'
-                    }`}
                   >
-                    <Text className="text-lg">{chip.emoji}</Text>
-                    <Text
-                      className={`text-sm font-semibold ${
-                        goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
+                    <View
+                      className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
+                        goalName === chip.label
+                          ? 'bg-primary-container border-2 border-primary'
+                          : 'bg-surface-container-low border-outline'
                       }`}
                     >
-                      {chip.label}
-                    </Text>
-                  </TouchableOpacity>
+                      <Text className="text-lg">{chip.emoji}</Text>
+                      <Text
+                        className={`text-sm font-semibold ${
+                          goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
+                        }`}
+                      >
+                        {chip.label}
+                      </Text>
+                    </View>
+                  </PressableScale>
                 ))}
               </View>
 
@@ -444,12 +453,12 @@ export default function Onboarding() {
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 3: Target Amount */}
           {step === OnboardingStep.TargetAmount && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 How much do you need{'\n'}for your {goalName}?
               </Text>
@@ -493,13 +502,13 @@ export default function Onboarding() {
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 4: Income (moved before the contribution question, so the
               suggestion chips have an anchor to prefill from) */}
           {step === OnboardingStep.Income && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 To build your roadmap,{'\n'}what is your average{'\n'}monthly income?
               </Text>
@@ -541,12 +550,12 @@ export default function Onboarding() {
                   I'd rather not say right now
                 </Text>
               </TouchableOpacity>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 5: Contribution (replaces the old timeline/date-chip screen) */}
           {step === OnboardingStep.Contribution && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <ContributionStep
                 currency={currency}
                 targetAmount={Number(targetAmount)}
@@ -566,12 +575,12 @@ export default function Onboarding() {
                   setStep(OnboardingStep.BlueprintReview);
                 }}
               />
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 6: Blueprint Review */}
           {step === OnboardingStep.BlueprintReview && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Let's make this official!
               </Text>
@@ -631,12 +640,12 @@ export default function Onboarding() {
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 7: Account Finalization */}
           {step === OnboardingStep.AccountFinalization && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Your Piggy Plan is ready!
@@ -726,14 +735,13 @@ export default function Onboarding() {
                   )}
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 8: Success */}
           {step === OnboardingStep.Success && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
+            <Animated.View
+              entering={FadeInDown.springify()}
               className="flex-1 items-center justify-center min-h-[70vh]"
             >
               <Text className="text-7xl text-center mb-6">🐷</Text>
@@ -761,11 +769,13 @@ export default function Onboarding() {
                 <Text className="text-base font-bold text-primary-foreground">Go to my dashboard</Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
-            </MotiView>
+            </Animated.View>
           )}
         </ScrollView>
 
-        {step === OnboardingStep.Success && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
+        {step === OnboardingStep.Success && (
+          <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />
+        )}
 
         <PickerModal
           isVisible={countryPickerVisible}
@@ -786,6 +796,27 @@ export default function Onboarding() {
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function ProgressSegment({ active }: { active: boolean }) {
+  const fill = useSharedValue(active ? 1 : 0);
+
+  useEffect(() => {
+    fill.value = withSpring(active ? 1 : 0, springPresets.press);
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
+
+  return (
+    <View className="h-2.5 flex-1 rounded-full bg-surface-container overflow-hidden">
+      <Animated.View
+        className="h-full w-full rounded-full bg-primary"
+        style={[{ transformOrigin: 'left' }, style]}
+      />
+    </View>
   );
 }
 
