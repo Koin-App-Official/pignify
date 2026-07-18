@@ -4,7 +4,7 @@
  * escalating lockout and routes to re-login on "Forgot PIN" or lockout exhaustion.
  */
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -16,6 +16,7 @@ import {
   getBiometricKind,
   type BiometricKind,
 } from '@/lib/biometrics';
+import { hasInternetConnection } from '@/lib/network';
 import { PinPad, PinDots } from './PinPad';
 
 function formatRemaining(ms: number): string {
@@ -38,6 +39,7 @@ export function LockGate() {
   const [lockedMs, setLockedMs] = useState(0);
   const [bioKind, setBioKind] = useState<BiometricKind>('none');
   const [bioEnabled, setBioEnabled] = useState(false);
+  const [forgotBusy, setForgotBusy] = useState(false);
   const triedBio = useRef(false);
 
   // Discover biometric state + auto-attempt once.
@@ -104,6 +106,33 @@ export function LockGate() {
     if (next.length === PIN_LENGTH) submit(next);
   };
 
+  const handleForgotPin = () => {
+    Alert.alert(
+      'Forgot your PIN?',
+      "You'll need to verify your email again to set a new PIN. Your saved goals and data are safe — nothing will be lost.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: async () => {
+            setForgotBusy(true);
+            // resetToLogin() wipes the local PIN immediately — check connectivity
+            // first so a fresh email OTP can actually be requested right after,
+            // rather than stranding the user PIN-less with no way to re-verify.
+            const online = await hasInternetConnection();
+            if (!online) {
+              setForgotBusy(false);
+              Alert.alert('No Internet Connection', 'Please check your connection and try again.');
+              return;
+            }
+            await resetToLogin();
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-1 items-center justify-center px-8">
@@ -126,18 +155,27 @@ export function LockGate() {
             ) : null}
           </View>
 
-          <View className="mt-6">
-            <PinPad
-              onDigit={onDigit}
-              onBackspace={() => setPin((p) => p.slice(0, -1))}
-              onBiometric={bioEnabled ? tryUnlockBiometric : undefined}
-              biometricKind={bioKind}
-              disabled={busy || locked}
-            />
-          </View>
+          {busy ? (
+            <View className="mt-6 items-center gap-3 py-16">
+              <ActivityIndicator color="#1D4ED8" />
+              <Text className="text-sm font-medium text-on-surface-variant">Unlocking…</Text>
+            </View>
+          ) : (
+            <View className="mt-6">
+              <PinPad
+                onDigit={onDigit}
+                onBackspace={() => setPin((p) => p.slice(0, -1))}
+                onBiometric={bioEnabled ? tryUnlockBiometric : undefined}
+                biometricKind={bioKind}
+                disabled={busy || locked}
+              />
+            </View>
+          )}
 
-          <Pressable onPress={resetToLogin} className="mt-8 py-2">
-            <Text className="text-sm font-semibold text-primary underline">Forgot PIN?</Text>
+          <Pressable onPress={handleForgotPin} className="mt-8 py-2" disabled={busy || forgotBusy}>
+            <Text className="text-sm font-semibold text-primary underline">
+              {forgotBusy ? 'Checking connection…' : 'Forgot PIN?'}
+            </Text>
           </Pressable>
         </Animated.View>
       </View>

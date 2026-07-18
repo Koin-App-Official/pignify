@@ -1,41 +1,32 @@
 /**
  * Drives the app-lock lifecycle: runs the cold-start bootstrap once and re-locks
- * the app after it has been backgrounded longer than LOCK_TIMEOUT_MS (banking
- * behaviour). Mounted once at the root; screens read `useAuthLock` directly.
+ * the app immediately every time it's backgrounded (banking behaviour — not on a
+ * delay, since even a brief exit should require the PIN/biometric again).
+ * Mounted once at the root; screens read `useAuthLock` directly.
+ *
+ * Listens for 'background' specifically, not 'inactive' — 'inactive' also fires
+ * for transient interruptions (control center, a phone call banner, the app
+ * switcher mid-swipe) that shouldn't force a re-lock.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useAuthLock } from '@/lib/authLock';
-
-/** How long the app may sit in the background before it re-locks. */
-export const LOCK_TIMEOUT_MS = 60_000;
 
 export function useAppLock() {
   const status = useAuthLock((s) => s.status);
   const bootstrap = useAuthLock((s) => s.bootstrap);
   const lock = useAuthLock((s) => s.lock);
-  const backgroundedAt = useRef<number | null>(null);
 
   // Cold-start once.
   useEffect(() => {
     bootstrap();
   }, [bootstrap]);
 
-  // Re-lock after a background timeout.
+  // Re-lock the instant the app leaves the foreground.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (next === 'background' || next === 'inactive') {
-        if (backgroundedAt.current == null) backgroundedAt.current = Date.now();
-      } else if (next === 'active') {
-        const since = backgroundedAt.current;
-        backgroundedAt.current = null;
-        if (
-          since != null &&
-          Date.now() - since >= LOCK_TIMEOUT_MS &&
-          useAuthLock.getState().status === 'unlocked'
-        ) {
-          lock();
-        }
+      if (next === 'background' && useAuthLock.getState().status === 'unlocked') {
+        lock();
       }
     });
     return () => sub.remove();

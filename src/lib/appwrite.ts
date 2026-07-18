@@ -13,8 +13,8 @@
  */
 import { Client, Account, TablesDB, ID } from 'react-native-appwrite';
 
-const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT ?? '';
-const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID ?? '';
+export const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT ?? '';
+export const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID ?? '';
 
 /** The live database id. */
 export const DATABASE_ID =

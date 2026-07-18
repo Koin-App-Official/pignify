@@ -15,9 +15,10 @@
 import { create } from 'zustand';
 import { applySession, clearClientSession } from './appwrite';
 import { validateSession, logout as serverLogout } from './auth';
-import { hasPin, verifyPin, clearPin, getLockoutState } from './pin';
+import { hasPin, verifyPin, clearPin, demoteToStale, getLockoutState } from './pin';
 import { unlockWithBiometric, disableBiometric } from './biometrics';
 import { registerDevice } from './device';
+import { useStore } from './store';
 
 export type LockStatus =
   | 'loading'
@@ -43,7 +44,7 @@ interface AuthLockState {
 
   /** Cold-start: decide whether to show login or the lock screen. */
   bootstrap: () => Promise<void>;
-  /** Called by the login/OTP screen after verifyEmailOtp succeeds. */
+  /** Called by onboarding/login after a session is established (anonymous or OTP). */
   onLoggedIn: (userId: string, secret: string) => void;
   /** Called after setPin() succeeds in the set-PIN screen. */
   onPinConfigured: () => Promise<void>;
@@ -90,8 +91,19 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
       await get().resetToLogin();
       return;
     }
+    const pinExists = await hasPin();
+    if (pinExists && !useStore.getState().profile.onboardingCompleted) {
+      // Keychain items outlive both "Reset Data" and a full app delete on iOS, so a
+      // PIN blob can exist with no matching local profile (fresh install/reset that
+      // never got to clear it). That PIN belongs to an account this install no
+      // longer knows about — wipe it and start clean instead of locking on it.
+      await clearPin();
+      clearClientSession();
+      set({ status: 'unauthenticated', userId: null, sessionSecret: null });
+      return;
+    }
     // No PIN blob means no stored session on this device → must (re-)login.
-    set({ status: (await hasPin()) ? 'locked' : 'unauthenticated' });
+    set({ status: pinExists ? 'locked' : 'unauthenticated' });
   },
 
   onLoggedIn: (userId, secret) => {
@@ -147,7 +159,10 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
   },
 
   resetToLogin: async () => {
-    await clearPin();
+    // Demotes (not deletes) the PIN blob: routes the app to login exactly like a
+    // full wipe would, but keeps the old ciphertext around just long enough for
+    // the next PinCreationFlow to reject a new PIN identical to the old one.
+    await demoteToStale();
     await disableBiometric();
     clearClientSession();
     set({ status: 'unauthenticated', userId: null, sessionSecret: null });

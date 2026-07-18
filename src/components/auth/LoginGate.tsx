@@ -13,6 +13,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
+import { clearClientSession } from '@/lib/appwrite';
+import NitroCookies from 'react-native-nitro-cookies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
@@ -50,9 +52,17 @@ export function LoginGate() {
     setBusy(true);
     setError('');
     try {
+      // Defensive: createSession 401s if a session is already active on the
+      // client (e.g. a stale/lingering session from an earlier state). Clearing
+      // our own header isn't enough — react-native-appwrite sends every request
+      // with credentials: 'include', so the native cookie jar re-sends any prior
+      // session cookie regardless.
+      clearClientSession();
+      await NitroCookies.clearAll();
       const { userId, secret } = await verifyEmailOtp(otpUserId, code.trim());
       onLoggedIn(userId, secret); // → needs_pin_setup
-    } catch {
+    } catch (err) {
+      console.error('[LoginGate] verify failed:', err);
       setError('That code is incorrect or expired. Request a new one.');
       setCode('');
     } finally {
@@ -69,7 +79,7 @@ export function LoginGate() {
 
             {stage === 'email' ? (
               <>
-                <Text className="text-2xl font-black text-on-surface mb-2 text-center">Welcome back</Text>
+                <Text className="text-2xl font-black text-on-surface mb-2 text-center">Reset your PIN</Text>
                 <Text className="text-sm font-medium text-on-surface-variant mb-8 text-center">
                   Enter your email and we'll send you a sign-in code.
                 </Text>
