@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
@@ -64,7 +64,7 @@ export function LoginGate() {
     <SafeAreaView className="flex-1 bg-surface">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <View className="flex-1 justify-center px-8">
-          <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }}>
+          <Animated.View entering={FadeInDown.springify()}>
             <Text className="text-5xl mb-4 text-center">🐷</Text>
 
             {stage === 'email' ? (
@@ -124,7 +124,7 @@ export function LoginGate() {
                 </Pressable>
               </>
             )}
-          </MotiView>
+          </Animated.View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -13,11 +13,13 @@ import {
   type PlanFeatures,
   type QuotaResource,
 } from '@/lib/entitlements';
+import { evaluatePeriodicQuota } from '@/lib/quota';
 
 export function useEntitlements() {
   const plan = useStore((s) => s.profile.plan ?? 'free');
   const goals = useStore((s) => s.goals);
   const monthlyIncome = useStore((s) => s.profile.monthlyIncome);
+  const addonMessageBalance = useStore((s) => s.addonMessageBalance);
   const coachMessagesUsed = useStore((s) => {
     const thisMonth = new Date().toISOString().slice(0, 7);
     return s.coachMessagesMonth === thisMonth ? s.coachMessagesUsed : 0;
@@ -38,9 +40,10 @@ export function useEntitlements() {
       quota: (resource: QuotaResource, used: number) => checkQuota(plan, resource, used),
       goals: checkQuota(plan, 'goals', activeGoals),
       incomes: checkQuota(plan, 'incomes', incomesUsed),
-      aiMessages: checkQuota(plan, 'aiMessages', coachMessagesUsed),
+      aiMessages: evaluatePeriodicQuota(config.quotas.aiMessages, coachMessagesUsed, addonMessageBalance),
       activeGoalCount: activeGoals,
       coachMessagesUsed,
+      addonMessageBalance,
     };
-  }, [plan, goals, monthlyIncome, coachMessagesUsed]);
+  }, [plan, goals, monthlyIncome, coachMessagesUsed, addonMessageBalance]);
 }

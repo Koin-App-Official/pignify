@@ -10,6 +10,7 @@ import Constants from 'expo-constants';
 import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
 import { getPlanConfig, formatUSD } from '@/lib/entitlements';
 import { Button } from '@/components/ui/button';
+import { FadeInStagger } from '@/components/animation/FadeInStagger';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -75,6 +76,7 @@ export default function Profile() {
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
         {/* User card */}
+        <FadeInStagger index={0} delayStep={60}>
         <View className="mb-6 rounded-3xl bg-primary-container p-6 items-center" style={CARD_SHADOW}>
           <View className="mb-4 h-18 w-18 items-center justify-center rounded-full bg-primary/20" style={{ width: 72, height: 72 }}>
             <Text className="text-4xl">🐷</Text>
@@ -132,8 +134,10 @@ export default function Profile() {
             </View>
           </View>
         </View>
+        </FadeInStagger>
 
         {/* Subscription */}
+        <FadeInStagger index={1} delayStep={60}>
         {(() => {
           const planConfig = getPlanConfig(profile.plan);
           const pendingConfig = profile.pendingPlan ? getPlanConfig(profile.pendingPlan) : null;
@@ -167,8 +171,10 @@ export default function Profile() {
             </TouchableOpacity>
           );
         })()}
+        </FadeInStagger>
 
         {/* Income */}
+        <FadeInStagger index={2} delayStep={60}>
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-3">
             <CreditCard size={16} color="#64748B" />
@@ -178,9 +184,11 @@ export default function Profile() {
             {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : 'Not provided'}
           </Text>
         </View>
+        </FadeInStagger>
 
         {/* Expense breakdown */}
         {Object.keys(expensesByCategory).length > 0 && (
+          <FadeInStagger index={3} delayStep={60}>
           <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
             <Text className="mb-4 text-base font-bold text-on-surface">Expense Breakdown</Text>
             <View className="gap-3">
@@ -200,9 +208,11 @@ export default function Profile() {
                 })}
             </View>
           </View>
+          </FadeInStagger>
         )}
 
         {/* Notifications */}
+        <FadeInStagger index={4} delayStep={60}>
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-4">
             <Bell size={16} color="#64748B" />
@@ -229,8 +239,10 @@ export default function Profile() {
             ))}
           </View>
         </View>
+        </FadeInStagger>
 
         {/* Reset */}
+        <FadeInStagger index={5} delayStep={60}>
         <Button
           variant="outline"
           onPress={handleReset}
@@ -239,8 +251,10 @@ export default function Profile() {
           <RotateCcw size={14} color="#64748B" />
           <Text className="text-sm font-bold text-on-surface-variant">Reset All Data (Demo)</Text>
         </Button>
+        </FadeInStagger>
 
         {/* Footer info */}
+        <FadeInStagger index={6} delayStep={60}>
         <View className="mb-12 items-center">
           <Text className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
             Piggy v{Constants.expoConfig?.version || '1.0.0'}
@@ -249,6 +263,7 @@ export default function Profile() {
             Device: {Constants.deviceName} • SB: {Constants.statusBarHeight}px
           </Text>
         </View>
+        </FadeInStagger>
       </ScrollView>
     </SafeAreaView>
     </ScreenTransition>

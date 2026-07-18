@@ -83,7 +83,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
     displayName: 'Medium',
     priceUSD: 7.99,
     quotas: { incomes: 1, goals: 2, devices: 1, aiMessages: 6, emailReports: 3 },
-    extraMessagePriceUSD: 1.99,
+    extraMessagePriceUSD: 2.99,
     emailReportsSoftLimited: false,
     emailReportsSoftCap: 0,
     features: {
@@ -108,7 +108,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
       aiMessages: 20,
       emailReports: 'unlimited',
     },
-    extraMessagePriceUSD: 0.99,
+    extraMessagePriceUSD: 2.99,
     emailReportsSoftLimited: true,
     emailReportsSoftCap: 100,
     features: {

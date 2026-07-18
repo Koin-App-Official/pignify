@@ -8,10 +8,12 @@ import {
   Platform,
   ActivityIndicator,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { springPresets } from '@/lib/springPresets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
@@ -19,10 +21,14 @@ import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
-import ConfettiCannon from 'react-native-confetti-cannon';
-import { CalendarModal } from '@/components/ui/calendar-modal';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
+import { PressableScale } from '@/components/animation/PressableScale';
+import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
+import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
+import { useCelebrate } from '@/components/animation/useCelebrate';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
+import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
+import { monthDiff } from '@/lib/goalMath';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -32,26 +38,24 @@ const GOAL_CHIPS = [
   { label: 'Something Else', emoji: '✏️' },
 ];
 
-const TIMELINE_CHIPS = [
-  { label: '6 months', months: 6 },
-  { label: '1 year', months: 12 },
-  { label: '2 years', months: 24 },
-  { label: '3 years', months: 36 },
-  { label: '5 years', months: 60 },
-];
-
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
+/**
+ * Named steps instead of raw indices — reordering (income now before the
+ * contribution question) touches every conditional, progress dot, and
+ * back-navigation call, so magic numbers would make that swap unreviewable.
+ */
+enum OnboardingStep {
+  Name = 0,
+  Localization = 1,
+  GoalDeclaration = 2,
+  TargetAmount = 3,
+  Income = 4,
+  Contribution = 5,
+  BlueprintReview = 6,
+  AccountFinalization = 7,
+  Success = 8,
 }
 
-function monthDiff(from: Date, to: Date): number {
-  return Math.max(
-    1,
-    (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
-  );
-}
+const TOTAL_STEPS = 6;
 
 function formatTargetDate(isoDate: string): string {
   const d = new Date(isoDate);
@@ -74,11 +78,11 @@ function detectLocaleCountry(): { country: string; currency: string } {
   return { country: 'US', currency: 'USD' };
 }
 
-const TOTAL_STEPS = 6;
-
 export default function Onboarding() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const [step, setStep] = useState<OnboardingStep>(OnboardingStep.Name);
+  const { confettiProgress, celebrate } = useCelebrate();
 
   const [firstName, setFirstName] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
@@ -93,8 +97,12 @@ export default function Onboarding() {
   const [targetAmount, setTargetAmount] = useState('');
   const [targetAmountError, setTargetAmountError] = useState('');
 
+  // Contribution-first fields. `targetDate` ends up holding the derived date
+  // (contribution mode) or the picked date (deadline mode) either way.
+  const [planningMode, setPlanningMode] = useState<PlanningMode>('contribution');
+  const [contributionInput, setContributionInput] = useState('');
   const [targetDate, setTargetDate] = useState('');
-  const [selectedChipLabel, setSelectedChipLabel] = useState('');
+  const [monthlyContribution, setMonthlyContribution] = useState(0);
 
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [incomeSkipped, setIncomeSkipped] = useState(false);
@@ -113,7 +121,6 @@ export default function Onboarding() {
   const [isLoading, setIsLoading] = useState(false);
   const [networkError, setNetworkError] = useState('');
 
-  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [currencyPickerVisible, setCurrencyPickerVisible] = useState(false);
 
@@ -128,6 +135,10 @@ export default function Onboarding() {
     setCurrency(detected.currency);
   }, []);
 
+  useEffect(() => {
+    if (step === OnboardingStep.Success) celebrate();
+  }, [step]);
+
   const currencySymbol = getCurrencySymbol(currency);
   const countryName = COUNTRIES.find((c) => c.code === country)?.name ?? country;
   const currencyName = CURRENCIES.find((c) => c.code === currency)?.name ?? currency;
@@ -138,22 +149,15 @@ export default function Onboarding() {
     if (matched) setCurrency(matched.currency);
   };
 
-  const handleTimelineChip = (months: number, label: string) => {
-    const date = addMonths(new Date(), months);
-    setTargetDate(date.toISOString().split('T')[0]);
-    setSelectedChipLabel(label);
-  };
-
   const handleSkipIncome = () => {
     setIncomeSkipped(true);
     setMonthlyIncome('');
-    setStep(6);
+    setStep(OnboardingStep.Contribution);
   };
 
   const totalMonths = targetDate ? monthDiff(new Date(), new Date(targetDate)) : 1;
-  const estimatedMonthlySavings = targetAmount ? Number(targetAmount) / totalMonths : 0;
   const incomeNumber = Number(monthlyIncome);
-  const savingsExceedsIncome = !incomeSkipped && incomeNumber > 0 && estimatedMonthlySavings > incomeNumber;
+  const savingsExceedsIncome = !incomeSkipped && incomeNumber > 0 && monthlyContribution > incomeNumber;
 
   const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -204,7 +208,10 @@ export default function Onboarding() {
         targetDate: new Date(targetDate).toISOString(),
         monthlyIncome: incomeSkipped ? null : incomeNumber,
         incomeSkipped,
-        estimatedMonthlySavings: Math.round(estimatedMonthlySavings * 100) / 100,
+        planningMode,
+        monthlyContribution,
+        // Deprecated alias, kept for workflows that haven't migrated yet.
+        estimatedMonthlySavings: monthlyContribution,
       };
 
       const res = await fetch(
@@ -228,6 +235,8 @@ export default function Onboarding() {
         createdAt: new Date().toISOString(),
         deposits: [],
         isPrimary: true,
+        planningMode,
+        monthlyContribution,
       };
       addGoal(goal);
       updateProfile({
@@ -238,13 +247,16 @@ export default function Onboarding() {
         currency,
         monthlyIncome: incomeSkipped ? null : incomeNumber,
         incomeSkipped,
+        planningMode,
+        monthlyContribution,
+        estimatedMonthlySavings: monthlyContribution,
         onboardingCompleted: true,
       });
       unlockAchievement('a1');
       // Hold the session; hand it to the lock machine after the success screen so
       // the user is routed into PIN setup.
       setPendingSession({ userId, secret });
-      setStep(8);
+      setStep(OnboardingStep.Success);
     } catch {
       setNetworkError(
         'That code is incorrect or expired, or the network failed. Request a new code and try again.'
@@ -255,9 +267,9 @@ export default function Onboarding() {
     }
   };
 
-  const goBack = () => setStep((s) => s - 1);
+  const goBack = () => setStep((s) => (s - 1) as OnboardingStep);
 
-  const showProgress = step < 6;
+  const showProgress = step < OnboardingStep.BlueprintReview;
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -269,12 +281,7 @@ export default function Onboarding() {
             </Text>
             <View className="flex-row gap-1.5">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                <View
-                  key={i}
-                  className={`h-2.5 flex-1 rounded-full ${
-                    i <= step ? 'bg-primary' : 'bg-surface-container'
-                  }`}
-                />
+                <ProgressSegment key={i} active={i <= step} />
               ))}
             </View>
           </View>
@@ -282,8 +289,8 @@ export default function Onboarding() {
 
         <ScrollView className="flex-1 px-5 py-6" keyboardShouldPersistTaps="handled">
           {/* Screen 0: Name */}
-          {step === 0 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {step === OnboardingStep.Name && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Welcome to Piggy!{'\n'}What should we call you?
@@ -315,19 +322,19 @@ export default function Onboarding() {
                     setFirstNameError("Hey, we'd love to know your name! 😊");
                     return;
                   }
-                  setStep(1);
+                  setStep(OnboardingStep.Localization);
                 }}
                 className="mt-8 w-full flex-row items-center justify-center gap-2 h-14"
               >
                 <Text className="text-base font-bold text-primary-foreground">Next</Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 1: Localization */}
-          {step === 1 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {step === OnboardingStep.Localization && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Where are you based,{'\n'}{firstName}?
               </Text>
@@ -366,19 +373,19 @@ export default function Onboarding() {
                   <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button
-                  onPress={() => setStep(2)}
+                  onPress={() => setStep(OnboardingStep.GoalDeclaration)}
                   className="flex-1 items-center justify-center flex-row gap-2"
                 >
                   <Text className="text-sm font-bold text-primary-foreground">Looks right, let's go!</Text>
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 2: Goal Declaration */}
-          {step === 2 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {step === OnboardingStep.GoalDeclaration && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 What are we saving for?
               </Text>
@@ -388,27 +395,30 @@ export default function Onboarding() {
 
               <View className="flex-row flex-wrap gap-2 mb-5">
                 {GOAL_CHIPS.map((chip) => (
-                  <TouchableOpacity
+                  <PressableScale
                     key={chip.label}
                     onPress={() => {
                       setGoalName(chip.label);
                       setGoalNameError('');
                     }}
-                    className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
-                      goalName === chip.label
-                        ? 'bg-primary-container border-2 border-primary'
-                        : 'bg-surface-container-low border-outline'
-                    }`}
                   >
-                    <Text className="text-lg">{chip.emoji}</Text>
-                    <Text
-                      className={`text-sm font-semibold ${
-                        goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
+                    <View
+                      className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
+                        goalName === chip.label
+                          ? 'bg-primary-container border-2 border-primary'
+                          : 'bg-surface-container-low border-outline'
                       }`}
                     >
-                      {chip.label}
-                    </Text>
-                  </TouchableOpacity>
+                      <Text className="text-lg">{chip.emoji}</Text>
+                      <Text
+                        className={`text-sm font-semibold ${
+                          goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
+                        }`}
+                      >
+                        {chip.label}
+                      </Text>
+                    </View>
+                  </PressableScale>
                 ))}
               </View>
 
@@ -435,7 +445,7 @@ export default function Onboarding() {
                       setGoalNameError("Tell us what you're saving for! 🎯");
                       return;
                     }
-                    setStep(3);
+                    setStep(OnboardingStep.TargetAmount);
                   }}
                   className="flex-1 items-center justify-center flex-row gap-2"
                 >
@@ -443,12 +453,12 @@ export default function Onboarding() {
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 3: Target Amount */}
-          {step === 3 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {step === OnboardingStep.TargetAmount && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 How much do you need{'\n'}for your {goalName}?
               </Text>
@@ -484,7 +494,7 @@ export default function Onboarding() {
                       setTargetAmountError('Please enter an amount greater than 0 💸');
                       return;
                     }
-                    setStep(4);
+                    setStep(OnboardingStep.Income);
                   }}
                   className="flex-1 items-center justify-center flex-row gap-2"
                 >
@@ -492,91 +502,13 @@ export default function Onboarding() {
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
-          {/* Screen 4: Timeline */}
-          {step === 4 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-              <Text className="mb-2 text-3xl font-black text-on-surface">
-                When do you want{'\n'}to achieve this?
-              </Text>
-              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                Pick a timeframe or set a custom date.
-              </Text>
-
-              <View className="flex-row flex-wrap gap-2 mb-4">
-                {TIMELINE_CHIPS.map((chip) => (
-                  <TouchableOpacity
-                    key={chip.label}
-                    onPress={() => handleTimelineChip(chip.months, chip.label)}
-                    className={`rounded-full px-4 py-2.5 border ${
-                      selectedChipLabel === chip.label
-                        ? 'bg-primary-container border-2 border-primary'
-                        : 'bg-surface-container-low border-outline'
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm font-semibold ${
-                        selectedChipLabel === chip.label
-                          ? 'text-on-primary-container'
-                          : 'text-on-surface'
-                      }`}
-                    >
-                      {chip.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                  onPress={() => setIsCalendarVisible(true)}
-                  className={`rounded-full px-4 py-2.5 border ${
-                    selectedChipLabel === 'custom'
-                      ? 'bg-primary-container border-2 border-primary'
-                      : 'bg-surface-container-low border-outline'
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-semibold ${
-                      selectedChipLabel === 'custom' ? 'text-on-primary-container' : 'text-on-surface'
-                    }`}
-                  >
-                    Custom Date
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {targetDate && selectedChipLabel === 'custom' ? (
-                <View className="rounded-2xl bg-surface-container-low p-4 mb-2">
-                  <Text className="text-sm text-on-surface-variant">Selected date</Text>
-                  <Text className="text-base font-bold text-on-surface mt-0.5">
-                    {new Date(targetDate).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                </View>
-              ) : null}
-
-              <View className="mt-6 flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={() => setStep(5)}
-                  disabled={!targetDate}
-                  className="flex-1 items-center justify-center flex-row gap-2"
-                >
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
-            </MotiView>
-          )}
-
-          {/* Screen 5: Income */}
-          {step === 5 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {/* Screen 4: Income (moved before the contribution question, so the
+              suggestion chips have an anchor to prefill from) */}
+          {step === OnboardingStep.Income && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 To build your roadmap,{'\n'}what is your average{'\n'}monthly income?
               </Text>
@@ -603,7 +535,7 @@ export default function Onboarding() {
                 <Button
                   onPress={() => {
                     setIncomeSkipped(false);
-                    setStep(6);
+                    setStep(OnboardingStep.Contribution);
                   }}
                   disabled={!(Number(monthlyIncome) > 0)}
                   className="flex-1 items-center justify-center flex-row gap-2"
@@ -618,12 +550,37 @@ export default function Onboarding() {
                   I'd rather not say right now
                 </Text>
               </TouchableOpacity>
-            </MotiView>
+            </Animated.View>
+          )}
+
+          {/* Screen 5: Contribution (replaces the old timeline/date-chip screen) */}
+          {step === OnboardingStep.Contribution && (
+            <Animated.View entering={FadeInDown.springify()}>
+              <ContributionStep
+                currency={currency}
+                targetAmount={Number(targetAmount)}
+                monthlyIncome={incomeSkipped ? null : incomeNumber}
+                incomeSkipped={incomeSkipped}
+                planningMode={planningMode}
+                onPlanningModeChange={setPlanningMode}
+                contribution={contributionInput}
+                onContributionChange={setContributionInput}
+                deadline={targetDate}
+                onDeadlineChange={setTargetDate}
+                onBack={goBack}
+                onContinue={(result) => {
+                  setMonthlyContribution(result.monthlyContribution);
+                  setTargetDate(result.targetDate);
+                  setPlanningMode(result.planningMode);
+                  setStep(OnboardingStep.BlueprintReview);
+                }}
+              />
+            </Animated.View>
           )}
 
           {/* Screen 6: Blueprint Review */}
-          {step === 6 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {step === OnboardingStep.BlueprintReview && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Let's make this official!
               </Text>
@@ -635,7 +592,6 @@ export default function Onboarding() {
                 <Row label="Name" value={firstName} />
                 <Row label="Goal" value={goalName} />
                 <Row label="Target" value={formatCurrency(Number(targetAmount), currency)} />
-                <Row label="Deadline" value={formatTargetDate(targetDate)} />
                 <Row
                   label="Monthly Income"
                   value={incomeSkipped ? 'Not provided' : formatCurrency(Number(monthlyIncome), currency)}
@@ -644,17 +600,18 @@ export default function Onboarding() {
                 <View className="h-px bg-outline-variant" />
 
                 <Row
-                  label="Est. monthly savings"
-                  value={formatCurrency(parseFloat(estimatedMonthlySavings.toFixed(2)), currency)}
+                  label="Monthly set-aside"
+                  value={formatCurrency(monthlyContribution, currency)}
                   highlight
                 />
+                <Row label="Goal reached" value={formatTargetDate(targetDate)} />
               </View>
 
               {savingsExceedsIncome && (
                 <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mb-4">
                   <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
                   <Text className="flex-1 text-sm text-warning">
-                    This target requires saving more than your income. We can adjust this layout later!
+                    This plan sets aside more than your income each month. We can adjust it anytime!
                   </Text>
                 </View>
               )}
@@ -676,19 +633,19 @@ export default function Onboarding() {
                   <ArrowLeft size={16} color="#1D4ED8" />
                 </Button>
                 <Button
-                  onPress={() => setStep(7)}
+                  onPress={() => setStep(OnboardingStep.AccountFinalization)}
                   className="flex-1 items-center justify-center flex-row gap-2 h-14"
                 >
                   <Text className="text-base font-bold text-primary-foreground">Create My Piggy Account</Text>
                   <ArrowRight size={16} color="#ffffff" />
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 7: Account Finalization */}
-          {step === 7 && (
-            <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+          {step === OnboardingStep.AccountFinalization && (
+            <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Your Piggy Plan is ready!
@@ -778,14 +735,13 @@ export default function Onboarding() {
                   )}
                 </Button>
               </View>
-            </MotiView>
+            </Animated.View>
           )}
 
           {/* Screen 8: Success */}
-          {step === 8 && (
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
+          {step === OnboardingStep.Success && (
+            <Animated.View
+              entering={FadeInDown.springify()}
               className="flex-1 items-center justify-center min-h-[70vh]"
             >
               <Text className="text-7xl text-center mb-6">🐷</Text>
@@ -813,22 +769,13 @@ export default function Onboarding() {
                 <Text className="text-base font-bold text-primary-foreground">Go to my dashboard</Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
-            </MotiView>
+            </Animated.View>
           )}
         </ScrollView>
 
-        {step === 8 && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
-
-        <CalendarModal
-          isVisible={isCalendarVisible}
-          onClose={() => setIsCalendarVisible(false)}
-          onConfirm={(date) => {
-            setTargetDate(date);
-            setSelectedChipLabel('custom');
-            setIsCalendarVisible(false);
-          }}
-          initialDate={targetDate}
-        />
+        {step === OnboardingStep.Success && (
+          <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />
+        )}
 
         <PickerModal
           isVisible={countryPickerVisible}
@@ -849,6 +796,27 @@ export default function Onboarding() {
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function ProgressSegment({ active }: { active: boolean }) {
+  const fill = useSharedValue(active ? 1 : 0);
+
+  useEffect(() => {
+    fill.value = withSpring(active ? 1 : 0, springPresets.press);
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
+
+  return (
+    <View className="h-2.5 flex-1 rounded-full bg-surface-container overflow-hidden">
+      <Animated.View
+        className="h-full w-full rounded-full bg-primary"
+        style={[{ transformOrigin: 'left' }, style]}
+      />
+    </View>
   );
 }
 

@@ -8,7 +8,7 @@
  * reads. See the billing architecture doc.
  *
  *   subscribe/upgrade:  createCheckoutSession → open hosted Stripe Checkout (external)
- *   extra AI message:   createAddonPaymentIntent → confirm with Stripe PaymentSheet
+ *   extra AI message:   createAddonCheckoutSession → open hosted Stripe Checkout (external)
  *   recover state:      requestSubscriptionSync (sync-on-foreground / after return)
  *
  * Endpoints are n8n webhook URLs, injected via env (never hardcoded). When the
@@ -87,37 +87,78 @@ export async function createCheckoutSession(
  * Stripe → n8n → Appwrite sync. Callers should refresh entitlements on return.
  */
 export async function startCheckout(plan: UserPlan, userId?: string): Promise<CheckoutResult> {
-  if (!isBillingConfigured() || !userId) return { status: 'unavailable' };
+  if (!isBillingConfigured()) {
+    console.warn('[billing] startCheckout: billing not configured (missing EXPO_PUBLIC_N8N_BILLING_URL)');
+    return { status: 'unavailable' };
+  }
+  if (!userId) {
+    console.warn('[billing] startCheckout: no userId provided');
+    return { status: 'unavailable' };
+  }
   try {
     const url = await createCheckoutSession(plan, userId);
-    if (!url) return { status: 'unavailable' };
+    if (!url) {
+      console.warn('[billing] startCheckout: n8n returned no url');
+      return { status: 'unavailable' };
+    }
     const canOpen = await Linking.canOpenURL(url);
-    if (!canOpen) return { status: 'unavailable' };
+    if (!canOpen) {
+      console.warn('[billing] startCheckout: Linking.canOpenURL returned false for', url);
+      return { status: 'unavailable' };
+    }
     await Linking.openURL(url);
     return { status: 'completed' };
-  } catch {
+  } catch (err) {
+    console.warn('[billing] startCheckout failed:', err);
     return { status: 'unavailable' };
   }
 }
 
-// ─── Extra AI message add-on (pay before allow) ─────────────────────────────
+// ─── Extra AI message add-on (hosted checkout, same rail as subscriptions) ──
 
-export interface AddonPaymentIntent {
-  clientSecret: string;
-  paymentIntentId: string;
-  amountCents: number;
-  currency: string;
+/**
+ * Ask n8n to create a Stripe Checkout Session for one-time extra AI messages
+ * (fixed price, adjustable quantity 1-20 on Stripe's own hosted page) and
+ * return its hosted URL.
+ */
+export async function createAddonCheckoutSession(userId: string): Promise<string | null> {
+  if (!isBillingConfigured()) return null;
+  const { url } = await postJson<CheckoutSessionResponse>(ENDPOINTS.addon, { userId });
+  return url ?? null;
 }
 
 /**
- * Ask n8n to create a per-message PaymentIntent (no packs; decision D-ADDON-SHAPE)
- * and a pending `addon_purchases` row. The client confirms it with Stripe
- * PaymentSheet; only after `payment_intent.succeeded` does n8n credit the
- * `usage_counters.allowance_bonus`, after which the prompt is allowed.
+ * Open hosted Stripe Checkout in the external browser for an add-on message
+ * purchase. `completed` only means the page opened; the balance credit
+ * arrives via the Stripe → n8n → Appwrite webhook. Callers should refresh
+ * entitlements on return (see `requestSubscriptionSync`).
  */
-export async function createAddonPaymentIntent(userId: string): Promise<AddonPaymentIntent | null> {
-  if (!isBillingConfigured()) return null;
-  return postJson<AddonPaymentIntent>(ENDPOINTS.addon, { userId });
+export async function startAddonCheckout(userId?: string): Promise<CheckoutResult> {
+  if (!isBillingConfigured()) {
+    console.warn('[billing] startAddonCheckout: billing not configured (missing EXPO_PUBLIC_N8N_BILLING_URL)');
+    return { status: 'unavailable' };
+  }
+  if (!userId) {
+    console.warn('[billing] startAddonCheckout: no userId provided');
+    return { status: 'unavailable' };
+  }
+  try {
+    const url = await createAddonCheckoutSession(userId);
+    if (!url) {
+      console.warn('[billing] startAddonCheckout: n8n returned no url');
+      return { status: 'unavailable' };
+    }
+    const canOpen = await Linking.canOpenURL(url);
+    if (!canOpen) {
+      console.warn('[billing] startAddonCheckout: Linking.canOpenURL returned false for', url);
+      return { status: 'unavailable' };
+    }
+    await Linking.openURL(url);
+    return { status: 'completed' };
+  } catch (err) {
+    console.warn('[billing] startAddonCheckout failed:', err);
+    return { status: 'unavailable' };
+  }
 }
 
 // ─── Recovery / sync-on-read ────────────────────────────────────────────────

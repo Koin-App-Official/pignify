@@ -1,21 +1,27 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, useWindowDimensions } from 'react-native';
 import { useFocusKey } from '@/hooks/useFocusKey';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react-native';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarModal } from '@/components/ui/calendar-modal';
 import { ProgressRing } from '@/components/ProgressRing';
 import { useStore, CURRENCIES, Goal, UserPlan, formatCurrency } from '@/lib/store';
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
-import ConfettiCannon from 'react-native-confetti-cannon';
 import { ScreenTransition } from '@/components/ScreenTransition';
+import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
+import { resolveMonthlyContribution } from '@/lib/goalMath';
+import { FadeInStagger } from '@/components/animation/FadeInStagger';
+import { PressableScale } from '@/components/animation/PressableScale';
+import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
+import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
+import { useCelebrate } from '@/components/animation/useCelebrate';
+import { springPresets } from '@/lib/springPresets';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -33,14 +39,6 @@ const GOAL_CHIPS = [
   { label: 'Something Else', emoji: '✏️' },
 ];
 
-const TIMELINE_CHIPS = [
-  { label: '6 months', months: 6 },
-  { label: '1 year', months: 12 },
-  { label: '2 years', months: 24 },
-  { label: '3 years', months: 36 },
-  { label: '5 years', months: 60 },
-];
-
 const GOAL_ICONS: Record<string, string> = {
   Vacation: '🏝️',
   'New Car': '🚗',
@@ -49,33 +47,31 @@ const GOAL_ICONS: Record<string, string> = {
   'Something Else': '✏️',
 };
 
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
-}
-
-function monthDiff(from: Date, to: Date): number {
-  return Math.max(
-    1,
-    (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
-  );
-}
-
 function formatTargetDate(isoDate: string): string {
   const d = new Date(isoDate);
   return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+/** Named steps for the add-goal flow — see the equivalent enum in app/onboarding.tsx. */
+enum CreateStep {
+  GoalDeclaration = 0,
+  TargetAmount = 1,
+  Contribution = 2,
+  Review = 3,
 }
 
 const TOTAL_STEPS = 4;
 
 export default function Goals() {
   const router = useRouter();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const goals = useStore((state) => state.goals);
   const currency = useStore((state) => state.profile.currency);
   const { plan, goals: goalQuota } = useEntitlements();
   const [gate, setGate] = useState<GateInfo | null>(null);
   const animKey = useFocusKey();
+  const { confettiProgress: depositConfettiProgress, celebrate: celebrateDeposit } = useCelebrate();
+  const { confettiProgress: creationConfettiProgress, celebrate: celebrateCreation } = useCelebrate();
   const monthlyIncome = useStore((state) => state.profile.monthlyIncome);
   const addGoal = useStore((state) => state.addGoal);
   const updateGoal = useStore((state) => state.updateGoal);
@@ -86,7 +82,7 @@ export default function Goals() {
 
   // Create flow state
   const [creating, setCreating] = useState(false);
-  const [createStep, setCreateStep] = useState(0);
+  const [createStep, setCreateStep] = useState<CreateStep>(CreateStep.GoalDeclaration);
 
   // Step 0 – goal name
   const [goalName, setGoalName] = useState('');
@@ -96,23 +92,28 @@ export default function Goals() {
   const [targetAmount, setTargetAmount] = useState('');
   const [targetAmountError, setTargetAmountError] = useState('');
 
-  // Step 2 – timeline
+  // Step 2 – contribution. `targetDate` ends up holding the derived date
+  // (contribution mode) or the picked date (deadline mode) either way.
+  const [planningMode, setPlanningMode] = useState<PlanningMode>('contribution');
+  const [contributionInput, setContributionInput] = useState('');
   const [targetDate, setTargetDate] = useState('');
-  const [selectedChipLabel, setSelectedChipLabel] = useState('');
-  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+  const [monthlyContribution, setMonthlyContribution] = useState(0);
 
   // Goal detail / deposit
   const [viewGoal, setViewGoal] = useState<Goal | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
 
-  const [confetti, setConfetti] = useState(false);
-  const [smallConfetti, setSmallConfetti] = useState(false);
 
   // Derived
-  const totalMonths = targetDate ? monthDiff(new Date(), new Date(targetDate)) : 1;
-  const estimatedMonthlySavings = targetAmount ? Number(targetAmount) / totalMonths : 0;
+  // Multiple-goals reality check: sum what every other active goal already
+  // sets aside so review can warn if adding this one pushes the total over
+  // income — a check that couldn't exist in the old date-first flow.
+  const otherActiveGoalsMonthlyTotal = goals
+    .filter((g) => !g.archived)
+    .reduce((sum, g) => sum + resolveMonthlyContribution(g.targetAmount, g.deadline, g.createdAt, g.monthlyContribution), 0);
+  const totalMonthlyWithNewGoal = otherActiveGoalsMonthlyTotal + monthlyContribution;
   const savingsExceedsIncome =
-    !!monthlyIncome && monthlyIncome > 0 && estimatedMonthlySavings > monthlyIncome;
+    !!monthlyIncome && monthlyIncome > 0 && totalMonthlyWithNewGoal > monthlyIncome;
 
   const goalIcon = GOAL_ICONS[goalName] ?? '🎯';
 
@@ -124,18 +125,15 @@ export default function Goals() {
       return;
     }
     setCreating(true);
-    setCreateStep(0);
+    setCreateStep(CreateStep.GoalDeclaration);
     setGoalName('');
     setGoalNameError('');
     setTargetAmount('');
     setTargetAmountError('');
+    setPlanningMode('contribution');
+    setContributionInput('');
     setTargetDate('');
-    setSelectedChipLabel('');
-  };
-
-  const handleTimelineChip = (months: number, label: string) => {
-    setTargetDate(addMonths(new Date(), months).toISOString().split('T')[0]);
-    setSelectedChipLabel(label);
+    setMonthlyContribution(0);
   };
 
   const finishCreate = () => {
@@ -150,10 +148,12 @@ export default function Goals() {
       createdAt: new Date().toISOString(),
       deposits: [],
       isPrimary: goals.length === 0,
+      planningMode,
+      monthlyContribution,
     };
     addGoal(goal);
     setCreating(false);
-    triggerConfetti();
+    celebrateCreation();
     addXP(20);
   };
 
@@ -169,7 +169,7 @@ export default function Goals() {
     setViewGoal(newGoal);
     setDepositAmount('');
     addXP(10);
-    triggerSmallConfetti();
+    celebrateDeposit();
     const pct = (newGoal.savedAmount / newGoal.targetAmount) * 100;
     if (pct >= 25) unlockAchievement('a5');
     if (pct >= 50) unlockAchievement('a6');
@@ -177,13 +177,12 @@ export default function Goals() {
     if (pct >= 100) unlockAchievement('a8');
   };
 
-  const triggerConfetti = () => { setConfetti(true); setTimeout(() => setConfetti(false), 3000); };
-  const triggerSmallConfetti = () => { setSmallConfetti(true); setTimeout(() => setSmallConfetti(false), 2000); };
 
   // ─── Goal detail view ────────────────────────────────────────────────────────
   if (viewGoal) {
     const g = goals.find((x) => x.id === viewGoal.id) || viewGoal;
     const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
+    const monthlySetAside = resolveMonthlyContribution(g.targetAmount, g.deadline, g.createdAt, g.monthlyContribution);
     return (
       <ScreenTransition>
       <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
@@ -202,6 +201,9 @@ export default function Goals() {
               <Text className="mt-4 text-xl font-black text-on-surface">{g.name}</Text>
               <Text className="text-sm font-semibold text-tertiary mt-1">
                 {formatCurrency(g.savedAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
+              </Text>
+              <Text className="text-xs text-on-surface-variant mt-2">
+                Setting aside {formatCurrency(monthlySetAside, currency)}/month · Goal reached {formatTargetDate(g.deadline)}
               </Text>
             </View>
 
@@ -248,7 +250,7 @@ export default function Goals() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-        {smallConfetti && <ConfettiCannon count={50} origin={{ x: -10, y: 0 }} fallSpeed={3000} />}
+        <SkiaConfetti progress={depositConfettiProgress} width={windowWidth} height={windowHeight} />
       </SafeAreaView>
       </ScreenTransition>
     );
@@ -267,7 +269,7 @@ export default function Goals() {
             </Text>
             <View className="flex-row gap-1.5">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                <View key={i} className={`h-2.5 flex-1 rounded-full ${i <= createStep ? 'bg-primary' : 'bg-surface-container'}`} />
+                <ProgressSegment key={i} active={i <= createStep} />
               ))}
             </View>
           </View>
@@ -275,27 +277,30 @@ export default function Goals() {
           <ScrollView className="flex-1 px-5 py-6" keyboardShouldPersistTaps="handled">
 
             {/* Step 0: What are we saving for? */}
-            {createStep === 0 && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            {createStep === CreateStep.GoalDeclaration && (
+              <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">What are we saving for?</Text>
                 <Text className="mb-6 text-sm font-medium text-on-surface-variant">Pick a goal or type your own below.</Text>
 
                 <View className="flex-row flex-wrap gap-2 mb-5">
                   {GOAL_CHIPS.map((chip) => (
-                    <TouchableOpacity
+                    <PressableScale
                       key={chip.label}
                       onPress={() => { setGoalName(chip.label); setGoalNameError(''); }}
-                      className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
-                        goalName === chip.label
-                          ? 'bg-primary-container border-2 border-primary'
-                          : 'bg-surface-container-low border-outline'
-                      }`}
                     >
-                      <Text className="text-lg">{chip.emoji}</Text>
-                      <Text className={`text-sm font-semibold ${goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'}`}>
-                        {chip.label}
-                      </Text>
-                    </TouchableOpacity>
+                      <View
+                        className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 border ${
+                          goalName === chip.label
+                            ? 'bg-primary-container border-2 border-primary'
+                            : 'bg-surface-container-low border-outline'
+                        }`}
+                      >
+                        <Text className="text-lg">{chip.emoji}</Text>
+                        <Text className={`text-sm font-semibold ${goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'}`}>
+                          {chip.label}
+                        </Text>
+                      </View>
+                    </PressableScale>
                   ))}
                 </View>
 
@@ -313,7 +318,7 @@ export default function Goals() {
                   <Button
                     onPress={() => {
                       if (goalName.trim().length < 1) { setGoalNameError("Tell us what you're saving for! 🎯"); return; }
-                      setCreateStep(1);
+                      setCreateStep(CreateStep.TargetAmount);
                     }}
                     className="flex-1 items-center justify-center flex-row gap-2"
                   >
@@ -321,12 +326,12 @@ export default function Goals() {
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
-              </MotiView>
+              </Animated.View>
             )}
 
             {/* Step 1: Target amount */}
-            {createStep === 1 && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            {createStep === CreateStep.TargetAmount && (
+              <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">
                   How much do you need{'\n'}for your {goalName}?
                 </Text>
@@ -348,13 +353,13 @@ export default function Goals() {
                 {targetAmountError ? <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text> : null}
 
                 <View className="mt-8 flex-row gap-3">
-                  <Button variant="outline" onPress={() => setCreateStep(0)} className="w-14 items-center justify-center">
+                  <Button variant="outline" onPress={() => setCreateStep(CreateStep.GoalDeclaration)} className="w-14 items-center justify-center">
                     <ArrowLeft size={16} color="#1D4ED8" />
                   </Button>
                   <Button
                     onPress={() => {
                       if (!(Number(targetAmount) > 0)) { setTargetAmountError('Please enter an amount greater than 0 💸'); return; }
-                      setCreateStep(2);
+                      setCreateStep(CreateStep.Contribution);
                     }}
                     className="flex-1 items-center justify-center flex-row gap-2"
                   >
@@ -362,77 +367,37 @@ export default function Goals() {
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
-              </MotiView>
+              </Animated.View>
             )}
 
-            {/* Step 2: Timeline */}
-            {createStep === 2 && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
-                <Text className="mb-2 text-3xl font-black text-on-surface">
-                  When do you want{'\n'}to achieve this?
-                </Text>
-                <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                  Pick a timeframe or set a custom date.
-                </Text>
-
-                <View className="flex-row flex-wrap gap-2 mb-4">
-                  {TIMELINE_CHIPS.map((chip) => (
-                    <TouchableOpacity
-                      key={chip.label}
-                      onPress={() => handleTimelineChip(chip.months, chip.label)}
-                      className={`rounded-full px-4 py-2.5 border ${
-                        selectedChipLabel === chip.label
-                          ? 'bg-primary-container border-2 border-primary'
-                          : 'bg-surface-container-low border-outline'
-                      }`}
-                    >
-                      <Text className={`text-sm font-semibold ${selectedChipLabel === chip.label ? 'text-on-primary-container' : 'text-on-surface'}`}>
-                        {chip.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    onPress={() => setIsCalendarVisible(true)}
-                    className={`rounded-full px-4 py-2.5 border ${
-                      selectedChipLabel === 'custom'
-                        ? 'bg-primary-container border-2 border-primary'
-                        : 'bg-surface-container-low border-outline'
-                    }`}
-                  >
-                    <Text className={`text-sm font-semibold ${selectedChipLabel === 'custom' ? 'text-on-primary-container' : 'text-on-surface'}`}>
-                      Custom Date
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {targetDate && selectedChipLabel === 'custom' && (
-                  <View className="rounded-2xl bg-surface-container-low p-4 mb-2">
-                    <Text className="text-sm text-on-surface-variant">Selected date</Text>
-                    <Text className="text-base font-bold text-on-surface mt-0.5">
-                      {new Date(targetDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </Text>
-                  </View>
-                )}
-
-                <View className="mt-6 flex-row gap-3">
-                  <Button variant="outline" onPress={() => setCreateStep(1)} className="w-14 items-center justify-center">
-                    <ArrowLeft size={16} color="#1D4ED8" />
-                  </Button>
-                  <Button
-                    onPress={() => setCreateStep(3)}
-                    disabled={!targetDate}
-                    className="flex-1 items-center justify-center flex-row gap-2"
-                  >
-                    <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                    <ArrowRight size={16} color="#ffffff" />
-                  </Button>
-                </View>
-              </MotiView>
+            {/* Step 2: Contribution (shared with onboarding) */}
+            {createStep === CreateStep.Contribution && (
+              <Animated.View entering={FadeInDown.springify()}>
+                <ContributionStep
+                  currency={currency}
+                  targetAmount={Number(targetAmount)}
+                  monthlyIncome={monthlyIncome}
+                  incomeSkipped={!monthlyIncome}
+                  planningMode={planningMode}
+                  onPlanningModeChange={setPlanningMode}
+                  contribution={contributionInput}
+                  onContributionChange={setContributionInput}
+                  deadline={targetDate}
+                  onDeadlineChange={setTargetDate}
+                  onBack={() => setCreateStep(CreateStep.TargetAmount)}
+                  onContinue={(result) => {
+                    setMonthlyContribution(result.monthlyContribution);
+                    setTargetDate(result.targetDate);
+                    setPlanningMode(result.planningMode);
+                    setCreateStep(CreateStep.Review);
+                  }}
+                />
+              </Animated.View>
             )}
 
             {/* Step 3: Review */}
-            {createStep === 3 && (
-              <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
+            {createStep === CreateStep.Review && (
+              <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">Looks good!</Text>
                 <Text className="mb-6 text-sm font-medium text-on-surface-variant">
                   Here's your savings plan at a glance.
@@ -441,30 +406,28 @@ export default function Goals() {
                 <View className="rounded-3xl bg-surface p-6 gap-4 mb-4" style={CARD_SHADOW}>
                   <ReviewRow label="Goal" value={`${goalIcon}  ${goalName}`} />
                   <ReviewRow label="Target" value={formatCurrency(Number(targetAmount), currency)} />
-                  <ReviewRow label="Deadline" value={formatTargetDate(targetDate)} />
                   <View className="h-px bg-outline-variant" />
                   <ReviewRow
-                    label="Est. monthly savings"
-                    value={formatCurrency(parseFloat(estimatedMonthlySavings.toFixed(2)), currency)}
+                    label="Monthly set-aside"
+                    value={formatCurrency(monthlyContribution, currency)}
                     highlight
                   />
+                  <ReviewRow label="Goal reached" value={formatTargetDate(targetDate)} />
                 </View>
 
                 {savingsExceedsIncome && (
                   <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mb-4">
                     <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
                     <Text className="flex-1 text-sm text-warning">
-                      This target requires saving more than your monthly income. You can adjust it anytime.
+                      {otherActiveGoalsMonthlyTotal > 0
+                        ? "Across all your active goals, this pushes your total monthly set-aside above your income. You can adjust anytime."
+                        : 'This target requires setting aside more than your monthly income. You can adjust it anytime.'}
                     </Text>
                   </View>
                 )}
 
-                <Text className="mb-6 text-sm font-medium text-on-surface-variant text-center">
-                  You're only {totalMonths} month{totalMonths !== 1 ? 's' : ''} away. Let's make it happen!
-                </Text>
-
                 <View className="flex-row gap-3">
-                  <Button variant="outline" onPress={() => setCreateStep(2)} className="w-14 items-center justify-center">
+                  <Button variant="outline" onPress={() => setCreateStep(CreateStep.Contribution)} className="w-14 items-center justify-center">
                     <ArrowLeft size={16} color="#1D4ED8" />
                   </Button>
                   <Button onPress={finishCreate} className="flex-1 items-center justify-center flex-row gap-2 h-14">
@@ -472,17 +435,10 @@ export default function Goals() {
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
-              </MotiView>
+              </Animated.View>
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-
-        <CalendarModal
-          isVisible={isCalendarVisible}
-          onClose={() => setIsCalendarVisible(false)}
-          onConfirm={(date) => { setTargetDate(date); setSelectedChipLabel('custom'); setIsCalendarVisible(false); }}
-          initialDate={targetDate}
-        />
       </SafeAreaView>
       </ScreenTransition>
     );
@@ -510,12 +466,7 @@ export default function Goals() {
               {goals.map((g, index) => {
                 const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
                 return (
-                  <MotiView
-                    key={g.id}
-                    from={{ opacity: 0, translateY: 20 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ delay: index * 100 }}
-                  >
+                  <FadeInStagger key={g.id} index={index} delayStep={100}>
                     <TouchableOpacity onPress={() => setViewGoal(g)} className="w-full rounded-3xl bg-surface p-4" style={CARD_SHADOW}>
                       <View className="flex-row items-center gap-4">
                         <Text className="text-3xl">{g.icon}</Text>
@@ -531,13 +482,13 @@ export default function Goals() {
                           <Text className="text-xs text-on-surface-variant mt-1">
                             {formatCurrency(g.savedAmount, currency)} / {formatCurrency(g.targetAmount, currency)}
                           </Text>
-                          <View className="mt-3 h-2.5 w-full rounded-full bg-surface-container overflow-hidden">
-                            <View className="h-2.5 rounded-full bg-tertiary" style={{ width: `${pct}%` }} />
+                          <View className="mt-3">
+                            <AnimatedProgressBar progress={pct / 100} color="#22C55E" />
                           </View>
                         </View>
                       </View>
                     </TouchableOpacity>
-                  </MotiView>
+                  </FadeInStagger>
                 );
               })}
             </View>
@@ -554,7 +505,7 @@ export default function Goals() {
           </TouchableOpacity>
         )}
       </View>
-      {confetti && <ConfettiCannon count={100} origin={{ x: -10, y: 0 }} fallSpeed={2000} />}
+      <SkiaConfetti progress={creationConfettiProgress} width={windowWidth} height={windowHeight} />
 
       <UpgradeModal
         isVisible={gate !== null}
@@ -567,6 +518,27 @@ export default function Goals() {
       />
     </SafeAreaView>
     </ScreenTransition>
+  );
+}
+
+function ProgressSegment({ active }: { active: boolean }) {
+  const fill = useSharedValue(active ? 1 : 0);
+
+  useEffect(() => {
+    fill.value = withSpring(active ? 1 : 0, springPresets.press);
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }));
+
+  return (
+    <View className="h-2.5 flex-1 rounded-full bg-surface-container overflow-hidden">
+      <Animated.View
+        className="h-full w-full rounded-full bg-primary"
+        style={[{ transformOrigin: 'left' }, style]}
+      />
+    </View>
   );
 }
 
