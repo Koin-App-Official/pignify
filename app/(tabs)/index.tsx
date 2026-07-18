@@ -1,15 +1,34 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
 import { Plus, Flame, TrendingUp, ChevronRight, Calendar } from 'lucide-react-native';
-import { MotiView } from 'moti';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, formatCurrency } from '@/lib/store';
+import { useStore, formatCurrency, CURRENCIES } from '@/lib/store';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { Button } from '@/components/ui/button';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useFocusKey } from '@/hooks/useFocusKey';
+import { FadeInStagger } from '@/components/animation/FadeInStagger';
+import { AnimatedCurrency } from '@/components/animation/AnimatedCurrency';
+import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
+import { springPresets } from '@/lib/springPresets';
+
+function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
+  return (n: number): string => {
+    'worklet';
+    const rounded = Math.round(n);
+    const sign = rounded < 0 ? '-' : '';
+    const digits = Math.abs(rounded).toString();
+    let withCommas = '';
+    for (let i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 === 0) withCommas += ',';
+      withCommas += digits[i];
+    }
+    return symbolAfter ? `${sign}${withCommas} ${symbol}` : `${sign}${symbol}${withCommas}`;
+  };
+}
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,6 +39,12 @@ export default function Dashboard() {
   const [activeGoalIndex, setActiveGoalIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const animKey = useFocusKey();
+
+  const currencyInfo = CURRENCIES.find((c) => c.code === profile.currency);
+  const currencyFormatter = useMemo(
+    () => makeCurrencyFormatter(currencyInfo?.symbol ?? profile.currency, currencyInfo?.symbolAfter ?? false),
+    [currencyInfo?.symbol, currencyInfo?.symbolAfter, profile.currency]
+  );
 
   const calculateTodaySpend = useCallback(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -76,25 +101,17 @@ export default function Dashboard() {
       <ScrollView className="flex-1 px-5 py-6">
         <View key={animKey}>
         {profile.incomeSkipped && (
-          <MotiView
-            from={{ opacity: 0, translateY: 16 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: 0 }}
-          >
+          <FadeInStagger index={0} delayStep={60}>
             <View className="mb-4 rounded-2xl bg-warning-container p-4" style={{ borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}>
               <Text className="text-sm font-semibold text-warning">
                 💡 Add your monthly income to unlock personalised savings insights.
               </Text>
             </View>
-          </MotiView>
+          </FadeInStagger>
         )}
 
         {/* Header */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 0 }}
-        >
+        <FadeInStagger index={0} delayStep={60}>
           <View className="mb-6 flex-row items-center justify-between">
             <View>
               <Text className="text-sm font-medium text-on-surface-variant">
@@ -108,14 +125,10 @@ export default function Dashboard() {
               <Text className="text-sm font-black text-warning">{profile.streak}</Text>
             </View>
           </View>
-        </MotiView>
+        </FadeInStagger>
 
         {/* Goal Slider */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 60 }}
-        >
+        <FadeInStagger index={1} delayStep={60}>
           {goals.length > 0 ? (
             <View className="mb-2">
               <FlatList
@@ -139,9 +152,16 @@ export default function Dashboard() {
                         <Text className="text-4xl font-black text-on-surface">{pct}%</Text>
                         <Text className="text-sm font-medium text-on-surface-variant mt-1">{g.name}</Text>
                       </ProgressRing>
-                      <Text className="mt-4 text-base font-semibold text-tertiary">
-                        {formatCurrency(g.savedAmount, profile.currency)} of {formatCurrency(g.targetAmount, profile.currency)}
-                      </Text>
+                      <View className="mt-4 flex-row items-center">
+                        <AnimatedCurrency
+                          value={g.savedAmount}
+                          formatter={currencyFormatter}
+                          style={{ fontSize: 16, fontWeight: '600', color: '#22C55E', padding: 0 }}
+                        />
+                        <Text className="text-base font-semibold text-tertiary">
+                          {' '}of {formatCurrency(g.targetAmount, profile.currency)}
+                        </Text>
+                      </View>
                       <Text className="text-sm text-on-surface-variant mt-1">{days} days left</Text>
                     </View>
                   );
@@ -150,15 +170,7 @@ export default function Dashboard() {
               {goals.length > 1 && (
                 <View className="flex-row justify-center gap-1.5 mt-4">
                   {goals.map((_, i) => (
-                    <View
-                      key={i}
-                      style={{
-                        width: i === activeGoalIndex ? 16 : 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: i === activeGoalIndex ? '#1D4ED8' : '#E2E8F0',
-                      }}
-                    />
+                    <CarouselDot key={i} active={i === activeGoalIndex} />
                   ))}
                 </View>
               )}
@@ -174,15 +186,11 @@ export default function Dashboard() {
               />
             </View>
           )}
-        </MotiView>
+        </FadeInStagger>
 
         {/* Motivational Copy */}
         {activeGoal && progress > 0 && (
-          <MotiView
-            from={{ opacity: 0, translateY: 16 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: 120 }}
-          >
+          <FadeInStagger index={2} delayStep={60}>
             <View className="mb-5 rounded-3xl bg-tertiary-container p-4 items-center flex-row justify-center gap-2">
               <Text className="text-lg">🐷</Text>
               <Text className="text-sm font-semibold text-on-tertiary-container text-center flex-1">
@@ -195,44 +203,37 @@ export default function Dashboard() {
                   : 'Almost there! Your goal is within reach 👑'}
               </Text>
             </View>
-          </MotiView>
+          </FadeInStagger>
         )}
 
         {/* Streak + Today */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 180 }}
-        >
+        <FadeInStagger index={3} delayStep={60}>
           <View className="mb-5 flex-row gap-3">
             <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
               <Text className="mb-3 text-xs font-semibold text-on-surface-variant">Weekly Streak</Text>
               <View className="flex-row justify-between">
                 {streakDots.map((d, i) => (
-                  <View key={i} className="items-center gap-1.5">
-                    <View className={`h-4 w-4 rounded-full ${d.active ? 'bg-warning' : 'bg-surface-container'}`} />
-                    <Text className="text-[10px] font-semibold text-on-surface-variant">{d.label}</Text>
-                  </View>
+                  <StreakDot key={i} label={d.label} active={d.active} />
                 ))}
               </View>
             </View>
             <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
               <Text className="mb-1.5 text-xs font-semibold text-on-surface-variant">Today's Spending</Text>
-              <Text className="text-2xl font-black text-on-surface mb-1">{formatCurrency(todaySpend, profile.currency)}</Text>
+              <AnimatedCurrency
+                value={todaySpend}
+                formatter={currencyFormatter}
+                style={{ fontSize: 24, fontWeight: '900', color: '#0f172a', marginBottom: 4, padding: 0 }}
+              />
               <Text className="text-xs text-on-surface-variant">
                 across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
                 expenses
               </Text>
             </View>
           </View>
-        </MotiView>
+        </FadeInStagger>
 
         {/* Saved Today + This Month */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 240 }}
-        >
+        <FadeInStagger index={4} delayStep={60}>
           <View className="mb-5 flex-row gap-3">
             <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
               <View className="flex-row items-center gap-2 mb-1.5">
@@ -241,9 +242,11 @@ export default function Dashboard() {
                 </View>
                 <Text className="text-xs font-semibold text-on-surface-variant">Saved Today</Text>
               </View>
-              <Text className="text-2xl font-black text-tertiary">
-                {formatCurrency(savedToday, profile.currency)}
-              </Text>
+              <AnimatedCurrency
+                value={savedToday}
+                formatter={currencyFormatter}
+                style={{ fontSize: 24, fontWeight: '900', color: '#22C55E', padding: 0 }}
+              />
             </View>
             <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
               <View className="flex-row items-center gap-2 mb-1.5">
@@ -252,33 +255,27 @@ export default function Dashboard() {
                 </View>
                 <Text className="text-xs font-semibold text-on-surface-variant">Saved This Month</Text>
               </View>
-              <Text className="text-2xl font-black text-tertiary">
-                {formatCurrency(savedThisMonth, profile.currency)}
-              </Text>
+              <AnimatedCurrency
+                value={savedThisMonth}
+                formatter={currencyFormatter}
+                style={{ fontSize: 24, fontWeight: '900', color: '#22C55E', padding: 0 }}
+              />
             </View>
           </View>
-        </MotiView>
+        </FadeInStagger>
 
         {/* Quick Add Expense */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 300 }}
-        >
+        <FadeInStagger index={5} delayStep={60}>
           <Button
             onPress={() => setShowExpense(true)}
             variant="tonal"
             className="mb-5 w-full flex-row items-center justify-center h-14"
             label="Quick Add Expense"
           />
-        </MotiView>
+        </FadeInStagger>
 
         {/* Level & Progress */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ delay: 360 }}
-        >
+        <FadeInStagger index={6} delayStep={60}>
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
             <View className="flex-row items-center justify-between mb-3">
               <View className="flex-row items-center gap-2">
@@ -289,23 +286,14 @@ export default function Dashboard() {
                 {profile.xp % 100}/100 XP
               </Text>
             </View>
-            <View className="h-2.5 w-full rounded-full bg-surface-container overflow-hidden">
-              <View
-                className="h-2.5 rounded-full bg-primary"
-                style={{ width: `${profile.xp % 100}%` }}
-              />
-            </View>
+            <AnimatedProgressBar progress={(profile.xp % 100) / 100} />
           </View>
-        </MotiView>
+        </FadeInStagger>
 
         {/* Goals list */}
         {goals.length > 0 && (
           <View className="mb-8">
-            <MotiView
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ delay: 420 }}
-            >
+            <FadeInStagger index={7} delayStep={60}>
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-lg font-bold text-on-surface">Your Goals</Text>
                 <TouchableOpacity onPress={() => router.push('/goals')} className="flex-row items-center gap-0.5">
@@ -313,15 +301,10 @@ export default function Dashboard() {
                   <ChevronRight size={16} color="#1D4ED8" />
                 </TouchableOpacity>
               </View>
-            </MotiView>
+            </FadeInStagger>
             <View className="gap-3">
               {goals.slice(0, 3).map((g, i) => (
-                <MotiView
-                  key={g.id}
-                  from={{ opacity: 0, translateY: 16 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{ delay: 480 + i * 60 }}
-                >
+                <FadeInStagger key={g.id} index={8 + i} delayStep={60}>
                   <View
                     className="flex-row items-center gap-4 rounded-2xl bg-surface p-4 min-h-[72px]"
                     style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4 }}
@@ -331,18 +314,16 @@ export default function Dashboard() {
                       <Text className="text-sm font-bold text-on-surface mb-2" numberOfLines={1}>
                         {g.name}
                       </Text>
-                      <View className="h-2.5 w-full rounded-full bg-surface-container overflow-hidden">
-                        <View
-                          className="h-2.5 rounded-full bg-tertiary"
-                          style={{ width: `${Math.round((g.savedAmount / g.targetAmount) * 100)}%` }}
-                        />
-                      </View>
+                      <AnimatedProgressBar
+                        progress={g.savedAmount / g.targetAmount}
+                        color="#22C55E"
+                      />
                     </View>
                     <Text className="text-sm font-bold text-on-surface-variant">
                       {Math.round((g.savedAmount / g.targetAmount) * 100)}%
                     </Text>
                   </View>
-                </MotiView>
+                </FadeInStagger>
               ))}
             </View>
           </View>
@@ -353,5 +334,40 @@ export default function Dashboard() {
       <AddExpenseModal open={showExpense} onClose={() => setShowExpense(false)} />
     </SafeAreaView>
     </ScreenTransition>
+  );
+}
+
+function CarouselDot({ active }: { active: boolean }) {
+  const progress = useSharedValue(active ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(active ? 1 : 0, springPresets.press);
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scaleX: interpolate(progress.value, [0, 1], [1, 2]) }],
+    backgroundColor: active ? '#1D4ED8' : '#E2E8F0',
+  }));
+
+  return <Animated.View style={[{ width: 8, height: 8, borderRadius: 4, transformOrigin: 'left' }, style]} />;
+}
+
+function StreakDot({ label, active }: { label: string; active: boolean }) {
+  const scale = useSharedValue(active ? 1 : 0.6);
+
+  useEffect(() => {
+    scale.value = withSpring(active ? 1 : 0.6, springPresets.press);
+  }, [active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: active ? '#F59E0B' : '#E2E8F0',
+  }));
+
+  return (
+    <View className="items-center gap-1.5">
+      <Animated.View style={[{ height: 16, width: 16, borderRadius: 8 }, style]} />
+      <Text className="text-[10px] font-semibold text-on-surface-variant">{label}</Text>
+    </View>
   );
 }
