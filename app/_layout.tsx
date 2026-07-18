@@ -17,6 +17,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="plans" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="change-pin" options={{ headerShown: false, presentation: 'modal' }} />
         </Stack>
       </AuthGate>
     </GestureHandlerRootView>

@@ -36,6 +36,7 @@
       "expo-router",
       "expo-font",
       "expo-secure-store",
+      "react-native-quick-crypto",
       [
         "expo-local-authentication",
         {
