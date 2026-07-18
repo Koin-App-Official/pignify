@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { useAuthLock } from '@/lib/authLock';
 import { PIN_LENGTH } from '@/lib/pin';
 import {
@@ -82,6 +83,7 @@ export function LockGate() {
     if (res.ok) return; // status flips, screen unmounts
     setPin('');
     setShakeKey((k) => k + 1);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     if (res.reason === 'locked') {
       setLockedMs(res.remainingMs ?? 0);
       setError('Too many attempts. Try again later.');
@@ -105,7 +107,7 @@ export function LockGate() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-1 items-center justify-center px-8">
-        <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} className="w-full items-center">
+        <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <Text className="text-5xl mb-4">🐷</Text>
           <Text className="text-2xl font-black text-on-surface mb-1">Enter your PIN</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
@@ -137,7 +139,7 @@ export function LockGate() {
           <Pressable onPress={resetToLogin} className="mt-8 py-2">
             <Text className="text-sm font-semibold text-primary underline">Forgot PIN?</Text>
           </Pressable>
-        </MotiView>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
