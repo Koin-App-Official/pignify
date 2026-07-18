@@ -1,8 +1,36 @@
 import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Target, Zap, MessageCircle, User } from 'lucide-react-native';
+import { Home, Target, Zap, MessageCircle, User, type LucideIcon } from 'lucide-react-native';
 import { AppState, View } from 'react-native';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useStore } from '@/lib/store';
+import { springPresets } from '@/lib/springPresets';
+
+function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: string; Icon: LucideIcon }) {
+  const progress = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(focused ? 1 : 0, springPresets.press);
+  }, [focused]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ scale: interpolate(progress.value, [0, 1], [0.8, 1]) }],
+  }));
+
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(progress.value, [0, 1], [1, 1.1]) }],
+  }));
+
+  return (
+    <View className="w-16 h-9 items-center justify-center">
+      <Animated.View className="absolute w-16 h-9 rounded-2xl bg-primary-container" style={pillStyle} />
+      <Animated.View style={iconStyle}>
+        <Icon size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
+      </Animated.View>
+    </View>
+  );
+}
 
 const SYNC_URL = 'https://n8n.piggnify.com/webhook/claude-plan';
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
@@ -68,55 +96,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-9 items-center justify-center rounded-2xl ${focused ? 'bg-primary-container' : ''}`}>
-              <Home size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
-            </View>
-          ),
+          tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={Home} />,
         }}
       />
       <Tabs.Screen
         name="goals"
         options={{
           title: 'Goals',
-          tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-9 items-center justify-center rounded-2xl ${focused ? 'bg-primary-container' : ''}`}>
-              <Target size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
-            </View>
-          ),
+          tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={Target} />,
         }}
       />
       <Tabs.Screen
         name="missions"
         options={{
           title: 'Missions',
-          tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-9 items-center justify-center rounded-2xl ${focused ? 'bg-primary-container' : ''}`}>
-              <Zap size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
-            </View>
-          ),
+          tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={Zap} />,
         }}
       />
       <Tabs.Screen
         name="coach"
         options={{
           title: 'Coach',
-          tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-9 items-center justify-center rounded-2xl ${focused ? 'bg-primary-container' : ''}`}>
-              <MessageCircle size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
-            </View>
-          ),
+          tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={MessageCircle} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <View className={`w-16 h-9 items-center justify-center rounded-2xl ${focused ? 'bg-primary-container' : ''}`}>
-              <User size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
-            </View>
-          ),
+          tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={User} />,
         }}
       />
     </Tabs>
