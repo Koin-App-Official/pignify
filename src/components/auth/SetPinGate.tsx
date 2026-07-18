@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MotiView } from 'moti';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuthLock } from '@/lib/authLock';
 import { Button } from '@/components/ui/button';
 import { PIN_LENGTH, setPin, validatePinStrength } from '@/lib/pin';
@@ -103,7 +103,7 @@ export function SetPinGate() {
     return (
       <SafeAreaView className="flex-1 bg-surface">
         <View className="flex-1 items-center justify-center px-8">
-          <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} className="w-full items-center">
+          <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
             <Text className="text-5xl mb-4">🔐</Text>
             <Text className="text-2xl font-black text-on-surface mb-2 text-center">
               Unlock faster with {label}?
@@ -117,7 +117,7 @@ export function SetPinGate() {
             <Button variant="ghost" onPress={skipBiometric} disabled={busy} className="w-full">
               <Text className="text-base font-bold text-primary">Not now</Text>
             </Button>
-          </MotiView>
+          </Animated.View>
         </View>
       </SafeAreaView>
     );
@@ -132,7 +132,7 @@ export function SetPinGate() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-1 items-center justify-center px-8">
-        <MotiView from={{ opacity: 0, translateY: 12 }} animate={{ opacity: 1, translateY: 0 }} className="w-full items-center">
+        <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <Text className="text-5xl mb-4">🐷</Text>
           <Text className="text-2xl font-black text-on-surface mb-1">{title}</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">{subtitle}</Text>
@@ -145,7 +145,7 @@ export function SetPinGate() {
           <View className="mt-6">
             <PinPad onDigit={onDigit} onBackspace={() => setPinValue((p) => p.slice(0, -1))} disabled={busy} />
           </View>
-        </MotiView>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
