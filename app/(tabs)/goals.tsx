@@ -70,8 +70,8 @@ export default function Goals() {
   const { plan, goals: goalQuota } = useEntitlements();
   const [gate, setGate] = useState<GateInfo | null>(null);
   const animKey = useFocusKey();
-  const { confettiProgress: depositConfettiProgress, celebrate: celebrateDeposit } = useCelebrate();
-  const { confettiProgress: creationConfettiProgress, celebrate: celebrateCreation } = useCelebrate();
+  const { confettiProgress: depositConfettiProgress, celebrate: celebrateDeposit, active: depositConfettiActive } = useCelebrate();
+  const { confettiProgress: creationConfettiProgress, celebrate: celebrateCreation, active: creationConfettiActive } = useCelebrate();
   const monthlyIncome = useStore((state) => state.profile.monthlyIncome);
   const addGoal = useStore((state) => state.addGoal);
   const updateGoal = useStore((state) => state.updateGoal);
@@ -250,7 +250,9 @@ export default function Goals() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-        <SkiaConfetti progress={depositConfettiProgress} width={windowWidth} height={windowHeight} />
+        {depositConfettiActive && (
+          <SkiaConfetti progress={depositConfettiProgress} width={windowWidth} height={windowHeight} />
+        )}
       </SafeAreaView>
       </ScreenTransition>
     );
@@ -505,7 +507,9 @@ export default function Goals() {
           </TouchableOpacity>
         )}
       </View>
-      <SkiaConfetti progress={creationConfettiProgress} width={windowWidth} height={windowHeight} />
+      {creationConfettiActive && (
+        <SkiaConfetti progress={creationConfettiProgress} width={windowWidth} height={windowHeight} />
+      )}
 
       <UpgradeModal
         isVisible={gate !== null}
