@@ -32,7 +32,7 @@ export default function Missions() {
   const [tab, setTab] = useState<'missions' | 'achievements'>('missions');
   const animKey = useFocusKey();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const { confettiProgress, celebrate } = useCelebrate();
+  const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
 
   const completeMission = (m: Mission) => {
     completeMissionAction(m.id);
@@ -110,7 +110,7 @@ export default function Missions() {
         )}
         </View>
       </ScrollView>
-      <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />
+      {confettiActive && <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />}
     </SafeAreaView>
     </ScreenTransition>
   );
