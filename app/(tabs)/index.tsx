@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, FlatList, useWindowDimensions, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import { Plus, Flame, TrendingUp, ChevronRight, Calendar } from 'lucide-react-native';
+import { Plus, Flame, TrendingUp, ChevronRight, Calendar, Sparkles } from 'lucide-react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, formatCurrency, CURRENCIES } from '@/lib/store';
+import { useStore, formatCurrency, CURRENCIES, type UserPlan } from '@/lib/store';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { Button } from '@/components/ui/button';
 import { ScreenTransition } from '@/components/ScreenTransition';
@@ -14,6 +14,10 @@ import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { AnimatedCurrency } from '@/components/animation/AnimatedCurrency';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
 import { springPresets } from '@/lib/springPresets';
+import { useEntitlements } from '@/hooks/useEntitlements';
+import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
+import { UpgradeModal } from '@/components/UpgradeModal';
+import { triggerDeepAnalysis } from '@/lib/deepAnalysis';
 
 function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
   return (n: number): string => {
@@ -39,6 +43,34 @@ export default function Dashboard() {
   const [activeGoalIndex, setActiveGoalIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const animKey = useFocusKey();
+
+  const { plan, has, deepAnalysis } = useEntitlements();
+  const incrementDeepAnalysis = useStore((s) => s.incrementDeepAnalysis);
+  const [gate, setGate] = useState<GateInfo | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const openGate = (key: GateKey) => setGate(gateInfo(key, plan));
+  const closeGate = () => setGate(null);
+  const goUpgrade = (target: UserPlan) => {
+    setGate(null);
+    router.push(`/plans?highlight=${target}`);
+  };
+
+  const runDeepAnalysis = async () => {
+    if (!has('deepAnalysis')) return openGate('deepAnalysis');
+    if (!deepAnalysis.allowed) return openGate('deepAnalysisQuota');
+
+    setIsAnalyzing(true);
+    const result = await triggerDeepAnalysis(profile.userID ?? '');
+    setIsAnalyzing(false);
+
+    if (result.status === 'success') {
+      incrementDeepAnalysis();
+      Alert.alert('Analysis started', "We're crunching your numbers — check your email shortly.");
+    } else {
+      Alert.alert('Something went wrong', 'Could not start the analysis. Please try again.');
+    }
+  };
 
   const currencyInfo = CURRENCIES.find((c) => c.code === profile.currency);
   const currencyFormatter = useMemo(
@@ -81,12 +113,6 @@ export default function Dashboard() {
   const daysUntilDeadline = activeGoal
     ? Math.max(0, Math.ceil((new Date(activeGoal.deadline).getTime() - Date.now()) / 86400000))
     : 0;
-
-  const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const streakDots = weekDays.map((d, i) => ({
-    label: d,
-    active: i < Math.min(profile.streak, 7),
-  }));
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -206,34 +232,50 @@ export default function Dashboard() {
           </FadeInStagger>
         )}
 
-        {/* Streak + Today */}
+        {/* Deep Analysis */}
         <FadeInStagger index={3} delayStep={60}>
-          <View className="mb-5 flex-row gap-3">
-            <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
-              <Text className="mb-3 text-xs font-semibold text-on-surface-variant">Weekly Streak</Text>
-              <View className="flex-row justify-between">
-                {streakDots.map((d, i) => (
-                  <StreakDot key={i} label={d.label} active={d.active} />
-                ))}
+          <TouchableOpacity
+            onPress={runDeepAnalysis}
+            disabled={isAnalyzing}
+            activeOpacity={0.85}
+            className="mb-5 w-full rounded-2xl bg-primary-container px-4 h-14 flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center gap-3">
+              <View className="h-9 w-9 rounded-xl bg-primary/10 items-center justify-center">
+                <Sparkles size={18} color="#1D4ED8" />
               </View>
-            </View>
-            <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
-              <Text className="mb-1.5 text-xs font-semibold text-on-surface-variant">Today's Spending</Text>
-              <AnimatedCurrency
-                value={todaySpend}
-                formatter={currencyFormatter}
-                style={{ fontSize: 24, fontWeight: '900', color: '#0f172a', marginBottom: 4, padding: 0 }}
-              />
-              <Text className="text-xs text-on-surface-variant">
-                across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
-                expenses
+              <Text className="text-sm font-black text-on-primary-container">
+                {isAnalyzing ? 'Analyzing…' : 'Deep Analysis'}
               </Text>
             </View>
+            <Text className="text-xs font-bold text-on-primary-container/70">
+              {!has('deepAnalysis')
+                ? 'Upgrade to unlock'
+                : deepAnalysis.unlimited
+                ? 'Unlimited'
+                : `${deepAnalysis.remaining} of ${deepAnalysis.limit} left`}
+            </Text>
+          </TouchableOpacity>
+        </FadeInStagger>
+
+        {/* Today's Spending */}
+        <FadeInStagger index={4} delayStep={60}>
+          <View className="mb-5 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
+            <Text className="mb-1.5 text-xs font-semibold text-on-surface-variant">Today's Spending</Text>
+            <AnimatedCurrency
+              value={todaySpend}
+              formatter={currencyFormatter}
+              style={{ fontSize: 24, fontWeight: '900', color: '#0f172a', marginBottom: 4, padding: 0 }}
+            />
+            <Text className="text-xs text-on-surface-variant">
+              across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
+              expenses
+            </Text>
           </View>
         </FadeInStagger>
 
         {/* Saved Today + This Month */}
-        <FadeInStagger index={4} delayStep={60}>
+        <FadeInStagger index={5} delayStep={60}>
           <View className="mb-5 flex-row gap-3">
             <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
               <View className="flex-row items-center gap-2 mb-1.5">
@@ -265,7 +307,7 @@ export default function Dashboard() {
         </FadeInStagger>
 
         {/* Quick Add Expense */}
-        <FadeInStagger index={5} delayStep={60}>
+        <FadeInStagger index={6} delayStep={60}>
           <Button
             onPress={() => setShowExpense(true)}
             variant="tonal"
@@ -275,7 +317,7 @@ export default function Dashboard() {
         </FadeInStagger>
 
         {/* Level & Progress */}
-        <FadeInStagger index={6} delayStep={60}>
+        <FadeInStagger index={7} delayStep={60}>
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
             <View className="flex-row items-center justify-between mb-3">
               <View className="flex-row items-center gap-2">
@@ -293,7 +335,7 @@ export default function Dashboard() {
         {/* Goals list */}
         {goals.length > 0 && (
           <View className="mb-8">
-            <FadeInStagger index={7} delayStep={60}>
+            <FadeInStagger index={8} delayStep={60}>
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-lg font-bold text-on-surface">Your Goals</Text>
                 <TouchableOpacity onPress={() => router.push('/goals')} className="flex-row items-center gap-0.5">
@@ -304,7 +346,7 @@ export default function Dashboard() {
             </FadeInStagger>
             <View className="gap-3">
               {goals.slice(0, 3).map((g, i) => (
-                <FadeInStagger key={g.id} index={8 + i} delayStep={60}>
+                <FadeInStagger key={g.id} index={9 + i} delayStep={60}>
                   <View
                     className="flex-row items-center gap-4 rounded-2xl bg-surface p-4 min-h-[72px]"
                     style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4 }}
@@ -332,6 +374,13 @@ export default function Dashboard() {
       </ScrollView>
 
       <AddExpenseModal open={showExpense} onClose={() => setShowExpense(false)} />
+
+      <UpgradeModal
+        isVisible={gate !== null}
+        gate={gate}
+        onClose={closeGate}
+        onUpgrade={goUpgrade}
+      />
     </SafeAreaView>
     </ScreenTransition>
   );
@@ -352,22 +401,3 @@ function CarouselDot({ active }: { active: boolean }) {
   return <Animated.View style={[{ width: 8, height: 8, borderRadius: 4, transformOrigin: 'left' }, style]} />;
 }
 
-function StreakDot({ label, active }: { label: string; active: boolean }) {
-  const scale = useSharedValue(active ? 1 : 0.6);
-
-  useEffect(() => {
-    scale.value = withSpring(active ? 1 : 0.6, springPresets.press);
-  }, [active]);
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    backgroundColor: active ? '#F59E0B' : '#E2E8F0',
-  }));
-
-  return (
-    <View className="items-center gap-1.5">
-      <Animated.View style={[{ height: 16, width: 16, borderRadius: 8 }, style]} />
-      <Text className="text-[10px] font-semibold text-on-surface-variant">{label}</Text>
-    </View>
-  );
-}
