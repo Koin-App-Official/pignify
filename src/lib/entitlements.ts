@@ -42,6 +42,7 @@ export interface PlanConfig {
     devices: QuotaValue;
     aiMessages: QuotaValue;
     emailReports: QuotaValue;
+    deepAnalysis: QuotaValue;
   };
   /** Price of one extra AI message beyond quota, or null if add-ons not offered. */
   extraMessagePriceUSD: number | null;
@@ -63,7 +64,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
     id: 'free',
     displayName: 'Beginner',
     priceUSD: 5.99,
-    quotas: { incomes: 1, goals: 1, devices: 1, aiMessages: 0, emailReports: 0 },
+    quotas: { incomes: 1, goals: 1, devices: 1, aiMessages: 0, emailReports: 0, deepAnalysis: 0 },
     extraMessagePriceUSD: null,
     emailReportsSoftLimited: false,
     emailReportsSoftCap: 0,
@@ -82,7 +83,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
     id: 'medium',
     displayName: 'Medium',
     priceUSD: 7.99,
-    quotas: { incomes: 1, goals: 2, devices: 1, aiMessages: 6, emailReports: 3 },
+    quotas: { incomes: 1, goals: 2, devices: 1, aiMessages: 6, emailReports: 3, deepAnalysis: 6 },
     extraMessagePriceUSD: 2.99,
     emailReportsSoftLimited: false,
     emailReportsSoftCap: 0,
@@ -91,7 +92,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
       emailReports: true,
       exclusiveProtection: true,
       referral: false,
-      deepAnalysis: false,
+      deepAnalysis: true,
       goalBonus: false,
       loyaltyDiscount: false,
     },
@@ -107,6 +108,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
       devices: 'unlimited',
       aiMessages: 20,
       emailReports: 'unlimited',
+      deepAnalysis: 10,
     },
     extraMessagePriceUSD: 2.99,
     emailReportsSoftLimited: true,
@@ -216,6 +218,7 @@ export type GateKey =
   | 'devices'
   | 'emailReports'
   | 'deepAnalysis'
+  | 'deepAnalysisQuota'
   | 'referral';
 
 export interface GateInfo {
@@ -269,8 +272,16 @@ export function gateInfo(key: GateKey, currentPlan: UserPlan): GateInfo {
     case 'deepAnalysis':
       return {
         title: 'Deep spending analysis',
-        description: 'Get advanced insights into your spending with the Family plan.',
+        description:
+          'Get an AI-powered deep dive into your spending, delivered straight to your inbox, by upgrading your plan.',
         requiredPlan: lowestPlanWithFeature('deepAnalysis'),
+      };
+    case 'deepAnalysisQuota':
+      return {
+        title: "You're out of Deep Analyses",
+        description:
+          "You've used all of this period's deep analyses. Upgrade for a bigger allowance.",
+        requiredPlan: lowestPlanWithMoreQuota('deepAnalysis', currentPlan),
       };
     case 'referral':
       return {

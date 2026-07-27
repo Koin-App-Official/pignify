@@ -24,6 +24,10 @@ export function useEntitlements() {
     const thisMonth = new Date().toISOString().slice(0, 7);
     return s.coachMessagesMonth === thisMonth ? s.coachMessagesUsed : 0;
   });
+  const deepAnalysisUsed = useStore((s) => {
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    return s.deepAnalysisMonth === thisMonth ? s.deepAnalysisUsed : 0;
+  });
 
   return useMemo(() => {
     const config = getPlanConfig(plan);
@@ -41,9 +45,11 @@ export function useEntitlements() {
       goals: checkQuota(plan, 'goals', activeGoals),
       incomes: checkQuota(plan, 'incomes', incomesUsed),
       aiMessages: evaluatePeriodicQuota(config.quotas.aiMessages, coachMessagesUsed, addonMessageBalance),
+      deepAnalysis: evaluatePeriodicQuota(config.quotas.deepAnalysis, deepAnalysisUsed),
       activeGoalCount: activeGoals,
       coachMessagesUsed,
       addonMessageBalance,
+      deepAnalysisUsed,
     };
-  }, [plan, goals, monthlyIncome, coachMessagesUsed, addonMessageBalance]);
+  }, [plan, goals, monthlyIncome, coachMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
 }
