@@ -121,6 +121,7 @@ const ZERO_QUOTAS: PlanConfig['quotas'] = {
   devices: 0,
   aiMessages: 0,
   emailReports: 0,
+  deepAnalysis: 0,
 };
 
 const NO_FEATURES: PlanFeatures = {

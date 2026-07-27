@@ -277,6 +277,8 @@ export interface PiggyState {
   coachMessagesMonth: string;
   /** Purchased extra AI messages, not tied to a billing period (roll over indefinitely). */
   addonMessageBalance: number;
+  deepAnalysisUsed: number;
+  deepAnalysisMonth: string;
   lastProfileSync: string;
 
   setProfile: (p: UserProfile) => void;
@@ -315,6 +317,8 @@ export interface PiggyState {
   /** Draws from the plan's monthly quota first, then `addonMessageBalance`. */
   incrementCoachMessages: (messageLimit: number) => void;
   setAddonMessageBalance: (balance: number) => void;
+  /** Called only after a confirmed-successful Deep Analysis webhook call. */
+  incrementDeepAnalysis: () => void;
   setLastProfileSync: (ts: string) => void;
 
   resetForDemo: () => void;
@@ -343,6 +347,8 @@ export const useStore = create<PiggyState>()(
       coachMessagesUsed: 0,
       coachMessagesMonth: getTodayString().slice(0, 7),
       addonMessageBalance: 0,
+      deepAnalysisUsed: 0,
+      deepAnalysisMonth: getTodayString().slice(0, 7),
       lastProfileSync: '',
 
       setProfile: (profile) => set({ profile }),
@@ -463,6 +469,12 @@ export const useStore = create<PiggyState>()(
       }),
 
       setAddonMessageBalance: (balance) => set({ addonMessageBalance: balance }),
+
+      incrementDeepAnalysis: () => set((state) => {
+        const thisMonth = getTodayString().slice(0, 7);
+        const used = state.deepAnalysisMonth === thisMonth ? state.deepAnalysisUsed : 0;
+        return { deepAnalysisUsed: used + 1, deepAnalysisMonth: thisMonth };
+      }),
 
       addXP: (amount) => set((state) => {
         const p = { ...state.profile };
