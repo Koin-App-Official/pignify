@@ -8,8 +8,16 @@ import type { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated
 export const springPresets = {
   /** Tap/press feedback — snappy, minimal overshoot. */
   press: { damping: 15, stiffness: 300 } satisfies WithSpringConfig,
-  /** Sheet drag-to-dismiss snaps — critically damped, no bounce. */
-  sheet: { damping: 30, stiffness: 200 } satisfies WithSpringConfig,
+  /**
+   * Sheet drag-to-dismiss snaps. Overdamped AND overshoot-clamped, so a fast
+   * flick (which passes its velocity into the spring) can never carry the sheet
+   * past its target and oscillate back — the snap only ever settles inward.
+   */
+  sheet: {
+    damping: 30,
+    stiffness: 200,
+    overshootClamping: true,
+  } satisfies WithSpringConfig,
 } as const;
 
 /**
