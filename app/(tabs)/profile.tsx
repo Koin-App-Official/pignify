@@ -4,12 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useRouter } from 'expo-router';
-import { Bell, CreditCard, RotateCcw, Pencil, Check, Crown, ChevronRight, Lock } from 'lucide-react-native';
-import Constants from 'expo-constants';
+import { Bell, CreditCard, RotateCcw, Pencil, Check, Settings as SettingsIcon } from 'lucide-react-native';
 
 import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
-import { getPlanConfig, formatUSD } from '@/lib/entitlements';
 import { Button } from '@/components/ui/button';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 
@@ -80,7 +78,7 @@ export default function Profile() {
   return (
     <ScreenTransition>
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
-      <ScrollView className="flex-1 px-5 py-6">
+      <ScrollView className="flex-1 px-5 pt-6" contentContainerStyle={{ paddingBottom: 96 }}>
         {/* User card */}
         <FadeInStagger index={0} delayStep={60}>
         <View className="mb-6 rounded-3xl bg-primary-container p-6 items-center" style={CARD_SHADOW}>
@@ -142,45 +140,8 @@ export default function Profile() {
         </View>
         </FadeInStagger>
 
-        {/* Subscription */}
-        <FadeInStagger index={1} delayStep={60}>
-        {(() => {
-          const planConfig = getPlanConfig(profile.plan);
-          const pendingConfig = profile.pendingPlan ? getPlanConfig(profile.pendingPlan) : null;
-          return (
-            <TouchableOpacity
-              onPress={() => router.push('/plans')}
-              className="mb-6 rounded-2xl bg-surface-container-low p-5"
-              style={CARD_SHADOW}
-            >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center gap-3 flex-1">
-                  <View className="h-10 w-10 items-center justify-center rounded-2xl bg-primary-container">
-                    <Crown size={18} color="#1D4ED8" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-sm font-bold text-on-surface">{planConfig.displayName} plan</Text>
-                    <Text className="text-xs font-medium text-on-surface-variant mt-0.5">
-                      {profile.planStatus === 'canceled'
-                        ? 'Canceled — active until period end'
-                        : pendingConfig
-                          ? `Switching to ${pendingConfig.displayName} next cycle`
-                          : `${formatUSD(planConfig.priceUSD)}/mo`}
-                    </Text>
-                  </View>
-                </View>
-                <View className="flex-row items-center gap-1">
-                  <Text className="text-xs font-bold text-primary">Manage</Text>
-                  <ChevronRight size={16} color="#1D4ED8" />
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })()}
-        </FadeInStagger>
-
         {/* Income */}
-        <FadeInStagger index={2} delayStep={60}>
+        <FadeInStagger index={1} delayStep={60}>
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-3">
             <CreditCard size={16} color="#64748B" />
@@ -194,7 +155,7 @@ export default function Profile() {
 
         {/* Expense breakdown */}
         {Object.keys(expensesByCategory).length > 0 && (
-          <FadeInStagger index={3} delayStep={60}>
+          <FadeInStagger index={2} delayStep={60}>
           <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
             <Text className="mb-4 text-base font-bold text-on-surface">Expense Breakdown</Text>
             <View className="gap-3">
@@ -218,7 +179,7 @@ export default function Profile() {
         )}
 
         {/* Notifications */}
-        <FadeInStagger index={4} delayStep={60}>
+        <FadeInStagger index={3} delayStep={60}>
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-4">
             <Bell size={16} color="#64748B" />
@@ -247,42 +208,27 @@ export default function Profile() {
         </View>
         </FadeInStagger>
 
-        {/* Change PIN */}
-        <FadeInStagger index={5} delayStep={60}>
-        <Button
-          variant="outline"
-          onPress={() => router.push('/change-pin')}
-          className="mb-3 w-full flex-row items-center justify-center gap-2 border-outline/50"
-        >
-          <Lock size={14} color="#64748B" />
-          <Text className="text-sm font-bold text-on-surface-variant">Change PIN</Text>
-        </Button>
-        </FadeInStagger>
-
         {/* Reset */}
-        <FadeInStagger index={6} delayStep={60}>
+        <FadeInStagger index={4} delayStep={60}>
         <Button
           variant="outline"
           onPress={handleReset}
-          className="mb-10 w-full flex-row items-center justify-center gap-2 border-outline/50"
+          className="mb-12 w-full flex-row items-center justify-center gap-2 border-outline/50"
         >
           <RotateCcw size={14} color="#64748B" />
           <Text className="text-sm font-bold text-on-surface-variant">Reset All Data (Demo)</Text>
         </Button>
         </FadeInStagger>
-
-        {/* Footer info */}
-        <FadeInStagger index={7} delayStep={60}>
-        <View className="mb-12 items-center">
-          <Text className="text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
-            Piggy v{Constants.expoConfig?.version || '1.0.0'}
-          </Text>
-          <Text className="text-[10px] text-on-surface-variant/30 mt-1">
-            Device: {Constants.deviceName} • SB: {Constants.statusBarHeight}px
-          </Text>
-        </View>
-        </FadeInStagger>
       </ScrollView>
+
+      {/* Settings FAB — fixed bottom-right, reachable one-handed regardless of scroll */}
+      <TouchableOpacity
+        onPress={() => router.push('/settings')}
+        className="absolute bottom-6 right-5 z-40 h-14 w-14 items-center justify-center rounded-2xl bg-primary"
+        style={{ ...CARD_SHADOW, shadowOpacity: 0.2 }}
+      >
+        <SettingsIcon size={22} color="#FFFFFF" />
+      </TouchableOpacity>
     </SafeAreaView>
     </ScreenTransition>
   );
