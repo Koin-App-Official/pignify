@@ -58,6 +58,30 @@ HTTP webhook `POST /billing-sync` `{ userId }` (also run by a **Schedule** trigg
 hourly over all active subs): refetch the user's Stripe subscription → same
 mirror+resolve as the `subscription` branch. Backstop for lost/delayed webhooks.
 
+### 5. `account-delete` (client → permanent delete) — Settings → Delete account
+HTTP webhook `POST /account-delete` `{ userId }`, called synchronously by
+`src/lib/billing.ts` `requestAccountDeletion()` — the client only wipes local
+device state (PIN/session/store) after this responds success.
+1. **Appwrite GET** `subscriptions` by `user_id` → existing row, if any.
+2. **Code** `buildDeletionPlan` (`code-nodes/account-deletion.js`) → decides
+   whether a live Stripe subscription needs canceling and lists the
+   user-keyed tables to purge (`subscriptions`, `entitlements`, `devices`,
+   `addon_purchases`, `goals`, `users`).
+3. If `needsStripeCancel` → **Stripe** cancel the subscription immediately
+   (not `cancel_at_period_end` — this is account deletion, not a downgrade).
+4. For each table in the plan → **Appwrite** list rows by `user_id` then
+   delete each (TablesDB REST has no delete-by-query).
+5. **Appwrite** delete the Auth user via the **Users REST API**
+   (`DELETE {APPWRITE_ENDPOINT}/users/{userId}`, server API key) — this is
+   not possible from the client SDK, which is why deletion must go through
+   n8n, same reason billing does.
+6. **Respond** `{ ok: true }`.
+
+⚠️ **Trust model**: like `billing-checkout`/`billing-addon`, this trusts the
+client-supplied `userId` with no additional server-side session check —
+consistent with the rest of this backend, but worth re-examining before
+launch since deletion is higher-stakes than checkout.
+
 ## n8n credentials to configure
 - **Stripe API** credential (secret key) — for Stripe nodes.
 - **Appwrite** via **HTTP Request** nodes (no native n8n Appwrite node): base
@@ -74,10 +98,15 @@ mirror+resolve as the `subscription` branch. Backstop for lost/delayed webhooks.
 
 ## App config (set in the Expo env / app.json `extra`)
 - `EXPO_PUBLIC_N8N_BILLING_URL` = your n8n webhook base, e.g. `https://n8n.piggnify.com/webhook`
-- `EXPO_PUBLIC_N8N_CHECKOUT_PATH` / `_ADDON_PATH` / `_SYNC_PATH` (defaults:
-  `billing-checkout` / `billing-addon` / `billing-sync`) — set to the n8n webhook ids.
+- `EXPO_PUBLIC_N8N_CHECKOUT_PATH` / `_ADDON_PATH` / `_SYNC_PATH` / `_ACCOUNT_DELETE_PATH`
+  (defaults: `billing-checkout` / `billing-addon` / `billing-sync` / `account-delete`)
+  — set to the n8n webhook ids.
 - `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` — for the PaymentSheet (add-on confirm), used
   in the enforcement/client phase.
+- `EXPO_PUBLIC_PRIVACY_URL` / `EXPO_PUBLIC_TERMS_URL` / `EXPO_PUBLIC_SUPPORT_EMAIL` —
+  optional; the Settings → Support & About rows only render when set (see
+  `app/settings.tsx`). Not billing-related, just documented here alongside the
+  other client env vars.
 
 ## ⚠️ What I need from you to finish wiring
 1. **Stripe IDs** (Products already created): per-plan **Price ids** for **USD / PLN /
