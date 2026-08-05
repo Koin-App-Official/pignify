@@ -40,32 +40,36 @@ export default function TabLayout() {
   const updateProfile = useStore((state) => state.updateProfile);
   const setLastProfileSync = useStore((state) => state.setLastProfileSync);
 
-  const syncUserProfile = async () => {
+  const syncUserProfile = async (signal: AbortSignal) => {
     const { profile, lastProfileSync } = useStore.getState();
     if (!profile.userID) return;
     if (lastProfileSync && Date.now() - new Date(lastProfileSync).getTime() < SYNC_INTERVAL_MS) return;
     try {
-      const res = await fetch(`${SYNC_URL}?user_id=${encodeURIComponent(profile.userID)}`);
+      const res = await fetch(`${SYNC_URL}?user_id=${encodeURIComponent(profile.userID)}`, { signal });
       if (!res.ok) return;
       const data = await res.json().catch(() => null);
       if (!data) return;
       if (data.plan) updateProfile({ plan: data.plan });
       setLastProfileSync(new Date().toISOString());
     } catch {
-      // silent failure — never block the UI
+      // silent failure (including abort) — never block the UI
     }
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     checkAndResetMissions();
-    syncUserProfile();
+    syncUserProfile(controller.signal);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         checkAndResetMissions();
-        syncUserProfile();
+        syncUserProfile(controller.signal);
       }
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      controller.abort();
+    };
   }, []);
 
   return (

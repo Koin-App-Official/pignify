@@ -1,5 +1,6 @@
 module.exports = function (api) {
-  api.cache(true);
+  api.cache.using(() => process.env.NODE_ENV);
+  const isProduction = process.env.NODE_ENV === "production";
   return {
     presets: [
       ["babel-preset-expo", { jsxImportSource: "nativewind" }],
@@ -17,6 +18,9 @@ module.exports = function (api) {
         },
       ],
       "react-native-worklets/plugin",
-    ],
+      // Strip console.log/debug/info from production bundles (console calls
+      // are a documented JS-thread cost); keep error/warn for diagnostics.
+      isProduction && ["transform-remove-console", { exclude: ["error", "warn"] }],
+    ].filter(Boolean),
   };
 };

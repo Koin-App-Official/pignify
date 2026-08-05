@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, useWindowDimensions } from 'react-native';
-import { useFocusKey } from '@/hooks/useFocusKey';
+import { FlashList } from '@shopify/flash-list';
+import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Plus, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -69,7 +71,7 @@ export default function Goals() {
   const currency = useStore((state) => state.profile.currency);
   const { plan, goals: goalQuota } = useEntitlements();
   const [gate, setGate] = useState<GateInfo | null>(null);
-  const animKey = useFocusKey();
+  const replay = useFocusReplay();
   const { confettiProgress: depositConfettiProgress, celebrate: celebrateDeposit, active: depositConfettiActive } = useCelebrate();
   const { confettiProgress: creationConfettiProgress, celebrate: celebrateCreation, active: creationConfettiActive } = useCelebrate();
   const monthlyIncome = useStore((state) => state.profile.monthlyIncome);
@@ -79,6 +81,13 @@ export default function Goals() {
   const unlockAchievement = useStore((state) => state.unlockAchievement);
 
   const currencySymbol = CURRENCIES.find((c) => c.code === currency)?.symbol ?? currency;
+
+  const renderGoalListRow = useCallback(
+    ({ item, index }: { item: Goal; index: number }) => (
+      <GoalListRow goal={item} index={index} currency={currency} replay={replay} onPress={setViewGoal} />
+    ),
+    [currency, replay]
+  );
 
   // Create flow state
   const [creating, setCreating] = useState(false);
@@ -108,14 +117,25 @@ export default function Goals() {
   // Multiple-goals reality check: sum what every other active goal already
   // sets aside so review can warn if adding this one pushes the total over
   // income — a check that couldn't exist in the old date-first flow.
-  const otherActiveGoalsMonthlyTotal = goals
-    .filter((g) => !g.archived)
-    .reduce((sum, g) => sum + resolveMonthlyContribution(g.targetAmount, g.deadline, g.createdAt, g.monthlyContribution), 0);
+  const otherActiveGoalsMonthlyTotal = useMemo(
+    () =>
+      goals
+        .filter((g) => !g.archived)
+        .reduce((sum, g) => sum + resolveMonthlyContribution(g.targetAmount, g.deadline, g.createdAt, g.monthlyContribution), 0),
+    [goals]
+  );
   const totalMonthlyWithNewGoal = otherActiveGoalsMonthlyTotal + monthlyContribution;
   const savingsExceedsIncome =
     !!monthlyIncome && monthlyIncome > 0 && totalMonthlyWithNewGoal > monthlyIncome;
 
   const goalIcon = GOAL_ICONS[goalName] ?? '🎯';
+
+  // Resolved current goal + its deposits reversed (most-recent first). Hoisted
+  // above the viewGoal conditional so useMemo stays unconditional; `g.deposits`
+  // only changes reference when a deposit is actually added, so this stays
+  // stable across unrelated re-renders (e.g. typing in the deposit input).
+  const g = viewGoal ? goals.find((x) => x.id === viewGoal.id) || viewGoal : null;
+  const reversedDeposits = useMemo(() => (g ? [...g.deposits].reverse() : []), [g]);
 
   const startCreate = () => {
     // Goal quota gate (C6/C13): if the active-goal limit is reached, keep the
@@ -179,76 +199,78 @@ export default function Goals() {
 
 
   // ─── Goal detail view ────────────────────────────────────────────────────────
-  if (viewGoal) {
-    const g = goals.find((x) => x.id === viewGoal.id) || viewGoal;
+  if (viewGoal && g) {
     const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
     const monthlySetAside = resolveMonthlyContribution(g.targetAmount, g.deadline, g.createdAt, g.monthlyContribution);
     return (
       <ScreenTransition>
       <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-          <ScrollView className="flex-1 px-5 py-6">
-            <TouchableOpacity onPress={() => setViewGoal(null)} className="mb-4 flex-row items-center gap-1">
-              <ArrowLeft size={16} color="#64748B" />
-              <Text className="text-sm font-semibold text-on-surface-variant">Back</Text>
-            </TouchableOpacity>
-
-            <View className="items-center mb-6">
-              <ProgressRing progress={pct} size={180} strokeWidth={16}>
-                <Text className="text-4xl">{g.icon}</Text>
-                <Text className="mt-1 text-4xl font-black text-on-surface">{pct}%</Text>
-              </ProgressRing>
-              <Text className="mt-4 text-xl font-black text-on-surface">{g.name}</Text>
-              <Text className="text-sm font-semibold text-tertiary mt-1">
-                {formatCurrency(g.savedAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
-              </Text>
-              <Text className="text-xs text-on-surface-variant mt-2">
-                Setting aside {formatCurrency(monthlySetAside, currency)}/month · Goal reached {formatTargetDate(g.deadline)}
-              </Text>
-            </View>
-
-            <View className="mb-6 flex-row gap-3">
-              <View className="flex-1">
-                <Input keyboardType="numeric" value={depositAmount} onChangeText={setDepositAmount} placeholder="Add savings..." />
-              </View>
-              <Button onPress={() => addDeposit(g)} disabled={!depositAmount} label="Save" />
-            </View>
-
-            <View className="mb-6">
-              <Text className="mb-3 text-sm font-bold text-on-surface">Milestones</Text>
-              <View className="gap-2">
-                {[25, 50, 75, 100].map((m) => (
-                  <View
-                    key={m}
-                    className={`flex-row items-center gap-3 rounded-2xl p-4 ${pct >= m ? 'bg-tertiary-container' : 'bg-surface-container-low'}`}
-                    style={pct >= m ? { borderWidth: 1, borderColor: 'rgba(34,197,94,0.25)' } : {}}
-                  >
-                    <Text className="text-lg">{pct >= m ? '✅' : '⬜'}</Text>
-                    <View className="flex-1">
-                      <Text className="text-sm font-black text-on-surface">{m}%</Text>
-                      <Text className="text-xs text-on-surface-variant mt-0.5">
-                        {formatCurrency(Math.round((g.targetAmount * m) / 100), currency)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {g.deposits.length > 0 && (
-              <View className="mb-8">
-                <Text className="mb-3 text-sm font-bold text-on-surface">Deposit History</Text>
-                <View className="gap-2">
-                  {g.deposits.slice().reverse().map((d, i) => (
-                    <View key={i} className="flex-row justify-between items-center rounded-2xl bg-surface-container-low p-4">
-                      <Text className="text-sm font-medium text-on-surface-variant">{d.date.split('T')[0]}</Text>
-                      <Text className="text-sm font-bold text-tertiary">+{formatCurrency(d.amount, currency)}</Text>
-                    </View>
-                  ))}
-                </View>
+          <FlashList
+            data={reversedDeposits}
+            keyExtractor={(d) => `${d.date}-${d.amount}`}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24 }}
+            renderItem={({ item: d }) => (
+              <View className="flex-row justify-between items-center rounded-2xl bg-surface-container-low p-4 mb-2">
+                <Text className="text-sm font-medium text-on-surface-variant">{d.date.split('T')[0]}</Text>
+                <Text className="text-sm font-bold text-tertiary">+{formatCurrency(d.amount, currency)}</Text>
               </View>
             )}
-          </ScrollView>
+            ListHeaderComponent={
+              <View>
+                <TouchableOpacity onPress={() => setViewGoal(null)} className="mb-4 flex-row items-center gap-1">
+                  <ArrowLeft size={16} color="#64748B" />
+                  <Text className="text-sm font-semibold text-on-surface-variant">Back</Text>
+                </TouchableOpacity>
+
+                <View className="items-center mb-6">
+                  <ProgressRing progress={pct} size={180} strokeWidth={16}>
+                    <Text className="text-4xl">{g.icon}</Text>
+                    <Text className="mt-1 text-4xl font-black text-on-surface">{pct}%</Text>
+                  </ProgressRing>
+                  <Text className="mt-4 text-xl font-black text-on-surface">{g.name}</Text>
+                  <Text className="text-sm font-semibold text-tertiary mt-1">
+                    {formatCurrency(g.savedAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
+                  </Text>
+                  <Text className="text-xs text-on-surface-variant mt-2">
+                    Setting aside {formatCurrency(monthlySetAside, currency)}/month · Goal reached {formatTargetDate(g.deadline)}
+                  </Text>
+                </View>
+
+                <View className="mb-6 flex-row gap-3">
+                  <View className="flex-1">
+                    <Input keyboardType="numeric" value={depositAmount} onChangeText={setDepositAmount} placeholder="Add savings..." />
+                  </View>
+                  <Button onPress={() => addDeposit(g)} disabled={!depositAmount} label="Save" />
+                </View>
+
+                <View className="mb-6">
+                  <Text className="mb-3 text-sm font-bold text-on-surface">Milestones</Text>
+                  <View className="gap-2">
+                    {[25, 50, 75, 100].map((m) => (
+                      <View
+                        key={m}
+                        className={`flex-row items-center gap-3 rounded-2xl p-4 ${pct >= m ? 'bg-tertiary-container' : 'bg-surface-container-low'}`}
+                        style={pct >= m ? { borderWidth: 1, borderColor: 'rgba(34,197,94,0.25)' } : {}}
+                      >
+                        <Text className="text-lg">{pct >= m ? '✅' : '⬜'}</Text>
+                        <View className="flex-1">
+                          <Text className="text-sm font-black text-on-surface">{m}%</Text>
+                          <Text className="text-xs text-on-surface-variant mt-0.5">
+                            {formatCurrency(Math.round((g.targetAmount * m) / 100), currency)}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {reversedDeposits.length > 0 && (
+                  <Text className="mb-3 text-sm font-bold text-on-surface">Deposit History</Text>
+                )}
+              </View>
+            }
+          />
         </KeyboardAvoidingView>
         {depositConfettiActive && (
           <SkiaConfetti progress={depositConfettiProgress} width={windowWidth} height={windowHeight} />
@@ -463,38 +485,14 @@ export default function Goals() {
             <Button onPress={startCreate} className="flex-row items-center gap-2" label="Create Goal" />
           </View>
         ) : (
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-            <View key={animKey} className="gap-4 pb-24">
-              {goals.map((g, index) => {
-                const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
-                return (
-                  <FadeInStagger key={g.id} index={index} delayStep={100}>
-                    <TouchableOpacity onPress={() => setViewGoal(g)} className="w-full rounded-3xl bg-surface p-4" style={CARD_SHADOW}>
-                      <View className="flex-row items-center gap-4">
-                        <Text className="text-3xl">{g.icon}</Text>
-                        <View className="flex-1">
-                          <View className="flex-row items-center justify-between">
-                            <Text className="text-sm font-bold text-on-surface" numberOfLines={1}>{g.name}</Text>
-                            {g.isPrimary && (
-                              <View className="bg-primary-container px-2 py-0.5 rounded-full">
-                                <Text className="text-[10px] font-bold text-on-primary-container">Primary</Text>
-                              </View>
-                            )}
-                          </View>
-                          <Text className="text-xs text-on-surface-variant mt-1">
-                            {formatCurrency(g.savedAmount, currency)} / {formatCurrency(g.targetAmount, currency)}
-                          </Text>
-                          <View className="mt-3">
-                            <AnimatedProgressBar progress={pct / 100} color="#22C55E" />
-                          </View>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  </FadeInStagger>
-                );
-              })}
-            </View>
-          </ScrollView>
+          <FlashList
+            data={goals}
+            keyExtractor={(goal) => goal.id}
+            renderItem={renderGoalListRow}
+            contentContainerStyle={{ paddingBottom: 96 }}
+            ItemSeparatorComponent={GoalListRowSeparator}
+            showsVerticalScrollIndicator={false}
+          />
         )}
 
         {goals.length > 0 && (
@@ -524,6 +522,49 @@ export default function Goals() {
     </ScreenTransition>
   );
 }
+
+const GoalListRowSeparator = () => <View style={{ height: 16 }} />;
+
+const GoalListRow = memo(function GoalListRow({
+  goal,
+  index,
+  currency,
+  replay,
+  onPress,
+}: {
+  goal: Goal;
+  index: number;
+  currency: string;
+  replay: SharedValue<number>;
+  onPress: (g: Goal) => void;
+}) {
+  const pct = Math.round((goal.savedAmount / goal.targetAmount) * 100);
+  return (
+    <FadeInStagger index={index} delayStep={100} replay={replay}>
+      <TouchableOpacity onPress={() => onPress(goal)} className="w-full rounded-3xl bg-surface p-4" style={CARD_SHADOW}>
+        <View className="flex-row items-center gap-4">
+          <Text className="text-3xl">{goal.icon}</Text>
+          <View className="flex-1">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-sm font-bold text-on-surface" numberOfLines={1}>{goal.name}</Text>
+              {goal.isPrimary && (
+                <View className="bg-primary-container px-2 py-0.5 rounded-full">
+                  <Text className="text-[10px] font-bold text-on-primary-container">Primary</Text>
+                </View>
+              )}
+            </View>
+            <Text className="text-xs text-on-surface-variant mt-1">
+              {formatCurrency(goal.savedAmount, currency)} / {formatCurrency(goal.targetAmount, currency)}
+            </Text>
+            <View className="mt-3">
+              <AnimatedProgressBar progress={pct / 100} color="#22C55E" />
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </FadeInStagger>
+  );
+});
 
 function ProgressSegment({ active }: { active: boolean }) {
   const fill = useSharedValue(active ? 1 : 0);

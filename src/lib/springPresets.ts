@@ -18,6 +18,8 @@ export const springPresets = {
     stiffness: 200,
     overshootClamping: true,
   } satisfies WithSpringConfig,
+  /** Staggered list/card entrance replay — mirrors FadeInDown's default feel. */
+  entrance: { damping: 16, stiffness: 160 } satisfies WithSpringConfig,
 } as const;
 
 /**
