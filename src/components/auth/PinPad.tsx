@@ -53,7 +53,11 @@ export function PinDots({
   );
 }
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const KEY_ROWS = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+];
 
 export function PinPad({
   onDigit,
@@ -79,13 +83,17 @@ export function PinPad({
 
   return (
     <View className="gap-4">
-      <View className="flex-row flex-wrap justify-center" style={{ gap: 20 }}>
-        {KEYS.map((k) => (
-          <Key key={k} onPress={press(() => onDigit(k))} disabled={disabled}>
-            <Text className="text-3xl font-semibold text-on-surface">{k}</Text>
-          </Key>
-        ))}
+      {KEY_ROWS.map((row) => (
+        <View key={row.join('')} className="flex-row justify-center" style={{ gap: 20 }}>
+          {row.map((k) => (
+            <Key key={k} onPress={press(() => onDigit(k))} disabled={disabled}>
+              <Text className="text-3xl font-semibold text-on-surface">{k}</Text>
+            </Key>
+          ))}
+        </View>
+      ))}
 
+      <View className="flex-row justify-center" style={{ gap: 20 }}>
         {/* bottom-left: biometric or empty */}
         {onBiometric && biometricKind !== 'none' ? (
           <Key onPress={press(onBiometric)} disabled={disabled} subtle>
