@@ -29,6 +29,7 @@ const ENDPOINTS = {
   checkout: process.env.EXPO_PUBLIC_N8N_CHECKOUT_PATH ?? 'billing-checkout',
   addon: process.env.EXPO_PUBLIC_N8N_ADDON_PATH ?? 'billing-addon',
   sync: process.env.EXPO_PUBLIC_N8N_SYNC_PATH ?? 'billing-sync',
+  accountDelete: process.env.EXPO_PUBLIC_N8N_ACCOUNT_DELETE_PATH ?? 'account-delete',
 };
 
 export function isBillingConfigured(): boolean {
@@ -174,5 +175,24 @@ export async function requestSubscriptionSync(userId: string): Promise<void> {
     await postJson(ENDPOINTS.sync, { userId });
   } catch {
     // Non-fatal: the reconcile cron is the backstop.
+  }
+}
+
+// ─── Account deletion ───────────────────────────────────────────────────────
+
+/**
+ * Ask n8n to permanently delete the Appwrite account (and cancel any active
+ * Stripe subscription) — this can't be done from the client SDK, same reason
+ * billing lives server-side. Returns false on any failure so the caller does
+ * NOT wipe local state unless the server deletion is confirmed.
+ */
+export async function requestAccountDeletion(userId: string): Promise<boolean> {
+  if (!isBillingConfigured()) return false;
+  try {
+    await postJson(ENDPOINTS.accountDelete, { userId });
+    return true;
+  } catch (err) {
+    console.warn('[billing] requestAccountDeletion failed:', err);
+    return false;
   }
 }

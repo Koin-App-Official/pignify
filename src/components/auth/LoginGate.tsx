@@ -1,7 +1,11 @@
 /**
  * Login screen (Email OTP) — primary account authentication for returning users,
- * new devices, and after a forgot-PIN / forced re-login. Brand-new users go
- * through onboarding instead (which performs the same OTP step inline).
+ * new devices, a normal logout, and after a forgot-PIN / forced re-login.
+ * Brand-new users go through onboarding instead (which performs the same OTP
+ * step inline). onLoggedIn() sorts out afterward whether the device still has
+ * a PIN to re-confirm (needs_pin_confirm) or needs a brand-new one
+ * (needs_pin_setup) — this screen's copy stays neutral since it doesn't know
+ * which case it is.
  *
  * The emailed code here is the account login OTP — NOT the device PIN. Copy keeps
  * them distinct on purpose.
@@ -60,7 +64,7 @@ export function LoginGate() {
       clearClientSession();
       await NitroCookies.clearAll();
       const { userId, secret } = await verifyEmailOtp(otpUserId, code.trim());
-      onLoggedIn(userId, secret); // → needs_pin_setup
+      onLoggedIn(userId, secret); // → needs_pin_setup or needs_pin_confirm
     } catch (err) {
       console.error('[LoginGate] verify failed:', err);
       setError('That code is incorrect or expired. Request a new one.');
@@ -79,7 +83,7 @@ export function LoginGate() {
 
             {stage === 'email' ? (
               <>
-                <Text className="text-2xl font-black text-on-surface mb-2 text-center">Reset your PIN</Text>
+                <Text className="text-2xl font-black text-on-surface mb-2 text-center">Sign back in</Text>
                 <Text className="text-sm font-medium text-on-surface-variant mb-8 text-center">
                   Enter your email and we'll send you a sign-in code.
                 </Text>

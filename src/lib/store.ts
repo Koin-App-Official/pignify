@@ -137,6 +137,13 @@ export interface UserProfile {
     milestoneAlerts: boolean;
     weeklyReflection: boolean;
   };
+  /**
+   * Grace period before the app re-locks after being backgrounded (unlocked
+   * only — the app always re-locks immediately on a killed/relaunched process
+   * regardless of this setting). 0 = immediate (default, matches pre-existing
+   * behavior), null = never lock on backgrounding.
+   */
+  autoLockMinutes: 0 | 1 | 5 | null;
 }
 
 export const DEFAULT_PROFILE: UserProfile = {
@@ -166,6 +173,7 @@ export const DEFAULT_PROFILE: UserProfile = {
     milestoneAlerts: true,
     weeklyReflection: true,
   },
+  autoLockMinutes: 0,
 };
 
 const DEFAULT_MISSIONS: Mission[] = [

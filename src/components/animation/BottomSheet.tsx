@@ -9,11 +9,12 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { springPresets } from '@/lib/springPresets';
+import { springPresets, timingPresets } from '@/lib/springPresets';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -24,8 +25,12 @@ interface BottomSheetProps {
 
 /**
  * Gesture-driven bottom sheet (guide §5.2): drag handle tracks the finger 1:1,
- * release hands off to a velocity-aware spring snap, and the backdrop fades
- * from the same translateY shared value that drives the sheet transform.
+ * release hands off to a velocity-aware (non-bouncy, critically damped) spring
+ * snap, and the backdrop fades from the same translateY shared value that
+ * drives the sheet transform. Programmatic open/close (driven by `visible`,
+ * not a live gesture) uses a smooth ease-in-out `withTiming` instead — no
+ * overshoot, per guide §3 rule 3 (timing is for non-interruptible, decorative
+ * state changes; the interactive drag path stays on a spring).
  *
  * Sheet height is content-driven (measured via onLayout, capped at `maxHeight`)
  * rather than fixed, so short content (e.g. a calendar) doesn't stretch to fill
@@ -48,9 +53,9 @@ export function BottomSheet({ visible, onClose, children, maxHeight }: BottomShe
   useEffect(() => {
     if (!mounted) return;
     if (visible && sheetHeight > 0) {
-      translateY.value = withSpring(0, springPresets.sheet);
+      translateY.value = withTiming(0, timingPresets.sheet);
     } else if (!visible) {
-      translateY.value = withSpring(sheetHeight || windowHeight, springPresets.sheet, (finished) => {
+      translateY.value = withTiming(sheetHeight || windowHeight, timingPresets.sheet, (finished) => {
         if (finished) runOnJS(setMounted)(false);
       });
     }
