@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -86,6 +86,7 @@ export default function AICoach() {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const router = useRouter();
   const { addon } = useLocalSearchParams<{ addon?: string }>();
@@ -112,6 +113,14 @@ export default function AICoach() {
     setGate(null);
     router.push(`/plans?highlight=${target}`);
   };
+
+  // Clear the pending simulated-reply timeout on unmount so it can't call
+  // setState after the screen is gone.
+  useEffect(() => {
+    return () => {
+      if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
+    };
+  }, []);
 
   const buyMore = async () => {
     setGate(null);
@@ -169,29 +178,27 @@ export default function AICoach() {
 
     incrementCoachMessages(messageLimit);
     const userMsg: Message = { id: Math.random().toString(36).substring(7), role: 'user', content: text };
+    const updated = [...messages, userMsg];
+    setMessages(updated);
 
-    setMessages((prev) => {
-      const updated = [...prev, userMsg];
-      const last10 = updated.slice(-10).map((m) => ({
-        role: m.role === 'coach' ? 'assistant' : 'user',
-        message: m.content,
-      }));
-
-      fetch('https://n8n1.neuralops.pl/webhook-test/533526a8-8261-4bed-8202-809c7563a81e', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: last10 }),
-        // @ts-ignore
-        mode: 'no-cors',
-      }).catch((err) => console.error('Coach webhook failed:', err));
-
-      return updated;
-    });
+    const last10 = updated.slice(-10).map((m) => ({
+      role: m.role === 'coach' ? 'assistant' : 'user',
+      message: m.content,
+    }));
+    fetch('https://n8n1.neuralops.pl/webhook-test/533526a8-8261-4bed-8202-809c7563a81e', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: last10 }),
+      // @ts-ignore
+      mode: 'no-cors',
+    }).catch((err) => console.error('Coach webhook failed:', err));
 
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
+    replyTimeoutRef.current = setTimeout(() => {
+      replyTimeoutRef.current = null;
       const coachMsg: Message = {
         id: Math.random().toString(36).substring(7),
         role: 'coach',
