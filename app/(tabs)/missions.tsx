@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import { Zap, Trophy, Check } from 'lucide-react-native';
 import { useStore, Mission } from '@/lib/store';
 import { ScreenTransition } from '@/components/ScreenTransition';
-import { useFocusKey } from '@/hooks/useFocusKey';
+import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
@@ -24,13 +25,14 @@ const CARD_SHADOW = {
 export default function Missions() {
   const missions = useStore((state) => state.missions);
   const achievements = useStore((state) => state.achievements);
-  const profile = useStore((state) => state.profile);
+  const level = useStore((s) => s.profile.level);
+  const xp = useStore((s) => s.profile.xp);
   const completeMissionAction = useStore((state) => state.completeMission);
   const addXP = useStore((state) => state.addXP);
   const unlockAchievement = useStore((state) => state.unlockAchievement);
 
   const [tab, setTab] = useState<'missions' | 'achievements'>('missions');
-  const animKey = useFocusKey();
+  const replay = useFocusReplay();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
 
@@ -55,7 +57,7 @@ export default function Missions() {
     <ScreenTransition>
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
-        <View key={animKey}>
+        <View>
         <Text className="mb-1 text-2xl font-black text-on-surface">Missions</Text>
         <Text className="mb-6 text-sm font-medium text-on-surface-variant">Complete missions to earn XP and build habits</Text>
 
@@ -64,11 +66,11 @@ export default function Missions() {
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
               <Zap size={18} color="#22C55E" />
-              <Text className="text-sm font-bold text-on-surface">Saver Lv.{profile.level}</Text>
+              <Text className="text-sm font-bold text-on-surface">Saver Lv.{level}</Text>
             </View>
-            <Text className="text-xs font-bold text-on-surface-variant">{profile.xp % 100}/100 XP</Text>
+            <Text className="text-xs font-bold text-on-surface-variant">{xp % 100}/100 XP</Text>
           </View>
-          <AnimatedProgressBar progress={(profile.xp % 100) / 100} />
+          <AnimatedProgressBar progress={(xp % 100) / 100} />
           <Text className="mt-3 text-xs font-medium text-on-surface-variant">{completedCount}/{missions.length} missions completed</Text>
         </View>
 
@@ -80,13 +82,13 @@ export default function Missions() {
             <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Daily Missions</Text>
             <View className="mb-6 gap-3">
               {dailyMissions.map((m, index) => (
-                <MissionCard key={m.id} mission={m} onComplete={() => completeMission(m)} index={index} />
+                <MissionCard key={m.id} mission={m} onComplete={() => completeMission(m)} index={index} replay={replay} />
               ))}
             </View>
             <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Weekly Missions</Text>
             <View className="mb-6 gap-3">
               {weeklyMissions.map((m, index) => (
-                <MissionCard key={m.id} mission={m} onComplete={() => completeMission(m)} index={index} />
+                <MissionCard key={m.id} mission={m} onComplete={() => completeMission(m)} index={index} replay={replay} />
               ))}
             </View>
           </View>
@@ -175,9 +177,19 @@ function SegmentedControl({
   );
 }
 
-function MissionCard({ mission, onComplete, index = 0 }: { mission: Mission; onComplete: () => void; index?: number }) {
+function MissionCard({
+  mission,
+  onComplete,
+  index = 0,
+  replay,
+}: {
+  mission: Mission;
+  onComplete: () => void;
+  index?: number;
+  replay: SharedValue<number>;
+}) {
   return (
-    <FadeInStagger index={index} delayStep={100}>
+    <FadeInStagger index={index} delayStep={100} replay={replay}>
       <View
         className={`flex-row items-center gap-4 rounded-2xl p-4 min-h-[72px] ${
           mission.completed ? 'bg-tertiary-container' : 'bg-surface border border-outline-variant'

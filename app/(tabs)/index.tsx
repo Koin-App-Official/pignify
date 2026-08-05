@@ -1,15 +1,25 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList, useWindowDimensions, Alert } from 'react-native';
+import { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  useWindowDimensions,
+  Alert,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
 import { Plus, Flame, TrendingUp, ChevronRight, Calendar, Sparkles } from 'lucide-react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, formatCurrency, CURRENCIES, type UserPlan } from '@/lib/store';
+import { useStore, formatCurrency, CURRENCIES, type Goal, type UserPlan } from '@/lib/store';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { Button } from '@/components/ui/button';
 import { ScreenTransition } from '@/components/ScreenTransition';
-import { useFocusKey } from '@/hooks/useFocusKey';
+import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { AnimatedCurrency } from '@/components/animation/AnimatedCurrency';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
@@ -36,13 +46,23 @@ function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
 
 export default function Dashboard() {
   const router = useRouter();
-  const profile = useStore((state) => state.profile);
+  // Fine-grained selectors instead of subscribing to the whole `profile`
+  // object — this screen only touches these fields, so unrelated profile
+  // changes (settings, plan sync, etc.) no longer re-render the dashboard.
+  const userID = useStore((s) => s.profile.userID);
+  const currency = useStore((s) => s.profile.currency);
+  const expenses = useStore((s) => s.profile.expenses);
+  const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
+  const incomeSkipped = useStore((s) => s.profile.incomeSkipped);
+  const name = useStore((s) => s.profile.name);
+  const streak = useStore((s) => s.profile.streak);
+  const level = useStore((s) => s.profile.level);
+  const xp = useStore((s) => s.profile.xp);
   const goals = useStore((state) => state.goals);
   const [showExpense, setShowExpense] = useState(false);
-  const [todaySpend, setTodaySpend] = useState(0);
   const [activeGoalIndex, setActiveGoalIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
-  const animKey = useFocusKey();
+  const replay = useFocusReplay();
 
   const { plan, has, deepAnalysis } = useEntitlements();
   const incrementDeepAnalysis = useStore((s) => s.incrementDeepAnalysis);
@@ -61,7 +81,7 @@ export default function Dashboard() {
     if (!deepAnalysis.allowed) return openGate('deepAnalysisQuota');
 
     setIsAnalyzing(true);
-    const result = await triggerDeepAnalysis(profile.userID ?? '');
+    const result = await triggerDeepAnalysis(userID ?? '');
     setIsAnalyzing(false);
 
     if (result.status === 'success') {
@@ -72,46 +92,65 @@ export default function Dashboard() {
     }
   };
 
-  const currencyInfo = CURRENCIES.find((c) => c.code === profile.currency);
+  const currencyInfo = CURRENCIES.find((c) => c.code === currency);
   const currencyFormatter = useMemo(
-    () => makeCurrencyFormatter(currencyInfo?.symbol ?? profile.currency, currencyInfo?.symbolAfter ?? false),
-    [currencyInfo?.symbol, currencyInfo?.symbolAfter, profile.currency]
+    () => makeCurrencyFormatter(currencyInfo?.symbol ?? currency, currencyInfo?.symbolAfter ?? false),
+    [currencyInfo?.symbol, currencyInfo?.symbolAfter, currency]
   );
 
-  const calculateTodaySpend = useCallback(() => {
+  const todaySpend = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    return profile.expenses
-      .filter((e) => e.date === today)
-      .reduce((sum, e) => sum + e.amount, 0);
-  }, [profile.expenses]);
+    return expenses.filter((e) => e.date === today).reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses]);
 
-  useEffect(() => {
-    setTodaySpend(calculateTodaySpend());
-  }, [calculateTodaySpend]);
+  const { savedToday, savedThisMonth } = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const thisMonth = today.slice(0, 7);
+    return {
+      savedToday: goals.reduce(
+        (sum, g) => sum + g.deposits.filter((d) => d.date === today).reduce((s, d) => s + d.amount, 0),
+        0
+      ),
+      savedThisMonth: goals.reduce(
+        (sum, g) => sum + g.deposits.filter((d) => d.date.startsWith(thisMonth)).reduce((s, d) => s + d.amount, 0),
+        0
+      ),
+    };
+  }, [goals]);
 
-  if (!profile.onboardingCompleted) {
+  const renderGoalItem = useCallback(
+    ({ item }: { item: Goal }) => (
+      <GoalCarouselItem
+        goal={item}
+        screenWidth={screenWidth}
+        currencyFormatter={currencyFormatter}
+        currency={currency}
+      />
+    ),
+    [screenWidth, currencyFormatter, currency]
+  );
+
+  const goalItemLayout = useCallback(
+    (_: unknown, index: number) => ({ length: screenWidth, offset: screenWidth * index, index }),
+    [screenWidth]
+  );
+
+  const handleCarouselScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+      setActiveGoalIndex(Math.min(index, goals.length - 1));
+    },
+    [screenWidth, goals.length]
+  );
+
+  if (!onboardingCompleted) {
     return <Redirect href="/onboarding" />;
   }
-
-  const today = new Date().toISOString().split('T')[0];
-  const thisMonth = today.slice(0, 7);
-  const savedToday = goals.reduce(
-    (sum, g) => sum + g.deposits.filter((d) => d.date === today).reduce((s, d) => s + d.amount, 0),
-    0
-  );
-  const savedThisMonth = goals.reduce(
-    (sum, g) => sum + g.deposits.filter((d) => d.date.startsWith(thisMonth)).reduce((s, d) => s + d.amount, 0),
-    0
-  );
 
   const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
   const activeGoal = goals[activeGoalIndex] ?? primaryGoal;
   const progress = activeGoal
     ? Math.round((activeGoal.savedAmount / activeGoal.targetAmount) * 100)
-    : 0;
-
-  const daysUntilDeadline = activeGoal
-    ? Math.max(0, Math.ceil((new Date(activeGoal.deadline).getTime() - Date.now()) / 86400000))
     : 0;
 
   const greeting = () => {
@@ -125,9 +164,9 @@ export default function Dashboard() {
     <ScreenTransition>
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
-        <View key={animKey}>
-        {profile.incomeSkipped && (
-          <FadeInStagger index={0} delayStep={60}>
+        <View>
+        {incomeSkipped && (
+          <FadeInStagger index={0} delayStep={60} replay={replay}>
             <View className="mb-4 rounded-2xl bg-warning-container p-4" style={{ borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}>
               <Text className="text-sm font-semibold text-warning">
                 💡 Add your monthly income to unlock personalised savings insights.
@@ -137,24 +176,24 @@ export default function Dashboard() {
         )}
 
         {/* Header */}
-        <FadeInStagger index={0} delayStep={60}>
+        <FadeInStagger index={0} delayStep={60} replay={replay}>
           <View className="mb-6 flex-row items-center justify-between">
             <View>
               <Text className="text-sm font-medium text-on-surface-variant">
                 {greeting()}
-                {profile.name ? `, ${profile.name}` : ''}
+                {name ? `, ${name}` : ''}
               </Text>
               <Text className="text-3xl font-black text-on-surface">Piggy</Text>
             </View>
             <View className="flex-row items-center gap-1.5 rounded-full bg-warning-container px-3.5 py-2">
               <Flame size={18} color="#F59E0B" />
-              <Text className="text-sm font-black text-warning">{profile.streak}</Text>
+              <Text className="text-sm font-black text-warning">{streak}</Text>
             </View>
           </View>
         </FadeInStagger>
 
         {/* Goal Slider */}
-        <FadeInStagger index={1} delayStep={60}>
+        <FadeInStagger index={1} delayStep={60} replay={replay}>
           {goals.length > 0 ? (
             <View className="mb-2">
               <FlatList
@@ -164,34 +203,12 @@ export default function Dashboard() {
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={(g) => g.id}
                 style={{ marginHorizontal: -20 }}
-                onMomentumScrollEnd={(e) => {
-                  const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-                  setActiveGoalIndex(Math.min(index, goals.length - 1));
-                }}
-                renderItem={({ item: g }) => {
-                  const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
-                  const days = Math.max(0, Math.ceil((new Date(g.deadline).getTime() - Date.now()) / 86400000));
-                  return (
-                    <View style={{ width: screenWidth }} className="items-center px-5">
-                      <ProgressRing progress={pct} size={200} strokeWidth={16}>
-                        <Text className="text-3xl mb-1">{g.icon}</Text>
-                        <Text className="text-4xl font-black text-on-surface">{pct}%</Text>
-                        <Text className="text-sm font-medium text-on-surface-variant mt-1">{g.name}</Text>
-                      </ProgressRing>
-                      <View className="mt-4 flex-row items-center">
-                        <AnimatedCurrency
-                          value={g.savedAmount}
-                          formatter={currencyFormatter}
-                          style={{ fontSize: 16, fontWeight: '600', color: '#22C55E', padding: 0 }}
-                        />
-                        <Text className="text-base font-semibold text-tertiary">
-                          {' '}of {formatCurrency(g.targetAmount, profile.currency)}
-                        </Text>
-                      </View>
-                      <Text className="text-sm text-on-surface-variant mt-1">{days} days left</Text>
-                    </View>
-                  );
-                }}
+                onMomentumScrollEnd={handleCarouselScrollEnd}
+                renderItem={renderGoalItem}
+                getItemLayout={goalItemLayout}
+                initialNumToRender={3}
+                windowSize={3}
+                removeClippedSubviews
               />
               {goals.length > 1 && (
                 <View className="flex-row justify-center gap-1.5 mt-4">
@@ -216,7 +233,7 @@ export default function Dashboard() {
 
         {/* Motivational Copy */}
         {activeGoal && progress > 0 && (
-          <FadeInStagger index={2} delayStep={60}>
+          <FadeInStagger index={2} delayStep={60} replay={replay}>
             <View className="mb-5 rounded-3xl bg-tertiary-container p-4 items-center flex-row justify-center gap-2">
               <Text className="text-lg">🐷</Text>
               <Text className="text-sm font-semibold text-on-tertiary-container text-center flex-1">
@@ -233,7 +250,7 @@ export default function Dashboard() {
         )}
 
         {/* Deep Analysis */}
-        <FadeInStagger index={3} delayStep={60}>
+        <FadeInStagger index={3} delayStep={60} replay={replay}>
           <TouchableOpacity
             onPress={runDeepAnalysis}
             disabled={isAnalyzing}
@@ -259,7 +276,7 @@ export default function Dashboard() {
         </FadeInStagger>
 
         {/* Today's Spending */}
-        <FadeInStagger index={4} delayStep={60}>
+        <FadeInStagger index={4} delayStep={60} replay={replay}>
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
             <Text className="mb-1.5 text-xs font-semibold text-on-surface-variant">Today's Spending</Text>
             <AnimatedCurrency
@@ -268,14 +285,14 @@ export default function Dashboard() {
               style={{ fontSize: 24, fontWeight: '900', color: '#0f172a', marginBottom: 4, padding: 0 }}
             />
             <Text className="text-xs text-on-surface-variant">
-              across {profile.expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
+              across {expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
               expenses
             </Text>
           </View>
         </FadeInStagger>
 
         {/* Saved Today + This Month */}
-        <FadeInStagger index={5} delayStep={60}>
+        <FadeInStagger index={5} delayStep={60} replay={replay}>
           <View className="mb-5 flex-row gap-3">
             <View className="flex-1 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
               <View className="flex-row items-center gap-2 mb-1.5">
@@ -307,7 +324,7 @@ export default function Dashboard() {
         </FadeInStagger>
 
         {/* Quick Add Expense */}
-        <FadeInStagger index={6} delayStep={60}>
+        <FadeInStagger index={6} delayStep={60} replay={replay}>
           <Button
             onPress={() => setShowExpense(true)}
             variant="tonal"
@@ -317,25 +334,25 @@ export default function Dashboard() {
         </FadeInStagger>
 
         {/* Level & Progress */}
-        <FadeInStagger index={7} delayStep={60}>
+        <FadeInStagger index={7} delayStep={60} replay={replay}>
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
             <View className="flex-row items-center justify-between mb-3">
               <View className="flex-row items-center gap-2">
                 <TrendingUp size={16} color="#22C55E" />
-                <Text className="text-sm font-bold text-on-surface">Saver Lv.{profile.level}</Text>
+                <Text className="text-sm font-bold text-on-surface">Saver Lv.{level}</Text>
               </View>
               <Text className="text-xs font-bold text-on-surface-variant">
-                {profile.xp % 100}/100 XP
+                {xp % 100}/100 XP
               </Text>
             </View>
-            <AnimatedProgressBar progress={(profile.xp % 100) / 100} />
+            <AnimatedProgressBar progress={(xp % 100) / 100} />
           </View>
         </FadeInStagger>
 
         {/* Goals list */}
         {goals.length > 0 && (
           <View className="mb-8">
-            <FadeInStagger index={8} delayStep={60}>
+            <FadeInStagger index={8} delayStep={60} replay={replay}>
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-lg font-bold text-on-surface">Your Goals</Text>
                 <TouchableOpacity onPress={() => router.push('/goals')} className="flex-row items-center gap-0.5">
@@ -346,7 +363,7 @@ export default function Dashboard() {
             </FadeInStagger>
             <View className="gap-3">
               {goals.slice(0, 3).map((g, i) => (
-                <FadeInStagger key={g.id} index={9 + i} delayStep={60}>
+                <FadeInStagger key={g.id} index={9 + i} delayStep={60} replay={replay}>
                   <View
                     className="flex-row items-center gap-4 rounded-2xl bg-surface p-4 min-h-[72px]"
                     style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4 }}
@@ -385,6 +402,41 @@ export default function Dashboard() {
     </ScreenTransition>
   );
 }
+
+const GoalCarouselItem = memo(function GoalCarouselItem({
+  goal,
+  screenWidth,
+  currencyFormatter,
+  currency,
+}: {
+  goal: Goal;
+  screenWidth: number;
+  currencyFormatter: (n: number) => string;
+  currency: string;
+}) {
+  const pct = Math.round((goal.savedAmount / goal.targetAmount) * 100);
+  const days = Math.max(0, Math.ceil((new Date(goal.deadline).getTime() - Date.now()) / 86400000));
+  return (
+    <View style={{ width: screenWidth }} className="items-center px-5">
+      <ProgressRing progress={pct} size={200} strokeWidth={16}>
+        <Text className="text-3xl mb-1">{goal.icon}</Text>
+        <Text className="text-4xl font-black text-on-surface">{pct}%</Text>
+        <Text className="text-sm font-medium text-on-surface-variant mt-1">{goal.name}</Text>
+      </ProgressRing>
+      <View className="mt-4 flex-row items-center">
+        <AnimatedCurrency
+          value={goal.savedAmount}
+          formatter={currencyFormatter}
+          style={{ fontSize: 16, fontWeight: '600', color: '#22C55E', padding: 0 }}
+        />
+        <Text className="text-base font-semibold text-tertiary">
+          {' '}of {formatCurrency(goal.targetAmount, currency)}
+        </Text>
+      </View>
+      <Text className="text-sm text-on-surface-variant mt-1">{days} days left</Text>
+    </View>
+  );
+});
 
 function CarouselDot({ active }: { active: boolean }) {
   const progress = useSharedValue(active ? 1 : 0);
