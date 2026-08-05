@@ -1,0 +1,7 @@
+{
+  "_comment": "Guardrail for scripts/check-bundle-size.mjs. Baseline captured 2026-08-05 (post performance-audit Stage 1-3 work): ~5.78 MB minified iOS bundle. maxBytes has ~35% headroom over baseline so routine dependency bumps don't fail CI, while still catching real regressions (e.g. an accidentally-un-lazy-loaded heavy library). Ratchet this down — or up, deliberately — as the app grows; don't just bump it to make a failing PR pass without checking why it grew.",
+  "ios": {
+    "baselineBytes": 6062496,
+    "maxBytes": 8000000
+  }
+}
