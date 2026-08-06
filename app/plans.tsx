@@ -96,7 +96,7 @@ export default function Plans() {
         if (plan && status && ['active', 'trialing'].includes(status) && plan !== currentPlan) {
           updateProfile({
             plan,
-            planStatus: status === 'trialing' ? 'active' : (status as any),
+            planStatus: status as any,
             pendingPlan: null,
             currentPeriodEnd: (row as any).current_period_end ?? null,
           });

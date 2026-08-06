@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  fireMilestoneNotification,
+  refreshNotificationSchedule,
+  getNotificationPermissionStatus,
+  DEFAULT_HOUR,
+} from './notifications';
 
 export interface Goal {
   id: string;
@@ -129,6 +135,12 @@ export interface UserProfile {
   xp: number;
   streak: number;
   lastActiveDate: string;
+  /** Last calendar day `checkAndUpdateStreak` has fully evaluated — prevents double-counting a day. */
+  lastStreakCheckDate: string;
+  /** Consecutive days the daily check-in reminder fired with the target unmet. Drives reminder decay. */
+  checkinIgnoredStreak: number;
+  /** Tally of app-foreground events per local hour-of-day (index 0-23) — the send-time personalization signal. */
+  activityHourCounts: number[];
   onboardingCompleted: boolean;
   expenses: Expense[];
   notificationPrefs: {
@@ -165,6 +177,9 @@ export const DEFAULT_PROFILE: UserProfile = {
   xp: 0,
   streak: 0,
   lastActiveDate: new Date().toISOString().split('T')[0],
+  lastStreakCheckDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+  checkinIgnoredStreak: 0,
+  activityHourCounts: new Array(24).fill(0),
   onboardingCompleted: false,
   expenses: [],
   notificationPrefs: {
@@ -317,6 +332,15 @@ export interface PiggyState {
   completeMission: (id: string) => void;
   checkAndResetMissions: () => void;
 
+  /** Walks forward from `lastStreakCheckDate` to today, incrementing/breaking the streak per missed day. */
+  checkAndUpdateStreak: () => void;
+  /** Recomputes and reschedules every local notification category from current state. */
+  refreshNotifications: () => void;
+  /** Detects OS-level permission revocation (e.g. turned off in device Settings) and flips prefs off to match. */
+  syncNotificationPermission: () => Promise<void>;
+  /** Tallies the current local hour as an activity signal — the input to send-time personalization. */
+  recordActivity: () => void;
+
   setAchievements: (a: Achievement[]) => void;
   unlockAchievement: (id: string) => void;
 
@@ -341,6 +365,82 @@ function getWeekMondayString() {
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
   return d.toISOString().split('T')[0];
+}
+
+function isValidDateString(s: unknown): s is string {
+  return typeof s === 'string' && !Number.isNaN(new Date(`${s}T00:00:00`).getTime());
+}
+
+function addDaysString(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+/** (monthly contribution across active goals) / 30 — the amount a "day" requires to count toward the streak. */
+export function getDailySavingsTarget(goals: Goal[]): number {
+  return goals.filter((g) => !g.archived).reduce((sum, g) => sum + (g.monthlyContribution ?? 0), 0) / 30;
+}
+
+function sumDepositsForDate(goals: Goal[], dateStr: string): number {
+  return goals.reduce(
+    (sum, g) => sum + g.deposits.filter((d) => d.date === dateStr).reduce((s, d) => s + d.amount, 0),
+    0
+  );
+}
+
+function sumDepositsSince(goals: Goal[], sinceDateStr: string): number {
+  return goals.reduce(
+    (sum, g) => sum + g.deposits.filter((d) => d.date >= sinceDateStr).reduce((s, d) => s + d.amount, 0),
+    0
+  );
+}
+
+/** The most-active hour-of-day from the tally, or `DEFAULT_HOUR` until there's enough signal (fewer than 5 samples). */
+function getPreferredHour(counts: number[]): number {
+  if (!Array.isArray(counts) || counts.length !== 24) return DEFAULT_HOUR;
+  const total = counts.reduce((s, c) => s + c, 0);
+  if (total < 5) return DEFAULT_HOUR;
+  let bestHour = DEFAULT_HOUR;
+  let bestCount = -1;
+  for (let h = 0; h < 24; h++) {
+    if (counts[h] > bestCount) {
+      bestCount = counts[h];
+      bestHour = h;
+    }
+  }
+  return bestHour;
+}
+
+/** Reads current state and (re)schedules every local notification category. Swallows failures — never blocks the UI. */
+function buildAndRefreshSchedule(state: PiggyState) {
+  const { profile, goals } = state;
+  const target = getDailySavingsTarget(goals);
+  const today = getTodayString();
+  const todaysSaved = sumDepositsForDate(goals, today);
+  const targetMet = target === 0 || todaysSaved >= target;
+  const remaining = Math.max(0, target - todaysSaved);
+  const monday = getWeekMondayString();
+  const savedThisWeek = sumDepositsSince(goals, monday);
+  const expenseCountThisWeek = profile.expenses.filter((e) => e.date >= monday).length;
+
+  refreshNotificationSchedule({
+    streakProtectionEnabled: profile.notificationPrefs.streakProtection,
+    milestoneAlertsEnabled: profile.notificationPrefs.milestoneAlerts,
+    weeklyReflectionEnabled: profile.notificationPrefs.weeklyReflection,
+    hasActiveTarget: target > 0,
+    targetMet,
+    streak: profile.streak,
+    remainingLabel: formatCurrency(remaining, profile.currency),
+    checkinIgnoredStreak: profile.checkinIgnoredStreak ?? 0,
+    hasWeeklyActivity: savedThisWeek > 0 || expenseCountThisWeek > 0,
+    preferredHour: getPreferredHour(profile.activityHourCounts),
+    savedThisWeekLabel: formatCurrency(savedThisWeek, profile.currency),
+    expenseCountThisWeek,
+    planStatus: profile.planStatus,
+    currentPeriodEnd: profile.currentPeriodEnd,
+    planDisplayName: profile.plan,
+  }).catch(() => {});
 }
 
 export const useStore = create<PiggyState>()(
@@ -418,9 +518,40 @@ export const useStore = create<PiggyState>()(
         const isPrimary = state.goals.length === 0;
         return { goals: [...state.goals, { ...g, isPrimary }] };
       }),
-      updateGoal: (id, updates) => set((state) => ({
-        goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
-      })),
+      updateGoal: (id, updates) => {
+        const { profile, goals } = get();
+        const before = goals.find((g) => g.id === id);
+
+        set((state) => ({
+          goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+        }));
+
+        if (before && updates.savedAmount != null && profile.notificationPrefs.milestoneAlerts) {
+          const target = updates.targetAmount ?? before.targetAmount;
+          const name = updates.name ?? before.name;
+          if (target > 0) {
+            const prevPct = before.savedAmount / target;
+            const newPct = updates.savedAmount / target;
+            if (prevPct < 1 && newPct >= 1) {
+              fireMilestoneNotification('👑 Goal crushed!', `You just hit ${name} — ${formatCurrency(updates.savedAmount, profile.currency)} saved.`).catch(() => {});
+            } else {
+              const thresholds: [number, string][] = [
+                [0.75, '🚀'],
+                [0.5, '💪'],
+                [0.25, '🌱'],
+              ];
+              for (const [t, emoji] of thresholds) {
+                if (prevPct < t && newPct >= t) {
+                  fireMilestoneNotification(`${emoji} ${Math.round(t * 100)}% there!`, `You're ${Math.round(t * 100)}% of the way to ${name}! Keep going.`).catch(() => {});
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        buildAndRefreshSchedule(get());
+      },
 
       setMissions: (missions) => set({ missions }),
       completeMission: (id) => set((state) => ({
@@ -449,16 +580,110 @@ export const useStore = create<PiggyState>()(
         });
       },
 
-      setAchievements: (achievements) => set({ achievements }),
-      unlockAchievement: (id) => set((state) => ({
-        achievements: state.achievements.map((a) =>
-          a.id === id ? { ...a, unlocked: true, unlockedAt: new Date().toISOString() } : a
-        ),
-      })),
+      checkAndUpdateStreak: () => {
+        const { goals, profile } = get();
+        const today = getTodayString();
 
-      addExpense: (expense) => set((state) => ({
-        profile: { ...state.profile, expenses: [...state.profile.expenses, expense] },
-      })),
+        // Profiles persisted before this field existed load with it missing/invalid —
+        // backfill rather than walking from an unparseable date.
+        if (!isValidDateString(profile.lastStreakCheckDate)) {
+          set((state) => ({
+            profile: {
+              ...state.profile,
+              lastStreakCheckDate: today,
+              checkinIgnoredStreak: state.profile.checkinIgnoredStreak ?? 0,
+            },
+          }));
+          return;
+        }
+
+        if (profile.lastStreakCheckDate >= today) return;
+
+        const target = getDailySavingsTarget(goals);
+        let streak = profile.streak;
+        let ignored = profile.checkinIgnoredStreak ?? 0;
+        let cursor = addDaysString(profile.lastStreakCheckDate, 1);
+        while (cursor < today) {
+          if (target > 0) {
+            if (sumDepositsForDate(goals, cursor) >= target) {
+              streak += 1;
+              ignored = 0;
+            } else {
+              streak = 0;
+              ignored += 1;
+            }
+          }
+          cursor = addDaysString(cursor, 1);
+        }
+
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            streak,
+            checkinIgnoredStreak: ignored,
+            lastStreakCheckDate: today,
+            lastActiveDate: today,
+          },
+        }));
+        buildAndRefreshSchedule(get());
+      },
+
+      refreshNotifications: () => buildAndRefreshSchedule(get()),
+
+      syncNotificationPermission: async () => {
+        const { profile } = get();
+        const prefs = profile.notificationPrefs;
+        const anyEnabled = prefs.paydayReminder || prefs.streakProtection || prefs.milestoneAlerts || prefs.weeklyReflection;
+        if (!anyEnabled) return;
+
+        const granted = await getNotificationPermissionStatus();
+        if (granted) return;
+
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            notificationPrefs: {
+              paydayReminder: false,
+              streakProtection: false,
+              milestoneAlerts: false,
+              weeklyReflection: false,
+            },
+          },
+        }));
+        buildAndRefreshSchedule(get());
+      },
+
+      recordActivity: () => {
+        const { profile } = get();
+        const base = Array.isArray(profile.activityHourCounts) && profile.activityHourCounts.length === 24
+          ? profile.activityHourCounts
+          : new Array(24).fill(0);
+        const hour = new Date().getHours();
+        const counts = [...base];
+        counts[hour] += 1;
+        set((state) => ({ profile: { ...state.profile, activityHourCounts: counts } }));
+      },
+
+      setAchievements: (achievements) => set({ achievements }),
+      unlockAchievement: (id) => {
+        const { achievements, profile } = get();
+        const achievement = achievements.find((a) => a.id === id);
+        set((state) => ({
+          achievements: state.achievements.map((a) =>
+            a.id === id ? { ...a, unlocked: true, unlockedAt: new Date().toISOString() } : a
+          ),
+        }));
+        if (achievement && !achievement.unlocked && profile.notificationPrefs.milestoneAlerts) {
+          fireMilestoneNotification('🏆 Achievement unlocked', achievement.title).catch(() => {});
+        }
+      },
+
+      addExpense: (expense) => {
+        set((state) => ({
+          profile: { ...state.profile, expenses: [...state.profile.expenses, expense] },
+        }));
+        buildAndRefreshSchedule(get());
+      },
 
       setLastProfileSync: (ts) => set({ lastProfileSync: ts }),
 
