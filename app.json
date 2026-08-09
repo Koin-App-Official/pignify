@@ -46,6 +46,13 @@
           "faceIDPermission": "Allow Piggy to unlock the app with Face ID."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cc860e5f-a78b-422c-8389-56b5d023d94d"
+      }
+    },
+    "owner": "mattyofficial"
   }
 }

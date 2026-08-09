@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 
 /**
  * Local-only notification engine (no push/remote infra exists yet — see
@@ -52,6 +53,29 @@ export async function requestNotificationPermission(): Promise<boolean> {
 export async function getNotificationPermissionStatus(): Promise<boolean> {
   const { status } = await Notifications.getPermissionsAsync();
   return status === 'granted';
+}
+
+/**
+ * Registers this device for remote (server-sent) push and returns its Expo push
+ * token, or null if permission isn't granted or no EAS project id is configured.
+ * Used to deliver billing-event notifications (payment failed, downgrade taking
+ * effect, bonus granted) that originate server-side, where local scheduling can't
+ * reach — see src/lib/device.ts's registerDevice, which persists the result.
+ */
+export async function registerRemotePushToken(): Promise<string | null> {
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+  if (!projectId) return null;
+
+  const granted = await getNotificationPermissionStatus();
+  if (!granted) return null;
+
+  try {
+    const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
+    return data;
+  } catch (err) {
+    console.warn('[notifications] registerRemotePushToken failed (non-fatal):', err);
+    return null;
+  }
 }
 
 async function cancel(id: string) {

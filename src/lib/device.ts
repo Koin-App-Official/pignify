@@ -19,6 +19,7 @@ import * as Crypto from 'expo-crypto';
 import { Permission, Role } from 'react-native-appwrite';
 import { tablesDB, DATABASE_ID } from './appwrite';
 import { SecureKeys, getItem, setItem } from './secureStorage';
+import { registerRemotePushToken } from './notifications';
 
 const DEVICES_TABLE = 'devices';
 
@@ -65,6 +66,9 @@ export async function registerDevice(userId: string): Promise<void> {
     const deviceId = await getDeviceId();
     const rowId = await deviceRowId(userId, deviceId);
     const now = new Date().toISOString();
+    // Best-effort — a missing/failed token just means no remote push for this
+    // device yet (e.g. permission not granted), not a registration failure.
+    const pushToken = await registerRemotePushToken();
 
     await tablesDB.upsertRow({
       databaseId: DATABASE_ID,
@@ -78,6 +82,7 @@ export async function registerDevice(userId: string): Promise<void> {
         registered_at: now,
         last_seen: now,
         active: true,
+        ...(pushToken ? { expo_push_token: pushToken } : {}),
       },
       permissions: [
         Permission.read(Role.user(userId)),

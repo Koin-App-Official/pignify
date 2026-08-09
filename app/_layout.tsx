@@ -17,12 +17,14 @@ export default function RootLayout() {
     initNotifications();
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const type = response.notification.request.content.data?.type;
-      if (type === 'trial-ending') {
+      if (type === 'trial-ending' || type === 'payment-failed' || type === 'downgrade-effective') {
         router.push('/plans');
       } else if (type === 'daily-checkin') {
         router.push('/(tabs)?openExpense=1');
       } else if (type === 'milestone') {
         router.push('/(tabs)/goals');
+      } else if (type === 'bonus-granted') {
+        router.push('/(tabs)/profile');
       } else {
         router.push('/(tabs)');
       }
