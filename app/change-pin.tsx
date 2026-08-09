@@ -66,6 +66,8 @@ export default function ChangePin() {
     } else if (res.reason === 'invalid_session') {
       setError('Session expired. Please sign in again.');
       router.back();
+    } else if (res.reason === 'network_error') {
+      setError("Couldn't reach the server. Check your connection and try again.");
     }
     // 'force_relogin' is handled by the store (status → unauthenticated), which
     // will unmount this whole modal since AuthGate swaps to LoginGate underneath.

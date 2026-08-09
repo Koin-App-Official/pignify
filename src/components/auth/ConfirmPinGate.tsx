@@ -73,6 +73,8 @@ export function ConfirmPinGate() {
       setError(left > 0 ? `Incorrect PIN. ${left} attempt${left === 1 ? '' : 's'} left.` : 'Incorrect PIN.');
     } else if (res.reason === 'invalid_session') {
       setError('Session expired. Please sign in again.');
+    } else if (res.reason === 'network_error') {
+      setError("Couldn't reach the server. Check your connection and try again.");
     }
     // 'force_relogin' is handled by the store (status → unauthenticated)
   };

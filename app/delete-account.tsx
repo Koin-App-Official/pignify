@@ -75,6 +75,8 @@ export default function DeleteAccount() {
     } else if (res.reason === 'invalid_session') {
       setError('Session expired. Please sign in again.');
       router.back();
+    } else if (res.reason === 'network_error') {
+      setError("Couldn't reach the server. Check your connection and try again.");
     }
   };
 

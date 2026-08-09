@@ -37,6 +37,10 @@ const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export default function TabLayout() {
   const checkAndResetMissions = useStore((state) => state.checkAndResetMissions);
+  const checkAndUpdateStreak = useStore((state) => state.checkAndUpdateStreak);
+  const refreshNotifications = useStore((state) => state.refreshNotifications);
+  const syncNotificationPermission = useStore((state) => state.syncNotificationPermission);
+  const recordActivity = useStore((state) => state.recordActivity);
   const updateProfile = useStore((state) => state.updateProfile);
   const setLastProfileSync = useStore((state) => state.setLastProfileSync);
 
@@ -59,10 +63,16 @@ export default function TabLayout() {
   useEffect(() => {
     const controller = new AbortController();
     checkAndResetMissions();
+    checkAndUpdateStreak();
+    recordActivity();
+    syncNotificationPermission().then(refreshNotifications);
     syncUserProfile(controller.signal);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         checkAndResetMissions();
+        checkAndUpdateStreak();
+        recordActivity();
+        syncNotificationPermission().then(refreshNotifications);
         syncUserProfile(controller.signal);
       }
     });

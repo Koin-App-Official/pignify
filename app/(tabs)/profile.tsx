@@ -10,6 +10,7 @@ import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { Button } from '@/components/ui/button';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
+import { requestNotificationPermission, getNotificationPermissionStatus } from '@/lib/notifications';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -25,6 +26,7 @@ export default function Profile() {
   const goals = useStore((state) => state.goals);
   const achievements = useStore((state) => state.achievements);
   const updateProfile = useStore((state) => state.updateProfile);
+  const refreshNotifications = useStore((state) => state.refreshNotifications);
   const resetForDemo = useStore((state) => state.resetForDemo);
   const resetLock = useAuthLock((state) => state.resetToLogin);
 
@@ -34,13 +36,39 @@ export default function Profile() {
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0);
   const unlockedBadges = achievements.filter((a) => a.unlocked).length;
 
-  const toggleNotif = (key: keyof typeof profile.notificationPrefs) => {
+  const toggleNotif = async (key: keyof typeof profile.notificationPrefs) => {
+    const turningOn = !profile.notificationPrefs[key];
+    if (turningOn) {
+      const alreadyGranted = await getNotificationPermissionStatus();
+      if (!alreadyGranted) {
+        // Soft-ask before the hard OS prompt — explain the value first, since a bare
+        // system dialog with no context converts worse and can't be re-shown if denied.
+        const wantsToEnable = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Stay on track',
+            'Piggy uses reminders to help you keep your streak and hit your savings goals. Enable notifications?',
+            [
+              { text: 'Not now', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Enable', onPress: () => resolve(true) },
+            ]
+          );
+        });
+        if (!wantsToEnable) return;
+
+        const granted = await requestNotificationPermission();
+        if (!granted) {
+          Alert.alert('Notifications disabled', 'Enable notifications for Piggy in your device Settings to turn this on.');
+          return;
+        }
+      }
+    }
     updateProfile({
       notificationPrefs: {
         ...profile.notificationPrefs,
-        [key]: !profile.notificationPrefs[key],
+        [key]: turningOn,
       },
     });
+    refreshNotifications();
   };
 
   const handleReset = () => {

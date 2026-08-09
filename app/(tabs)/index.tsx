@@ -11,7 +11,7 @@ import {
   type NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Redirect } from 'expo-router';
+import { useRouter, useLocalSearchParams, Redirect } from 'expo-router';
 import { Plus, Flame, TrendingUp, ChevronRight, Calendar, Sparkles } from 'lucide-react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -46,6 +46,7 @@ function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
 
 export default function Dashboard() {
   const router = useRouter();
+  const { openExpense } = useLocalSearchParams<{ openExpense?: string }>();
   // Fine-grained selectors instead of subscribing to the whole `profile`
   // object — this screen only touches these fields, so unrelated profile
   // changes (settings, plan sync, etc.) no longer re-render the dashboard.
@@ -63,6 +64,13 @@ export default function Dashboard() {
   const [activeGoalIndex, setActiveGoalIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const replay = useFocusReplay();
+
+  // Opened via a "daily check-in" notification tap (app/_layout.tsx) deep-linking to ?openExpense=1.
+  useEffect(() => {
+    if (openExpense !== '1') return;
+    setShowExpense(true);
+    router.setParams({ openExpense: undefined });
+  }, [openExpense]);
 
   const { plan, has, deepAnalysis } = useEntitlements();
   const incrementDeepAnalysis = useStore((s) => s.incrementDeepAnalysis);
