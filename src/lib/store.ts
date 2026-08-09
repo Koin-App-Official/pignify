@@ -95,6 +95,8 @@ export interface UserProfile {
   userID?: string;
   name: string;
   email: string;
+  /** ISO date (yyyy-mm-dd) confirmed during the onboarding 18+ age gate. */
+  dateOfBirth: string;
   country: string;
   currency: string;
   plan: UserPlan;
@@ -161,6 +163,7 @@ export interface UserProfile {
 export const DEFAULT_PROFILE: UserProfile = {
   name: '',
   email: '',
+  dateOfBirth: '',
   country: '',
   currency: 'USD',
   plan: 'free',
@@ -361,19 +364,32 @@ function getTodayString() {
 }
 
 function getWeekMondayString() {
+  // UTC throughout: mixing local getDay()/setDate() with a UTC toISOString()
+  // serialization is the same bug class as addDaysString below — in any
+  // timezone ahead of UTC it can silently roll the result back a day.
   const d = new Date();
-  const day = d.getDay();
-  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  const day = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
   return d.toISOString().split('T')[0];
 }
 
 function isValidDateString(s: unknown): s is string {
-  return typeof s === 'string' && !Number.isNaN(new Date(`${s}T00:00:00`).getTime());
+  return typeof s === 'string' && !Number.isNaN(new Date(`${s}T00:00:00Z`).getTime());
 }
 
+/**
+ * UTC throughout — these are plain calendar-day strings (no timezone of their
+ * own), so parsing/mutating in local time and then serializing via
+ * toISOString() (always UTC) is inconsistent: in any timezone ahead of UTC,
+ * local midnight of `dateStr + days` can land on the previous UTC day,
+ * returning the SAME string back for `days = 1`. Callers that loop by
+ * incrementing a cursor with this (e.g. checkAndUpdateStreak) would then spin
+ * forever, since the cursor never advances. Doing everything in UTC removes
+ * the round-trip entirely.
+ */
 function addDaysString(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + days);
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().split('T')[0];
 }
 

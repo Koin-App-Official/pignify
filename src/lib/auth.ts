@@ -21,8 +21,20 @@
  * value Appwrite also sets as a Set-Cookie) right after the session call, then
  * wipe the cookie so the only place it lives is our own PIN-encrypted storage.
  */
+import { AppwriteException } from 'react-native-appwrite';
 import { account, ID, applySession, clearClientSession, endpoint, projectId } from './appwrite';
 import NitroCookies from 'react-native-nitro-cookies';
+
+const VALIDATE_SESSION_TIMEOUT_MS = 10_000;
+
+/**
+ * Thrown by validateSession() when the request never got a response (timeout,
+ * offline, DNS/firewall issue) — as opposed to the server actively rejecting
+ * the session (401). Callers must NOT treat this the same as an invalid
+ * session: wiping the local PIN over a transient network blip would strand a
+ * user with a perfectly good session behind a PIN they can no longer use.
+ */
+export class SessionCheckNetworkError extends Error {}
 
 /**
  * Recover the real session token from the native cookie jar when the SDK
@@ -93,14 +105,34 @@ export async function getCurrentAccount() {
 /**
  * Validate that the currently applied session is still live on the server.
  * Returns the account id on success, null on 401/expiry/revocation.
+ *
+ * Times out after VALIDATE_SESSION_TIMEOUT_MS instead of hanging forever — the
+ * SDK's account.get() has no built-in timeout, and on a real device a stalled
+ * request (bad WiFi, captive portal, no route to the endpoint) would otherwise
+ * leave the caller awaiting a promise that never settles.
  */
 export async function validateSession(): Promise<string | null> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new SessionCheckNetworkError('validateSession timed out')),
+      VALIDATE_SESSION_TIMEOUT_MS
+    );
+  });
   try {
-    const me = await account.get();
+    const me = await Promise.race([account.get(), timeout]);
     return me.$id;
   } catch (err) {
     console.error('[auth] validateSession failed:', err);
-    return null;
+    // Only a real 401 (server actively says "not you") means the session is
+    // dead. Anything else — timeout, DNS failure, no route — is "couldn't
+    // check", not "checked and it's invalid".
+    if (err instanceof AppwriteException && err.code === 401) {
+      return null;
+    }
+    throw new SessionCheckNetworkError(err instanceof Error ? err.message : String(err));
+  } finally {
+    clearTimeout(timeoutId!);
   }
 }
 

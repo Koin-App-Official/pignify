@@ -23,7 +23,7 @@
  */
 import { create } from 'zustand';
 import { applySession, clearClientSession } from './appwrite';
-import { validateSession, logout as serverLogout } from './auth';
+import { validateSession, logout as serverLogout, SessionCheckNetworkError } from './auth';
 import { hasPin, verifyPin, setPin, clearPin, demoteToStale, getLockoutState } from './pin';
 import { unlockWithBiometric, disableBiometric, isBiometricEnabled, enableBiometric } from './biometrics';
 import { registerDevice } from './device';
@@ -41,10 +41,18 @@ export type UnlockResult =
   | { ok: true }
   | {
       ok: false;
-      reason: 'wrong_pin' | 'locked' | 'force_relogin' | 'invalid_session' | 'no_pin';
+      reason:
+        | 'wrong_pin'
+        | 'locked'
+        | 'force_relogin'
+        | 'invalid_session'
+        | 'no_pin'
+        | 'network_error';
       remainingMs?: number;
       attemptsRemaining?: number;
     };
+
+type ActivateOutcome = 'ok' | 'invalid_session' | 'network_error';
 
 interface AuthLockState {
   status: LockStatus;
@@ -96,23 +104,38 @@ interface AuthLockState {
   logout: () => Promise<void>;
 }
 
-/** Promote a just-decrypted secret to an unlocked session, validating it live. */
+/**
+ * Promote a just-decrypted secret to an unlocked session, validating it live.
+ *
+ * Distinguishes "server said no" from "couldn't reach the server": only the
+ * former wipes the local PIN. A timeout/offline validateSession() call must
+ * NOT be treated as an invalid session — the encrypted blob is still perfectly
+ * good, the network is just temporarily unavailable, and the caller should let
+ * the user retry rather than force them through a full re-login.
+ */
 async function activateSession(
   secret: string,
   set: (s: Partial<AuthLockState>) => void
-): Promise<boolean> {
+): Promise<ActivateOutcome> {
   applySession(secret);
-  const accountId = await validateSession();
+  let accountId: string | null;
+  try {
+    accountId = await validateSession();
+  } catch (err) {
+    clearClientSession();
+    if (err instanceof SessionCheckNetworkError) return 'network_error';
+    throw err;
+  }
   if (!accountId) {
     // session revoked/expired on the server — local PIN is useless, force re-login
     await clearPin();
     clearClientSession();
     set({ status: 'unauthenticated', userId: null, sessionSecret: null });
-    return false;
+    return 'invalid_session';
   }
   set({ status: 'unlocked', userId: accountId, sessionSecret: secret });
   registerDevice(accountId); // fire-and-forget last_seen refresh
-  return true;
+  return 'ok';
 }
 
 export const useAuthLock = create<AuthLockState>((set, get) => ({
@@ -187,8 +210,8 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
       };
     }
 
-    const ok = await activateSession(res.secret, set);
-    return ok ? { ok: true } : { ok: false, reason: 'invalid_session' };
+    const outcome = await activateSession(res.secret, set);
+    return outcome === 'ok' ? { ok: true } : { ok: false, reason: outcome };
   },
 
   confirmExistingPin: async (pin) => {
@@ -232,15 +255,22 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
       await enableBiometric(key).catch(() => false);
     }
 
-    const ok = await activateSession(pendingSecret, set);
+    const outcome = await activateSession(pendingSecret, set);
+    if (outcome === 'network_error') {
+      // Keep pendingSecret intact — the PIN blob is already re-wrapped around
+      // it above, so a retry just needs to re-run activateSession, not redo
+      // the whole confirm-PIN step.
+      return { ok: false, reason: 'network_error' };
+    }
     set({ pendingSecret: null });
-    return ok ? { ok: true } : { ok: false, reason: 'invalid_session' };
+    return outcome === 'ok' ? { ok: true } : { ok: false, reason: 'invalid_session' };
   },
 
   tryUnlockBiometric: async () => {
     const secret = await unlockWithBiometric();
     if (!secret) return false;
-    return activateSession(secret, set);
+    const outcome = await activateSession(secret, set);
+    return outcome === 'ok';
   },
 
   lock: () => {
