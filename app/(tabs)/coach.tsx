@@ -56,13 +56,6 @@ function isMilestoneReply(text: string): boolean {
   return text.includes("You're doing amazing!");
 }
 
-const STARTERS = [
-  'How can I save more?',
-  'Am I on track?',
-  'Help me recover this week',
-  'What should I do next?',
-];
-
 function getCoachResponse(input: string): string {
   const lower = input.toLowerCase();
   const profile = useStore.getState().profile;
@@ -332,15 +325,6 @@ export default function AICoach() {
             })}
             {isTyping && <TypingIndicator />}
           </View>
-
-          {/* Starters */}
-          {messages.length <= 1 && (
-            <View className="mt-6 flex-row flex-wrap gap-2">
-              {STARTERS.map((s) => (
-                <Button key={s} variant="chip" size="chip" label={s} onPress={() => send(s)} />
-              ))}
-            </View>
-          )}
         </Animated.ScrollView>
 
         {confettiActive && (
