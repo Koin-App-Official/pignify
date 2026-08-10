@@ -25,12 +25,14 @@ const buttonVariants = cva(
         ghost: "bg-transparent",
         link: "bg-transparent",
         tonal: "bg-primary-container",
+        chip: "border-2 border-primary bg-primary-container",
       },
       size: {
         default: "h-12 px-6 py-3",
         sm: "h-10 px-4",
         lg: "h-14 px-8",
         icon: "h-12 w-12",
+        chip: "px-5 py-3",
       },
     },
     defaultVariants: {
@@ -52,12 +54,14 @@ const buttonTextVariants = cva(
         ghost: "text-primary",
         link: "text-primary underline",
         tonal: "text-on-primary-container",
+        chip: "text-primary",
       },
       size: {
         default: "text-base",
         sm: "text-sm",
         lg: "text-lg",
         icon: "",
+        chip: "text-sm",
       },
     },
     defaultVariants: {
@@ -71,6 +75,7 @@ const VARIANT_BOTTOM_BORDERS: Record<string, { borderBottomWidth: number; border
   default: { borderBottomWidth: 4, borderBottomColor: '#1E3A8A' },
   destructive: { borderBottomWidth: 4, borderBottomColor: '#7F1D1D' },
   tonal: { borderBottomWidth: 4, borderBottomColor: '#166534' },
+  chip: { borderBottomWidth: 3, borderBottomColor: '#1E3A8A' },
 };
 
 export interface ButtonProps
