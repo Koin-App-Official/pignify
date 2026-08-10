@@ -4,6 +4,14 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      // Note: keys can't reuse Tailwind's default fontWeight names (bold/semibold/
+      // black/medium) — those already generate colliding `font-*` weight utilities.
+      fontFamily: {
+        sans: ["Nunito_400Regular"],
+        "sans-semibold": ["Nunito_600SemiBold"],
+        "sans-bold": ["Nunito_700Bold"],
+        heading: ["Nunito_800ExtraBold"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
