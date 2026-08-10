@@ -4,7 +4,7 @@
  * escalating lockout and routes to re-login on "Forgot PIN" or lockout exhaustion.
  */
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Alert, InteractionManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -42,14 +42,20 @@ export function LockGate() {
   const [forgotBusy, setForgotBusy] = useState(false);
   const triedBio = useRef(false);
 
-  // Discover biometric state + auto-attempt once.
+  // Discover biometric state + auto-attempt once. The prompt is deferred until
+  // after mount/transition interactions settle — firing it immediately on mount
+  // races the native view transition (e.g. app launch, or the previous screen
+  // unmounting), which silently drops the Face ID prompt on iOS and leaves the
+  // user thinking they have to tap the button to "activate" it.
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+    const task = InteractionManager.runAfterInteractions(async () => {
       const [available, enabled, kind] = await Promise.all([
         isBiometricAvailable(),
         isBiometricEnabled(),
         getBiometricKind(),
       ]);
+      if (cancelled) return;
       const usable = available && enabled;
       setBioEnabled(usable);
       setBioKind(kind);
@@ -57,7 +63,11 @@ export function LockGate() {
         triedBio.current = true;
         await tryUnlockBiometric(); // success flips status away from this screen
       }
-    })();
+    });
+    return () => {
+      cancelled = true;
+      task.cancel();
+    };
   }, [tryUnlockBiometric]);
 
   // Tick down an active lockout.
