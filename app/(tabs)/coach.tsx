@@ -254,7 +254,7 @@ export default function AICoach() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={0}
       >
         {/* Header */}
         <View className="bg-surface-container-low px-5 py-4 border-b border-surface-container flex-row items-center gap-3">
