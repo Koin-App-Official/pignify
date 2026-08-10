@@ -18,7 +18,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.piggy.app",
+      "bundleIdentifier": "com.piggnify.app",
       "infoPlist": {
         "CADisableMinimumFrameDurationOnPhone": true
       }
