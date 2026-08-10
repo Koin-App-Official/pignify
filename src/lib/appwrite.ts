@@ -23,14 +23,23 @@ export const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID ?? '';
 export const DATABASE_ID =
   process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID ?? 'piggnify_mobile_db';
 
-if (!endpoint || !projectId) {
+const isConfigured = !!endpoint && !!projectId;
+
+if (!isConfigured) {
   // Surfaced loudly in dev rather than failing with an opaque network error.
   log.warn(
     'Missing EXPO_PUBLIC_APPWRITE_ENDPOINT or EXPO_PUBLIC_APPWRITE_PROJECT_ID — auth will fail.'
   );
 }
 
-export const client = new Client().setEndpoint(endpoint).setProject(projectId);
+// Client.setEndpoint()/setProject() throw synchronously on an empty string, and this
+// module is imported (directly or transitively) by nearly every route — including the
+// root layout — so that throw would crash module evaluation for the whole route tree,
+// not just auth. Fall back to obviously-invalid placeholders so construction always
+// succeeds; real network calls still fail loudly (as intended) when unconfigured.
+export const client = new Client()
+  .setEndpoint(isConfigured ? endpoint : 'https://unconfigured.invalid/v1')
+  .setProject(isConfigured ? projectId : 'unconfigured');
 
 export const account = new Account(client);
 export const tablesDB = new TablesDB(client);
