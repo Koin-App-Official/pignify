@@ -45,7 +45,8 @@
         {
           "faceIDPermission": "Allow Piggy to unlock the app with Face ID."
         }
-      ]
+      ],
+      "./plugins/withoutPushEntitlement"
     ]
   }
 }
