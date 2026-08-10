@@ -27,6 +27,9 @@ import { ScreenTransition } from '@/components/ScreenTransition';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('coach');
 
 interface Message {
   id: string;
@@ -156,7 +159,7 @@ export default function AICoach() {
         const balance = (row as any).addon_balance;
         if (typeof balance === 'number') setAddonMessageBalance(balance);
       } catch (err) {
-        console.error('Failed to refresh addon balance:', err);
+        log.error('Failed to refresh addon balance:', err);
       }
       router.setParams({ addon: undefined });
     })();
@@ -191,7 +194,7 @@ export default function AICoach() {
       body: JSON.stringify({ messages: last10 }),
       // @ts-ignore
       mode: 'no-cors',
-    }).catch((err) => console.error('Coach webhook failed:', err));
+    }).catch((err) => log.error('Coach webhook failed:', err));
 
     setInput('');
     setIsTyping(true);

@@ -12,6 +12,9 @@
  *   EXPO_PUBLIC_APPWRITE_DATABASE_ID  defaults to piggnify_mobile_db
  */
 import { Client, Account, TablesDB, ID } from 'react-native-appwrite';
+import { createLogger } from './logger';
+
+const log = createLogger('appwrite');
 
 export const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT ?? '';
 export const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID ?? '';
@@ -22,8 +25,8 @@ export const DATABASE_ID =
 
 if (!endpoint || !projectId) {
   // Surfaced loudly in dev rather than failing with an opaque network error.
-  console.warn(
-    '[appwrite] Missing EXPO_PUBLIC_APPWRITE_ENDPOINT or EXPO_PUBLIC_APPWRITE_PROJECT_ID — auth will fail.'
+  log.warn(
+    'Missing EXPO_PUBLIC_APPWRITE_ENDPOINT or EXPO_PUBLIC_APPWRITE_PROJECT_ID — auth will fail.'
   );
 }
 

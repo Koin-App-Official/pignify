@@ -17,6 +17,9 @@ import {
 } from '@/lib/entitlements';
 import { startCheckout, requestSubscriptionSync } from '@/lib/billing';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('plans');
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -103,7 +106,7 @@ export default function Plans() {
           Alert.alert('Plan updated', `You're now on the ${getPlanConfig(plan).displayName} plan. Enjoy your new features! 🎉`);
         }
       } catch (err) {
-        console.warn('[plans] Failed to sync subscription after checkout return:', err);
+        log.warn('Failed to sync subscription after checkout return:', err);
       } finally {
         setSyncing(false);
         router.setParams({ checkout: undefined });
