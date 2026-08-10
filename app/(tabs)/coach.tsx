@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, KeyboardAvoidingView, Platform, TextInput, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Send } from 'lucide-react-native';
+import { Send, Sparkles } from 'lucide-react-native';
 import Animated, {
   FadeInDown,
   LinearTransition,
@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SimpleMarkdown } from '@/components/ui/simple-markdown';
 import { Button } from '@/components/ui/button';
+import { Mascot } from '@/components/Mascot';
 import { useStore, UserPlan } from '@/lib/store';
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
@@ -25,6 +26,8 @@ import { UpgradeModal } from '@/components/UpgradeModal';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { PressableScale } from '@/components/animation/PressableScale';
+import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
+import { useCelebrate } from '@/components/animation/useCelebrate';
 import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
@@ -35,6 +38,21 @@ interface Message {
   id: string;
   role: 'user' | 'coach';
   content: string;
+  timestamp: number;
+}
+
+/** Group consecutive same-role messages that landed within 3 minutes; only
+ * the last message of each run shows a timestamp, per the chat-polish spec. */
+const GROUP_GAP_MS = 3 * 60 * 1000;
+
+function formatTimestamp(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Sentinel matching the "≥50% on track" branch of getCoachResponse — used to
+ * fire a restrained celebration only on genuine milestone replies, not every message. */
+function isMilestoneReply(text: string): boolean {
+  return text.includes("You're doing amazing!");
 }
 
 const STARTERS = [
@@ -85,6 +103,7 @@ export default function AICoach() {
       id: '1',
       role: 'coach',
       content: "Hi! 👋 I'm your Piggy coach. I'm here to help you save smarter and reach your goals. What's on your mind today?",
+      timestamp: Date.now(),
     },
   ]);
   const [input, setInput] = useState('');
@@ -93,6 +112,8 @@ export default function AICoach() {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const router = useRouter();
   const { addon } = useLocalSearchParams<{ addon?: string }>();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
 
   const { plan, config, aiMessages, has } = useEntitlements();
   const incrementCoachMessages = useStore((s) => s.incrementCoachMessages);
@@ -180,7 +201,12 @@ export default function AICoach() {
     }
 
     incrementCoachMessages(messageLimit);
-    const userMsg: Message = { id: Math.random().toString(36).substring(7), role: 'user', content: text };
+    const userMsg: Message = {
+      id: Math.random().toString(36).substring(7),
+      role: 'user',
+      content: text,
+      timestamp: Date.now(),
+    };
     const updated = [...messages, userMsg];
     setMessages(updated);
 
@@ -202,13 +228,16 @@ export default function AICoach() {
     if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
     replyTimeoutRef.current = setTimeout(() => {
       replyTimeoutRef.current = null;
+      const replyText = getCoachResponse(text);
       const coachMsg: Message = {
         id: Math.random().toString(36).substring(7),
         role: 'coach',
-        content: getCoachResponse(text)
+        content: replyText,
+        timestamp: Date.now(),
       };
       setIsTyping(false);
       setMessages((prev) => [...prev, coachMsg]);
+      if (isMilestoneReply(replyText)) celebrate();
     }, 600);
   };
 
@@ -229,25 +258,26 @@ export default function AICoach() {
       >
         {/* Header */}
         <View className="bg-surface-container-low px-5 py-4 border-b border-surface-container flex-row items-center gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary-container">
-            <Text className="text-2xl">🐷</Text>
-          </View>
+          <Mascot expression="idle" size={48} />
           <View className="flex-1">
-            <Text className="text-base font-black text-on-surface">AI Coach</Text>
+            <Text className="text-base font-heading text-on-surface">AI Coach</Text>
             <View className="flex-row items-center gap-1.5 mt-0.5">
               <View className="h-2 w-2 rounded-full bg-tertiary" />
-              <Text className="text-xs font-semibold text-tertiary">Online • Ready to help</Text>
+              <Text className="text-xs font-sans-semibold text-tertiary">Online • Ready to help</Text>
             </View>
           </View>
-          <TouchableOpacity className="items-end" onPress={() => !has('aiCoach') && openGate('aiCoach')}>
-            {!has('aiCoach') ? (
-              <Text className="text-xs font-bold text-destructive">Upgrade your plan</Text>
-            ) : (
-              <Text className="text-xs font-bold text-on-surface">
-                {aiMessages.unlimited ? 'Unlimited' : `${aiMessages.remaining} messages left`}
-              </Text>
-            )}
-          </TouchableOpacity>
+          {!has('aiCoach') ? (
+            <PressableScale onPress={() => openGate('aiCoach')}>
+              <View className="flex-row items-center gap-1 rounded-full bg-warning-container px-3 py-1.5">
+                <Sparkles size={12} color="#F59E0B" />
+                <Text className="text-xs font-sans-bold text-on-surface">Upgrade your plan</Text>
+              </View>
+            </PressableScale>
+          ) : (
+            <Text className="text-xs font-sans-bold text-on-surface">
+              {aiMessages.unlimited ? 'Unlimited' : `${aiMessages.remaining} messages left`}
+            </Text>
+          )}
         </View>
 
         {/* Messages */}
@@ -258,26 +288,47 @@ export default function AICoach() {
           onContentSizeChange={handleContentSizeChange}
         >
           <View className="gap-4">
-            {messages.map((m) => (
-              <Animated.View
-                key={m.id}
-                entering={FadeInDown.springify()}
-                layout={LinearTransition.springify()}
-                className={`flex-row ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <View
-                  className={`max-w-[85%] px-4 py-3 ${
-                    m.role === 'user'
-                      ? 'bg-primary-container rounded-3xl rounded-br-lg'
-                      : 'bg-surface-container-low rounded-3xl rounded-bl-lg'
-                  }`}
-                >
-                  <SimpleMarkdown color="#0F172A" fontSize={14} lineHeight={20}>
-                    {m.content}
-                  </SimpleMarkdown>
+            {messages.map((m, i) => {
+              const prev = messages[i - 1];
+              const next = messages[i + 1];
+              const isFirstOfRun = !prev || prev.role !== m.role;
+              const showTimestamp =
+                !next || next.role !== m.role || next.timestamp - m.timestamp > GROUP_GAP_MS;
+              const isUser = m.role === 'user';
+              return (
+                <View key={m.id} className="gap-1">
+                  <Animated.View
+                    entering={FadeInDown.springify().damping(16).stiffness(160)}
+                    layout={LinearTransition.springify()}
+                    className={`flex-row items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {!isUser && (
+                      <View style={{ width: 24 }}>{isFirstOfRun && <Mascot size={24} />}</View>
+                    )}
+                    <View
+                      className={`max-w-[80%] px-4 py-3 ${
+                        isUser
+                          ? 'bg-primary rounded-3xl rounded-br-lg'
+                          : 'bg-surface-container border border-outline/40 rounded-3xl rounded-bl-2xl'
+                      }`}
+                    >
+                      <SimpleMarkdown color={isUser ? '#FFFFFF' : '#0F172A'} fontSize={14} lineHeight={20}>
+                        {m.content}
+                      </SimpleMarkdown>
+                    </View>
+                  </Animated.View>
+                  {showTimestamp && (
+                    <Text
+                      className={`text-[11px] font-sans text-on-surface-variant/70 ${
+                        isUser ? 'text-right mr-1' : 'text-left ml-9'
+                      }`}
+                    >
+                      {formatTimestamp(m.timestamp)}
+                    </Text>
+                  )}
                 </View>
-              </Animated.View>
-            ))}
+              );
+            })}
             {isTyping && <TypingIndicator />}
           </View>
 
@@ -285,15 +336,15 @@ export default function AICoach() {
           {messages.length <= 1 && (
             <View className="mt-6 flex-row flex-wrap gap-2">
               {STARTERS.map((s) => (
-                <PressableScale key={s} onPress={() => send(s)}>
-                  <View className="rounded-full border-2 border-primary/30 bg-primary-container/50 px-4 py-2.5">
-                    <Text className="text-sm font-semibold text-primary">{s}</Text>
-                  </View>
-                </PressableScale>
+                <Button key={s} variant="chip" size="chip" label={s} onPress={() => send(s)} />
               ))}
             </View>
           )}
         </Animated.ScrollView>
+
+        {confettiActive && (
+          <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />
+        )}
 
         {/* Input */}
         <View className="bg-surface-container-low p-4 pb-6">
@@ -313,9 +364,9 @@ export default function AICoach() {
                 if (input.trim()) send(input.trim());
               }}
               disabled={!input.trim()}
-              className="h-12 w-12 items-center justify-center p-0"
+              className="h-14 w-14 items-center justify-center p-0"
             >
-              <Send size={16} color={!input.trim() ? '#64748B' : '#ffffff'} />
+              <Send size={22} color={!input.trim() ? '#64748B' : '#ffffff'} />
             </Button>
           </View>
         </View>
@@ -349,13 +400,18 @@ function TypingDot({ delay }: { delay: number }) {
 
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
-  return <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#94A3B8' }, style]} />;
+  return <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#64748B' }, style]} />;
 }
 
 function TypingIndicator() {
   return (
-    <Animated.View entering={FadeInDown.springify()} layout={LinearTransition.springify()} className="flex-row justify-start">
-      <View className="flex-row items-center gap-1.5 max-w-[85%] px-4 py-3 bg-surface-container-low rounded-3xl rounded-bl-lg">
+    <Animated.View
+      entering={FadeInDown.springify().damping(16).stiffness(160)}
+      layout={LinearTransition.springify()}
+      className="flex-row items-end justify-start gap-2"
+    >
+      <Mascot expression="thinking" size={24} />
+      <View className="flex-row items-center gap-1.5 max-w-[85%] px-4 py-3 bg-surface-container border border-outline/40 rounded-3xl rounded-bl-2xl">
         <TypingDot delay={0} />
         <TypingDot delay={150} />
         <TypingDot delay={300} />
