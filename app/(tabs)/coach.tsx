@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Send, Sparkles } from 'lucide-react-native';
 import Animated, {
+  Easing,
   FadeInDown,
   LinearTransition,
   runOnUI,
@@ -298,7 +299,7 @@ export default function AICoach() {
               return (
                 <View key={m.id} className="gap-1">
                   <Animated.View
-                    entering={FadeInDown.springify().damping(16).stiffness(160)}
+                    entering={FadeInDown.duration(220).easing(Easing.out(Easing.ease))}
                     layout={LinearTransition.springify()}
                     className={`flex-row items-end gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
                   >
