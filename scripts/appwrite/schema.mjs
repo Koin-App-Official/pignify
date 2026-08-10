@@ -61,7 +61,7 @@ export const PLAN_SEED = [
   },
   {
     plan_id: 'medium', display_name: 'Medium', rank: 1, price_cents: 799,
-    quota_incomes: 1, quota_goals: 2, quota_devices: 1, quota_ai_messages: 6, quota_email_reports: 3,
+    quota_incomes: 1, quota_goals: 2, quota_devices: 1, quota_ai_messages: 10, quota_email_reports: 3,
     quota_deep_analysis: 6,
     extra_message_price_cents: 199,
     feat_ai_coach: true, feat_email_reports: true, feat_exclusive_protection: true,
@@ -70,7 +70,7 @@ export const PLAN_SEED = [
   },
   {
     plan_id: 'family', display_name: 'Family', rank: 2, price_cents: 999,
-    quota_incomes: 3, quota_goals: UNLIMITED, quota_devices: UNLIMITED, quota_ai_messages: 20,
+    quota_incomes: 3, quota_goals: UNLIMITED, quota_devices: UNLIMITED, quota_ai_messages: 30,
     quota_email_reports: UNLIMITED, quota_deep_analysis: 10, extra_message_price_cents: 99,
     feat_ai_coach: true, feat_email_reports: true, feat_exclusive_protection: true,
     feat_referral: true, feat_deep_analysis: true, feat_goal_bonus: true, feat_loyalty_discount: true,

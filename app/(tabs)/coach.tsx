@@ -269,7 +269,9 @@ export default function AICoach() {
             </PressableScale>
           ) : (
             <Text className="text-xs font-sans-bold text-on-surface">
-              {aiMessages.unlimited ? 'Unlimited' : `${aiMessages.remaining} messages left`}
+              {aiMessages.unlimited
+                ? 'Unlimited'
+                : `${Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100))}% used this month`}
             </Text>
           )}
         </View>
