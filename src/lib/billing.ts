@@ -16,7 +16,10 @@
  * the UI can fall back to a simulated flow.
  */
 import { Linking } from 'react-native';
+import { createLogger } from './logger';
 import type { UserPlan } from './store';
+
+const log = createLogger('billing');
 
 /**
  * Base URL of the n8n billing webhooks, e.g. https://n8n.piggnify.com/webhook.
@@ -89,28 +92,28 @@ export async function createCheckoutSession(
  */
 export async function startCheckout(plan: UserPlan, userId?: string): Promise<CheckoutResult> {
   if (!isBillingConfigured()) {
-    console.warn('[billing] startCheckout: billing not configured (missing EXPO_PUBLIC_N8N_BILLING_URL)');
+    log.warn('startCheckout: billing not configured (missing EXPO_PUBLIC_N8N_BILLING_URL)');
     return { status: 'unavailable' };
   }
   if (!userId) {
-    console.warn('[billing] startCheckout: no userId provided');
+    log.warn('startCheckout: no userId provided');
     return { status: 'unavailable' };
   }
   try {
     const url = await createCheckoutSession(plan, userId);
     if (!url) {
-      console.warn('[billing] startCheckout: n8n returned no url');
+      log.warn('startCheckout: n8n returned no url');
       return { status: 'unavailable' };
     }
     const canOpen = await Linking.canOpenURL(url);
     if (!canOpen) {
-      console.warn('[billing] startCheckout: Linking.canOpenURL returned false for', url);
+      log.warn('startCheckout: Linking.canOpenURL returned false for', url);
       return { status: 'unavailable' };
     }
     await Linking.openURL(url);
     return { status: 'completed' };
   } catch (err) {
-    console.warn('[billing] startCheckout failed:', err);
+    log.warn('startCheckout failed:', err);
     return { status: 'unavailable' };
   }
 }
@@ -136,28 +139,28 @@ export async function createAddonCheckoutSession(userId: string): Promise<string
  */
 export async function startAddonCheckout(userId?: string): Promise<CheckoutResult> {
   if (!isBillingConfigured()) {
-    console.warn('[billing] startAddonCheckout: billing not configured (missing EXPO_PUBLIC_N8N_BILLING_URL)');
+    log.warn('startAddonCheckout: billing not configured (missing EXPO_PUBLIC_N8N_BILLING_URL)');
     return { status: 'unavailable' };
   }
   if (!userId) {
-    console.warn('[billing] startAddonCheckout: no userId provided');
+    log.warn('startAddonCheckout: no userId provided');
     return { status: 'unavailable' };
   }
   try {
     const url = await createAddonCheckoutSession(userId);
     if (!url) {
-      console.warn('[billing] startAddonCheckout: n8n returned no url');
+      log.warn('startAddonCheckout: n8n returned no url');
       return { status: 'unavailable' };
     }
     const canOpen = await Linking.canOpenURL(url);
     if (!canOpen) {
-      console.warn('[billing] startAddonCheckout: Linking.canOpenURL returned false for', url);
+      log.warn('startAddonCheckout: Linking.canOpenURL returned false for', url);
       return { status: 'unavailable' };
     }
     await Linking.openURL(url);
     return { status: 'completed' };
   } catch (err) {
-    console.warn('[billing] startAddonCheckout failed:', err);
+    log.warn('startAddonCheckout failed:', err);
     return { status: 'unavailable' };
   }
 }
@@ -192,7 +195,7 @@ export async function requestAccountDeletion(userId: string): Promise<boolean> {
     await postJson(ENDPOINTS.accountDelete, { userId });
     return true;
   } catch (err) {
-    console.warn('[billing] requestAccountDeletion failed:', err);
+    log.warn('requestAccountDeletion failed:', err);
     return false;
   }
 }

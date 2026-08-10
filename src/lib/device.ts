@@ -18,7 +18,10 @@ import * as Device from 'expo-device';
 import * as Crypto from 'expo-crypto';
 import { Permission, Role } from 'react-native-appwrite';
 import { tablesDB, DATABASE_ID } from './appwrite';
+import { createLogger } from './logger';
 import { SecureKeys, getItem, setItem } from './secureStorage';
+
+const log = createLogger('device');
 
 const DEVICES_TABLE = 'devices';
 
@@ -86,6 +89,6 @@ export async function registerDevice(userId: string): Promise<void> {
       ],
     });
   } catch (err) {
-    console.warn('[device] registerDevice failed (non-fatal):', err);
+    log.warn('registerDevice failed (non-fatal):', err);
   }
 }

@@ -23,7 +23,10 @@
  */
 import { AppwriteException } from 'react-native-appwrite';
 import { account, ID, applySession, clearClientSession, endpoint, projectId } from './appwrite';
+import { createLogger } from './logger';
 import NitroCookies from 'react-native-nitro-cookies';
+
+const log = createLogger('auth');
 
 const VALIDATE_SESSION_TIMEOUT_MS = 10_000;
 
@@ -123,7 +126,7 @@ export async function validateSession(): Promise<string | null> {
     const me = await Promise.race([account.get(), timeout]);
     return me.$id;
   } catch (err) {
-    console.error('[auth] validateSession failed:', err);
+    log.error('validateSession failed:', err);
     // Only a real 401 (server actively says "not you") means the session is
     // dead. Anything else — timeout, DNS failure, no route — is "couldn't
     // check", not "checked and it's invalid".

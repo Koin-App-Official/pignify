@@ -18,10 +18,13 @@ import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
 import { clearClientSession } from '@/lib/appwrite';
+import { createLogger } from '@/lib/logger';
 import NitroCookies from 'react-native-nitro-cookies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
+
+const log = createLogger('LoginGate');
 
 const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -66,7 +69,7 @@ export function LoginGate() {
       const { userId, secret } = await verifyEmailOtp(otpUserId, code.trim());
       onLoggedIn(userId, secret); // → needs_pin_setup or needs_pin_confirm
     } catch (err) {
-      console.error('[LoginGate] verify failed:', err);
+      log.error('verify failed:', err);
       setError('That code is incorrect or expired. Request a new one.');
       setCode('');
     } finally {
