@@ -10,7 +10,7 @@ function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: st
   const progress = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
-    progress.value = withSpring(focused ? 1 : 0, springPresets.press);
+    progress.value = withSpring(focused ? 1 : 0, springPresets.entrance);
   }, [focused]);
 
   const pillStyle = useAnimatedStyle(() => ({
@@ -19,14 +19,19 @@ function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: st
   }));
 
   const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(progress.value, [0, 1], [1, 1.1]) }],
+    transform: [{ scale: interpolate(progress.value, [0, 1], [1, 1.18]) }],
   }));
 
   return (
     <View className="w-16 h-9 items-center justify-center">
       <Animated.View className="absolute w-16 h-9 rounded-2xl bg-primary-container" style={pillStyle} />
       <Animated.View style={iconStyle}>
-        <Icon size={24} color={focused ? '#1D4ED8' : color} strokeWidth={focused ? 2.2 : 1.6} />
+        <Icon
+          size={24}
+          color={focused ? '#1D4ED8' : color}
+          fill={focused ? '#1D4ED8' : 'none'}
+          strokeWidth={focused ? 2.2 : 1.6}
+        />
       </Animated.View>
     </View>
   );

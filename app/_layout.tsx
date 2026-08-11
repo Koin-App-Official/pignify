@@ -1,9 +1,17 @@
 import '../global.css';
 import { useEffect } from 'react';
-import { LogBox } from 'react-native';
+import { LogBox, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+} from '@expo-google-fonts/nunito';
 import { AuthGate } from '@/components/auth/AuthGate';
 import { initNotifications } from '@/lib/notifications';
 
@@ -12,7 +20,20 @@ import { initNotifications } from '@/lib/notifications';
 // is a false positive from RN internals and cannot be fixed in userland.
 LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
+
   useEffect(() => {
     initNotifications();
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
@@ -29,6 +50,10 @@ export default function RootLayout() {
     });
     return () => sub.remove();
   }, []);
+
+  if (!fontsLoaded) {
+    return <View className="flex-1 bg-surface" />;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
