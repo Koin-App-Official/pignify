@@ -1,8 +1,10 @@
 /**
  * Idempotent TablesDB provisioning for the subscription & entitlement system.
  *
- * Targets the EXISTING database `piggnify_mobile_db` and creates only the new,
- * additive tables defined in schema.mjs. Existing tables are never touched.
+ * Targets the EXISTING database `piggnify_mobile_db` and creates the new,
+ * additive tables defined in schema.mjs. If a table already exists, its
+ * permissions/rowSecurity are synced to match schema.mjs; columns/indexes
+ * on existing tables are otherwise left untouched (only added if missing).
  *
  * Usage:
  *   node scripts/appwrite/setup.mjs            # DRY RUN (default) — prints the plan, no writes
@@ -114,8 +116,12 @@ async function apply() {
       await db.createTable(DATABASE_ID, t.id, t.name, t.permissions ?? [], t.rowSecurity ?? false);
       console.log(`✓ table "${t.id}" created`);
     } catch (e) {
-      if (isConflict(e)) console.log(`• table "${t.id}" exists`);
-      else throw e;
+      if (isConflict(e)) {
+        // Table exists — bring its permissions/rowSecurity in line with schema.mjs
+        // (createTable only fires once; without this, permission changes here never reach the live table).
+        await db.updateTable(DATABASE_ID, t.id, t.name, t.permissions ?? [], t.rowSecurity ?? false);
+        console.log(`• table "${t.id}" exists — permissions synced`);
+      } else throw e;
     }
     for (const a of t.columns) {
       try {
