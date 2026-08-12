@@ -30,6 +30,15 @@ interface ContributionStepProps {
   onDeadlineChange: (iso: string) => void;
   onBack: () => void;
   onContinue: (result: ContributionResult) => void;
+  /**
+   * When true, the Back/Continue row isn't rendered inline — the caller
+   * renders its own footer instead (e.g. pinned above the keyboard, outside
+   * the scrolling content). The caller is then responsible for computing its
+   * own canContinue/onContinue from the same props it already passes down
+   * (contribution/deadline/planningMode/targetAmount) rather than having this
+   * component report them back up.
+   */
+  hideFooter?: boolean;
 }
 
 const SUGGESTION_PCTS = [0.1, 0.15, 0.2];
@@ -63,6 +72,7 @@ export function ContributionStep({
   onDeadlineChange,
   onBack,
   onContinue,
+  hideFooter,
 }: ContributionStepProps) {
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const currencySymbol = getCurrencySymbol(currency);
@@ -152,6 +162,7 @@ export function ContributionStep({
               keyboardType="numeric"
               placeholder="0.00"
               placeholderTextColor={PLACEHOLDER_COLOR}
+              autoFocus
             />
           </View>
 
@@ -187,9 +198,11 @@ export function ContributionStep({
             </View>
           )}
 
-          <TouchableOpacity onPress={() => onPlanningModeChange('deadline')} className="mt-4 items-center py-2">
-            <Text className="text-sm font-medium text-primary underline">I have a fixed deadline instead</Text>
-          </TouchableOpacity>
+          {!hideFooter && (
+            <TouchableOpacity onPress={() => onPlanningModeChange('deadline')} className="mt-4 items-center py-2">
+              <Text className="text-sm font-medium text-primary underline">I have a fixed deadline instead</Text>
+            </TouchableOpacity>
+          )}
         </>
       ) : (
         <>
@@ -241,25 +254,29 @@ export function ContributionStep({
             </View>
           )}
 
-          <TouchableOpacity onPress={() => onPlanningModeChange('contribution')} className="mt-4 items-center py-2">
-            <Text className="text-sm font-medium text-primary underline">Switch back to monthly set-aside</Text>
-          </TouchableOpacity>
+          {!hideFooter && (
+            <TouchableOpacity onPress={() => onPlanningModeChange('contribution')} className="mt-4 items-center py-2">
+              <Text className="text-sm font-medium text-primary underline">Switch back to monthly set-aside</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
 
-      <View className="mt-6 flex-row gap-3">
-        <Button variant="outline" onPress={onBack} className="w-14 items-center justify-center">
-          <ArrowLeft size={16} color="#1D4ED8" />
-        </Button>
-        <Button
-          onPress={handleContinue}
-          disabled={!canContinue}
-          className="flex-1 items-center justify-center flex-row gap-2"
-        >
-          <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-          <ArrowRight size={16} color="#ffffff" />
-        </Button>
-      </View>
+      {!hideFooter && (
+        <View className="mt-6 flex-row gap-3">
+          <Button variant="outline" onPress={onBack} className="w-14 items-center justify-center">
+            <ArrowLeft size={16} color="#1D4ED8" />
+          </Button>
+          <Button
+            onPress={handleContinue}
+            disabled={!canContinue}
+            className="flex-1 items-center justify-center flex-row gap-2"
+          >
+            <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+            <ArrowRight size={16} color="#ffffff" />
+          </Button>
+        </View>
+      )}
 
       <CalendarModal
         isVisible={isCalendarVisible}

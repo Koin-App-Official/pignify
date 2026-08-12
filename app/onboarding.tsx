@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,13 +23,15 @@ import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
+import { DobWheelPicker } from '@/components/ui/dob-picker';
+import { DobConfirmModal } from '@/components/ui/dob-confirm-modal';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
-import { monthDiff } from '@/lib/goalMath';
+import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -98,6 +100,15 @@ function getCurrencySymbol(currencyCode: string): string {
   return CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
 }
 
+function computeAge(isoDate: string): number {
+  const dob = new Date(isoDate);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDelta = today.getMonth() - dob.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
+
 function detectLocaleCountry(): { country: string; currency: string } {
   try {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale;
@@ -115,6 +126,7 @@ export default function Onboarding() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.Name);
   const { confettiProgress, celebrate } = useCelebrate();
+  const emailInputRef = useRef<TextInput>(null);
 
   const [firstName, setFirstName] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
@@ -138,6 +150,16 @@ export default function Onboarding() {
 
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [incomeSkipped, setIncomeSkipped] = useState(false);
+
+  // Age gate (18+, legal requirement) — gates the email/OTP sub-flow below it
+  // within the same AccountFinalization step. Once confirmed underage, this
+  // is a terminal state: no path back to re-enter a different DOB. Seeded
+  // with a plausible default (not left blank) since the wheel picker is
+  // inline and always shows a selected date.
+  const [dateOfBirth, setDateOfBirth] = useState(() => `${new Date().getFullYear() - 25}-01-01`);
+  const [dobConfirmModalVisible, setDobConfirmModalVisible] = useState(false);
+  const [dobConfirmed, setDobConfirmed] = useState(false);
+  const [ageBlocked, setAgeBlocked] = useState(false);
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -191,6 +213,40 @@ export default function Onboarding() {
   const incomeNumber = Number(monthlyIncome);
   const savingsExceedsIncome = !incomeSkipped && incomeNumber > 0 && monthlyContribution > incomeNumber;
 
+  // Mirrors ContributionStep's own canContinue/handleContinue, computed here
+  // from the same state onboarding already owns (contributionInput/targetDate/
+  // planningMode/targetAmount) so the fixed footer can drive it directly —
+  // no need for ContributionStep to report its internal state back up.
+  const contributionNumber = Number(contributionInput);
+  const contributionCanContinue = planningMode === 'contribution' ? contributionNumber > 0 : !!targetDate;
+
+  const handleContributionContinue = () => {
+    if (!contributionCanContinue) return;
+    if (planningMode === 'contribution') {
+      const result = deriveGoalDate(Number(targetAmount), contributionNumber);
+      setMonthlyContribution(Math.round(contributionNumber * 100) / 100);
+      setTargetDate(result.date);
+    } else {
+      const monthly = requiredContribution(Number(targetAmount), new Date(targetDate));
+      setMonthlyContribution(Math.round(monthly * 100) / 100);
+      setTargetDate(new Date(targetDate).toISOString());
+    }
+    setStep(OnboardingStep.BlueprintReview);
+  };
+
+  const handleDobEdit = () => {
+    setDobConfirmModalVisible(false);
+  };
+
+  const handleDobConfirmed = () => {
+    setDobConfirmModalVisible(false);
+    if (computeAge(dateOfBirth) < 18) {
+      setAgeBlocked(true);
+    } else {
+      setDobConfirmed(true);
+    }
+  };
+
   const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
   // Step 1: validate email and send the Appwrite Email OTP (creates the account).
@@ -232,6 +288,7 @@ export default function Onboarding() {
         userID: userId, // canonical id = Appwrite account $id
         email,
         firstName,
+        dateOfBirth,
         country,
         currency,
         goalName,
@@ -275,6 +332,7 @@ export default function Onboarding() {
         userID: userId,
         name: firstName,
         email,
+        dateOfBirth,
         country,
         currency,
         monthlyIncome: incomeSkipped ? null : incomeNumber,
@@ -307,6 +365,237 @@ export default function Onboarding() {
   const goBack = () => setStep((s) => (s - 1) as OnboardingStep);
 
   const showProgress = step < OnboardingStep.BlueprintReview;
+
+  // Fixed footer for the paginated steps — pulled out of the scrolling
+  // content so it docks right above the keyboard (via the KeyboardAvoidingView
+  // below) instead of sitting immediately under the input. The Contribution
+  // step keeps its own inline buttons (shared ContributionStep component,
+  // also used by the Goals tab) and Success has no keyboard to dodge, so
+  // both are left out of this footer.
+  const renderFooter = () => {
+    switch (step) {
+      case OnboardingStep.Name:
+        return (
+          <Button
+            onPress={() => {
+              setFirstNameTouched(true);
+              if (firstName.trim().length < 1) {
+                setFirstNameError("Hey, we'd love to know your name! 😊");
+                return;
+              }
+              setStep(OnboardingStep.Localization);
+            }}
+            className="w-full flex-row items-center justify-center gap-2 h-14"
+          >
+            <Text className="text-base font-bold text-primary-foreground">Next</Text>
+            <ArrowRight size={18} color="#ffffff" />
+          </Button>
+        );
+
+      case OnboardingStep.Localization:
+        return (
+          <View className="flex-row gap-3">
+            <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+              <ArrowLeft size={16} color="#1D4ED8" />
+            </Button>
+            <Button
+              onPress={() => setStep(OnboardingStep.GoalDeclaration)}
+              className="flex-1 items-center justify-center flex-row gap-2"
+            >
+              <Text className="text-sm font-bold text-primary-foreground">Looks right, let's go!</Text>
+              <ArrowRight size={16} color="#ffffff" />
+            </Button>
+          </View>
+        );
+
+      case OnboardingStep.GoalDeclaration:
+        return (
+          <View className="flex-row gap-3">
+            <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+              <ArrowLeft size={16} color="#1D4ED8" />
+            </Button>
+            <Button
+              onPress={() => {
+                if (goalName.trim().length < 1) {
+                  setGoalNameError("Tell us what you're saving for! 🎯");
+                  return;
+                }
+                setStep(OnboardingStep.TargetAmount);
+              }}
+              className="flex-1 items-center justify-center flex-row gap-2"
+            >
+              <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+              <ArrowRight size={16} color="#ffffff" />
+            </Button>
+          </View>
+        );
+
+      case OnboardingStep.TargetAmount:
+        return (
+          <View className="flex-row gap-3">
+            <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+              <ArrowLeft size={16} color="#1D4ED8" />
+            </Button>
+            <Button
+              onPress={() => {
+                if (!(Number(targetAmount) > 0)) {
+                  setTargetAmountError('Please enter an amount greater than 0 💸');
+                  return;
+                }
+                setStep(OnboardingStep.Income);
+              }}
+              className="flex-1 items-center justify-center flex-row gap-2"
+            >
+              <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+              <ArrowRight size={16} color="#ffffff" />
+            </Button>
+          </View>
+        );
+
+      case OnboardingStep.Income:
+        return (
+          <View>
+            <View className="flex-row gap-3">
+              <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                <ArrowLeft size={16} color="#1D4ED8" />
+              </Button>
+              <Button
+                onPress={() => {
+                  setIncomeSkipped(false);
+                  setStep(OnboardingStep.Contribution);
+                }}
+                disabled={!(Number(monthlyIncome) > 0)}
+                className="flex-1 items-center justify-center flex-row gap-2"
+              >
+                <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                <ArrowRight size={16} color="#ffffff" />
+              </Button>
+            </View>
+            <TouchableOpacity onPress={handleSkipIncome} className="mt-4 items-center py-2">
+              <Text className="text-sm font-medium text-primary underline">
+                I'd rather not say right now
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case OnboardingStep.Contribution:
+        return (
+          <View>
+            <View className="flex-row gap-3">
+              <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
+                <ArrowLeft size={16} color="#1D4ED8" />
+              </Button>
+              <Button
+                onPress={handleContributionContinue}
+                disabled={!contributionCanContinue}
+                className="flex-1 items-center justify-center flex-row gap-2"
+              >
+                <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                <ArrowRight size={16} color="#ffffff" />
+              </Button>
+            </View>
+            <TouchableOpacity
+              onPress={() => setPlanningMode(planningMode === 'contribution' ? 'deadline' : 'contribution')}
+              className="mt-4 items-center py-2"
+            >
+              <Text className="text-sm font-medium text-primary underline">
+                {planningMode === 'contribution'
+                  ? 'I have a fixed deadline instead'
+                  : 'Switch back to monthly set-aside'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case OnboardingStep.BlueprintReview:
+        return (
+          <View className="flex-row gap-3">
+            <Button variant="outline" onPress={goBack} className="w-14 h-14 items-center justify-center">
+              <ArrowLeft size={16} color="#1D4ED8" />
+            </Button>
+            <Button
+              onPress={() => setStep(OnboardingStep.AccountFinalization)}
+              className="flex-1 items-center justify-center flex-row gap-2 h-14"
+            >
+              <Text className="text-base font-bold text-primary-foreground">Create My Piggy Account</Text>
+              <ArrowRight size={16} color="#ffffff" />
+            </Button>
+          </View>
+        );
+
+      case OnboardingStep.AccountFinalization:
+        if (ageBlocked) return null;
+
+        if (!dobConfirmed) {
+          return (
+            <View className="flex-row gap-3">
+              <Button variant="outline" onPress={goBack} className="w-14 h-14 items-center justify-center">
+                <ArrowLeft size={16} color="#1D4ED8" />
+              </Button>
+              <Button
+                onPress={() => setDobConfirmModalVisible(true)}
+                className="flex-1 items-center justify-center flex-row gap-2 h-14"
+              >
+                <Text className="text-base font-bold text-primary-foreground">Continue</Text>
+                <ArrowRight size={16} color="#ffffff" />
+              </Button>
+            </View>
+          );
+        }
+
+        return (
+          <View className="flex-row gap-3">
+            <Button
+              variant="outline"
+              onPress={
+                otpSent
+                  ? () => {
+                      setOtpSent(false);
+                      setCode('');
+                      setNetworkError('');
+                      emailInputRef.current?.focus();
+                    }
+                  : goBack
+              }
+              className="w-14 h-14 items-center justify-center"
+            >
+              <ArrowLeft size={16} color="#1D4ED8" />
+            </Button>
+            <Button
+              onPress={otpSent ? handleVerifyAndCreate : handleRequestCode}
+              disabled={isLoading || (otpSent ? code.length !== 6 : !isEmailValid(email))}
+              className="flex-1 items-center justify-center flex-row gap-2 h-14"
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Text className="text-base font-bold text-primary-foreground">
+                    {otpSent ? 'Verify & Create Account' : 'Send Code'}
+                  </Text>
+                  <ArrowRight size={16} color="#ffffff" />
+                </>
+              )}
+            </Button>
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const showFixedFooter = [
+    OnboardingStep.Name,
+    OnboardingStep.Localization,
+    OnboardingStep.GoalDeclaration,
+    OnboardingStep.TargetAmount,
+    OnboardingStep.Income,
+    OnboardingStep.Contribution,
+    OnboardingStep.BlueprintReview,
+    OnboardingStep.AccountFinalization,
+  ].includes(step) && !(step === OnboardingStep.AccountFinalization && ageBlocked);
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -347,25 +636,11 @@ export default function Onboarding() {
                 placeholder="Your first name"
                 maxLength={50}
                 autoCapitalize="words"
+                autoFocus
               />
               {firstNameError ? (
                 <Text className="mt-2 text-xs text-destructive">{firstNameError}</Text>
               ) : null}
-
-              <Button
-                onPress={() => {
-                  setFirstNameTouched(true);
-                  if (firstName.trim().length < 1) {
-                    setFirstNameError("Hey, we'd love to know your name! 😊");
-                    return;
-                  }
-                  setStep(OnboardingStep.Localization);
-                }}
-                className="mt-8 w-full flex-row items-center justify-center gap-2 h-14"
-              >
-                <Text className="text-base font-bold text-primary-foreground">Next</Text>
-                <ArrowRight size={18} color="#ffffff" />
-              </Button>
             </Animated.View>
           )}
 
@@ -403,19 +678,6 @@ export default function Onboarding() {
                     <ChevronDown size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
-              </View>
-
-              <View className="mt-8 flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={() => setStep(OnboardingStep.GoalDeclaration)}
-                  className="flex-1 items-center justify-center flex-row gap-2"
-                >
-                  <Text className="text-sm font-bold text-primary-foreground">Looks right, let's go!</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
               </View>
             </Animated.View>
           )}
@@ -466,30 +728,11 @@ export default function Onboarding() {
                   if (v.trim().length >= 1) setGoalNameError('');
                 }}
                 placeholder="I want to..."
-                autoFocus={false}
+                autoFocus
               />
               {goalNameError ? (
                 <Text className="mt-2 text-xs text-destructive">{goalNameError}</Text>
               ) : null}
-
-              <View className="mt-8 flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={() => {
-                    if (goalName.trim().length < 1) {
-                      setGoalNameError("Tell us what you're saving for! 🎯");
-                      return;
-                    }
-                    setStep(OnboardingStep.TargetAmount);
-                  }}
-                  className="flex-1 items-center justify-center flex-row gap-2"
-                >
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
             </Animated.View>
           )}
 
@@ -515,30 +758,12 @@ export default function Onboarding() {
                   keyboardType="numeric"
                   placeholder="0.00"
                   placeholderTextColor={PLACEHOLDER_COLOR}
+                  autoFocus
                 />
               </View>
               {targetAmountError ? (
                 <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text>
               ) : null}
-
-              <View className="mt-8 flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={() => {
-                    if (!(Number(targetAmount) > 0)) {
-                      setTargetAmountError('Please enter an amount greater than 0 💸');
-                      return;
-                    }
-                    setStep(OnboardingStep.Income);
-                  }}
-                  className="flex-1 items-center justify-center flex-row gap-2"
-                >
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
             </Animated.View>
           )}
 
@@ -562,31 +787,9 @@ export default function Onboarding() {
                   keyboardType="numeric"
                   placeholder="0.00"
                   placeholderTextColor={PLACEHOLDER_COLOR}
+                  autoFocus
                 />
               </View>
-
-              <View className="mt-8 flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={() => {
-                    setIncomeSkipped(false);
-                    setStep(OnboardingStep.Contribution);
-                  }}
-                  disabled={!(Number(monthlyIncome) > 0)}
-                  className="flex-1 items-center justify-center flex-row gap-2"
-                >
-                  <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
-
-              <TouchableOpacity onPress={handleSkipIncome} className="mt-4 items-center py-2">
-                <Text className="text-sm font-medium text-primary underline">
-                  I'd rather not say right now
-                </Text>
-              </TouchableOpacity>
             </Animated.View>
           )}
 
@@ -611,6 +814,7 @@ export default function Onboarding() {
                   setPlanningMode(result.planningMode);
                   setStep(OnboardingStep.BlueprintReview);
                 }}
+                hideFooter
               />
             </Animated.View>
           )}
@@ -664,24 +868,41 @@ export default function Onboarding() {
               <Text className="mb-6 text-sm font-medium text-on-surface-variant text-center">
                 You're only {totalMonths} months away from your dream. Let's make it happen.
               </Text>
-
-              <View className="flex-row gap-3">
-                <Button variant="outline" onPress={goBack} className="w-14 items-center justify-center">
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={() => setStep(OnboardingStep.AccountFinalization)}
-                  className="flex-1 items-center justify-center flex-row gap-2 h-14"
-                >
-                  <Text className="text-base font-bold text-primary-foreground">Create My Piggy Account</Text>
-                  <ArrowRight size={16} color="#ffffff" />
-                </Button>
-              </View>
             </Animated.View>
           )}
 
-          {/* Screen 7: Account Finalization */}
-          {step === OnboardingStep.AccountFinalization && (
+          {/* Screen 7a: Age gate blocked (terminal — no retry) */}
+          {step === OnboardingStep.AccountFinalization && ageBlocked && (
+            <Animated.View entering={FadeInDown.springify()} className="items-center pt-10">
+              <Text className="text-6xl text-center mb-4">🔒</Text>
+              <Text className="mb-3 text-2xl font-black text-on-surface text-center">
+                Piggy is for adults 18+
+              </Text>
+              <Text className="text-sm font-medium text-on-surface-variant text-center px-4">
+                We're not able to create an account for you based on the date of birth you confirmed.
+                This app isn't available to users under 18.
+              </Text>
+            </Animated.View>
+          )}
+
+          {/* Screen 7b: Age gate — DOB not yet confirmed */}
+          {step === OnboardingStep.AccountFinalization && !ageBlocked && !dobConfirmed && (
+            <Animated.View entering={FadeInDown.springify()}>
+              <Text className="text-6xl text-center mb-4">🎂</Text>
+              <Text className="mb-2 text-3xl font-black text-on-surface">
+                Just one more thing,{'\n'}{firstName}
+              </Text>
+              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+                Piggy is only available to users 18 and older. We need your date of birth to confirm
+                that before we create your account.
+              </Text>
+
+              <DobWheelPicker value={dateOfBirth} onChange={setDateOfBirth} />
+            </Animated.View>
+          )}
+
+          {/* Screen 7c: Account Finalization (email / OTP) */}
+          {step === OnboardingStep.AccountFinalization && !ageBlocked && dobConfirmed && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
@@ -694,6 +915,7 @@ export default function Onboarding() {
               </Text>
 
               <Input
+                ref={emailInputRef}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 editable={!otpSent}
@@ -712,6 +934,7 @@ export default function Onboarding() {
                 }}
                 placeholder="you@example.com"
                 className={otpSent ? 'opacity-60' : ''}
+                autoFocus
               />
               {emailError ? (
                 <Text className="mt-2 text-xs text-destructive">{emailError}</Text>
@@ -748,32 +971,6 @@ export default function Onboarding() {
               ) : null}
 
               <LegalLinksNote />
-
-              <View className="mt-8 flex-row gap-3">
-                <Button
-                  variant="outline"
-                  onPress={otpSent ? () => { setOtpSent(false); setCode(''); setNetworkError(''); } : goBack}
-                  className="w-14 items-center justify-center"
-                >
-                  <ArrowLeft size={16} color="#1D4ED8" />
-                </Button>
-                <Button
-                  onPress={otpSent ? handleVerifyAndCreate : handleRequestCode}
-                  disabled={isLoading || (otpSent ? code.length !== 6 : !isEmailValid(email))}
-                  className="flex-1 items-center justify-center flex-row gap-2 h-14"
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#ffffff" />
-                  ) : (
-                    <>
-                      <Text className="text-base font-bold text-primary-foreground">
-                        {otpSent ? 'Verify & Create Account' : 'Send Code'}
-                      </Text>
-                      <ArrowRight size={16} color="#ffffff" />
-                    </>
-                  )}
-                </Button>
-              </View>
             </Animated.View>
           )}
 
@@ -817,6 +1014,12 @@ export default function Onboarding() {
           )}
         </ScrollView>
 
+        {showFixedFooter && (
+          <View className="px-5 pt-4 pb-6">
+            {renderFooter()}
+          </View>
+        )}
+
         {step === OnboardingStep.Success && (
           <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />
         )}
@@ -837,6 +1040,13 @@ export default function Onboarding() {
           items={CURRENCIES.map((c) => ({ code: c.code, name: c.name, symbol: c.symbol }))}
           selectedCode={currency}
           title="Select Currency"
+        />
+
+        <DobConfirmModal
+          isVisible={dobConfirmModalVisible}
+          dateOfBirth={dateOfBirth}
+          onEdit={handleDobEdit}
+          onConfirm={handleDobConfirmed}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

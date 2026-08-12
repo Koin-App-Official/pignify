@@ -71,6 +71,7 @@
     "babel-plugin-module-resolver": "^5.0.3",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "dotenv": "^17.4.2",
+    "eas-cli": "^21.5.0",
     "node-appwrite": "^26.2.0",
     "typescript": "~5.9.2",
     "vitest": "^4.1.9"

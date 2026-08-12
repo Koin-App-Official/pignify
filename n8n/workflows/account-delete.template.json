@@ -1,0 +1,450 @@
+{
+  "name": "account-delete",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "account-delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-in",
+      "name": "Webhook (POST account-delete)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract + validate userId, and pre-build the Appwrite Query.equal(\"user_id\", userId)\n// string used by every List Rows call below (Appwrite TablesDB REST query format).\nconst body = $json.body || $json;\nconst userId = body.userId;\nif (!userId) {\n  throw new Error('account-delete: missing userId');\n}\nconst queryUserId = JSON.stringify({ method: 'equal', attribute: 'user_id', values: [userId] });\nreturn [{ json: { userId, queryUserId } }];"
+      },
+      "id": "validate-extract",
+      "name": "Validate & Extract userId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/subscriptions/rows",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "queries[]", "value": "={{ $json.queryUserId }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } } }
+      },
+      "id": "list-subscription-row",
+      "name": "Appwrite: List Subscription Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decide whether a live Stripe subscription needs canceling before we purge rows.\n// Mirrors n8n/code-nodes/account-deletion.js buildDeletionPlan().\nconst userId = $('Validate & Extract userId').item.json.userId;\nconst rows = $json.rows || [];\nconst subscriptionRow = rows[0] || null;\n\nconst stripeSubscriptionId = subscriptionRow ? subscriptionRow.stripe_subscription_id : null;\nconst cancelableStatuses = ['trialing', 'active', 'past_due', 'cancel_scheduled'];\nconst needsStripeCancel =\n  !!stripeSubscriptionId && cancelableStatuses.includes(subscriptionRow.status);\n\nreturn [{\n  json: {\n    userId,\n    needsStripeCancel,\n    stripeSubscriptionId: needsStripeCancel ? stripeSubscriptionId : null,\n  },\n}];"
+      },
+      "id": "build-deletion-plan",
+      "name": "Build Deletion Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.needsStripeCancel }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "needs-stripe-cancel",
+      "name": "Needs Stripe Cancel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1140, 300]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.stripe.com/v1/subscriptions/{{ $json.stripeSubscriptionId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "stripeApi",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "stripe-cancel-subscription",
+      "name": "Stripe Cancel Subscription",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1380, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/subscriptions/rows",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "queries[]", "value": "={{ $('Validate & Extract userId').item.json.queryUserId }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } }, "alwaysOutputData": true }
+      },
+      "id": "list-subscription-rows-2",
+      "name": "Appwrite: List Subscription Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1620, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fan the rows[] array from the List call into one item per row so the\n// Delete node below runs once per row (n8n runs most nodes once per input item).\nconst rows = $json.rows || [];\nreturn rows.map((r) => ({ json: { id: r.$id } }));"
+      },
+      "id": "split-subscription-rows",
+      "name": "Split Subscription Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1860, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/subscriptions/rows/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } }, "alwaysOutputData": true }
+      },
+      "id": "delete-subscription-row",
+      "name": "Appwrite: Delete Subscription Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2100, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/entitlements/rows",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "queries[]", "value": "={{ $('Validate & Extract userId').item.json.queryUserId }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } }, "alwaysOutputData": true }
+      },
+      "id": "list-entitlement-rows",
+      "name": "Appwrite: List Entitlement Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2340, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.rows || [];\nreturn rows.map((r) => ({ json: { id: r.$id } }));"
+      },
+      "id": "split-entitlement-rows",
+      "name": "Split Entitlement Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2580, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/entitlements/rows/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } }, "alwaysOutputData": true }
+      },
+      "id": "delete-entitlement-row",
+      "name": "Appwrite: Delete Entitlement Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2820, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/devices/rows",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "queries[]", "value": "={{ $('Validate & Extract userId').item.json.queryUserId }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } }, "alwaysOutputData": true }
+      },
+      "id": "list-device-rows",
+      "name": "Appwrite: List Device Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3060, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.rows || [];\nreturn rows.map((r) => ({ json: { id: r.$id } }));"
+      },
+      "id": "split-device-rows",
+      "name": "Split Device Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3300, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/devices/rows/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } }, "alwaysOutputData": true }
+      },
+      "id": "delete-device-row",
+      "name": "Appwrite: Delete Device Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3540, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/addon_purchases/rows",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "queries[]", "value": "={{ $('Validate & Extract userId').item.json.queryUserId }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } }, "alwaysOutputData": true }
+      },
+      "id": "list-addon-purchase-rows",
+      "name": "Appwrite: List Addon Purchase Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3780, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.rows || [];\nreturn rows.map((r) => ({ json: { id: r.$id } }));"
+      },
+      "id": "split-addon-purchase-rows",
+      "name": "Split Addon Purchase Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4020, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/addon_purchases/rows/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } }, "alwaysOutputData": true }
+      },
+      "id": "delete-addon-purchase-row",
+      "name": "Appwrite: Delete Addon Purchase Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4260, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/goals/rows",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "queries[]", "value": "={{ $('Validate & Extract userId').item.json.queryUserId }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } }, "alwaysOutputData": true }
+      },
+      "id": "list-goal-rows",
+      "name": "Appwrite: List Goal Rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4500, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.rows || [];\nreturn rows.map((r) => ({ json: { id: r.$id } }));"
+      },
+      "id": "split-goal-rows",
+      "name": "Split Goal Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4740, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/goals/rows/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } }, "alwaysOutputData": true }
+      },
+      "id": "delete-goal-row",
+      "name": "Appwrite: Delete Goal Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4980, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/databases/piggnify_mobile_db/tables/users/rows/{{ $('Validate & Extract userId').item.json.userId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } }, "alwaysOutputData": true }
+      },
+      "id": "delete-users-row",
+      "name": "Appwrite: Delete Users Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5220, 400]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.APPWRITE_ENDPOINT }}/users/{{ $('Validate & Extract userId').item.json.userId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Appwrite-Project", "value": "={{ $env.APPWRITE_PROJECT_ID }}" },
+            { "name": "X-Appwrite-Key", "value": "={{ $env.APPWRITE_API_KEY }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": false } } }
+      },
+      "id": "delete-auth-user",
+      "name": "Appwrite: Delete Auth User",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5460, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond { ok: true }",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [5700, 400]
+    }
+  ],
+  "connections": {
+    "Webhook (POST account-delete)": { "main": [[{ "node": "Validate & Extract userId", "type": "main", "index": 0 }]] },
+    "Validate & Extract userId": { "main": [[{ "node": "Appwrite: List Subscription Row", "type": "main", "index": 0 }]] },
+    "Appwrite: List Subscription Row": { "main": [[{ "node": "Build Deletion Plan", "type": "main", "index": 0 }]] },
+    "Build Deletion Plan": { "main": [[{ "node": "Needs Stripe Cancel?", "type": "main", "index": 0 }]] },
+    "Needs Stripe Cancel?": {
+      "main": [
+        [{ "node": "Stripe Cancel Subscription", "type": "main", "index": 0 }],
+        [{ "node": "Appwrite: List Subscription Rows", "type": "main", "index": 0 }]
+      ]
+    },
+    "Stripe Cancel Subscription": { "main": [[{ "node": "Appwrite: List Subscription Rows", "type": "main", "index": 0 }]] },
+    "Appwrite: List Subscription Rows": { "main": [[{ "node": "Split Subscription Rows", "type": "main", "index": 0 }]] },
+    "Split Subscription Rows": { "main": [[{ "node": "Appwrite: Delete Subscription Row", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Subscription Row": { "main": [[{ "node": "Appwrite: List Entitlement Rows", "type": "main", "index": 0 }]] },
+    "Appwrite: List Entitlement Rows": { "main": [[{ "node": "Split Entitlement Rows", "type": "main", "index": 0 }]] },
+    "Split Entitlement Rows": { "main": [[{ "node": "Appwrite: Delete Entitlement Row", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Entitlement Row": { "main": [[{ "node": "Appwrite: List Device Rows", "type": "main", "index": 0 }]] },
+    "Appwrite: List Device Rows": { "main": [[{ "node": "Split Device Rows", "type": "main", "index": 0 }]] },
+    "Split Device Rows": { "main": [[{ "node": "Appwrite: Delete Device Row", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Device Row": { "main": [[{ "node": "Appwrite: List Addon Purchase Rows", "type": "main", "index": 0 }]] },
+    "Appwrite: List Addon Purchase Rows": { "main": [[{ "node": "Split Addon Purchase Rows", "type": "main", "index": 0 }]] },
+    "Split Addon Purchase Rows": { "main": [[{ "node": "Appwrite: Delete Addon Purchase Row", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Addon Purchase Row": { "main": [[{ "node": "Appwrite: List Goal Rows", "type": "main", "index": 0 }]] },
+    "Appwrite: List Goal Rows": { "main": [[{ "node": "Split Goal Rows", "type": "main", "index": 0 }]] },
+    "Split Goal Rows": { "main": [[{ "node": "Appwrite: Delete Goal Row", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Goal Row": { "main": [[{ "node": "Appwrite: Delete Users Row", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Users Row": { "main": [[{ "node": "Appwrite: Delete Auth User", "type": "main", "index": 0 }]] },
+    "Appwrite: Delete Auth User": { "main": [[{ "node": "Respond { ok: true }", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

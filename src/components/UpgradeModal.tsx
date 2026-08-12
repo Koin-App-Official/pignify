@@ -56,6 +56,7 @@ export function UpgradeModal({
         <View className="items-end">
           <Pressable
             onPress={handleClose}
+            hitSlop={6}
             className="h-9 w-9 items-center justify-center rounded-full bg-surface-container"
           >
             <X size={18} color="#64748B" />
