@@ -96,7 +96,7 @@ export default function AICoach() {
     {
       id: '1',
       role: 'coach',
-      content: "Hi! 👋 I'm your Piggy coach. I'm here to help you save smarter and reach your goals. What's on your mind today?",
+      content: `Hi ${useStore.getState().profile.name || 'there'}! 👋 I'm your Piggy coach. I'm here to help you save smarter and reach your goals. What's on your mind today?`,
       timestamp: Date.now(),
     },
   ]);
