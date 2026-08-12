@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Image } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -43,7 +43,8 @@ export function Mascot({ expression = 'idle', size = 48 }: MascotProps) {
     <Animated.View style={[{ width: size, height: size }, animatedStyle]}>
       <Image
         source={MASCOT_IMAGE}
-        resizeMode="contain"
+        contentFit="contain"
+        cachePolicy="memory-disk"
         style={{ width: size, height: size }}
       />
     </Animated.View>
