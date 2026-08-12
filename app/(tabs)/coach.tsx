@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, TextInput, Alert, useWindowDimensions } from 'react-native';
+import { fetch as expoFetch } from 'expo/fetch';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Send, Sparkles } from 'lucide-react-native';
@@ -50,45 +51,25 @@ function formatTimestamp(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-/** Sentinel matching the "≥50% on track" branch of getCoachResponse — used to
- * fire a restrained celebration only on genuine milestone replies, not every message. */
-function isMilestoneReply(text: string): boolean {
-  return text.includes("You're doing amazing!");
-}
+const COACH_ENDPOINT = 'https://n8n.piggnify.com/webhook/claude-coach';
+const COACH_REQUEST_TIMEOUT_MS = 30000;
 
-function getCoachResponse(input: string): string {
-  const lower = input.toLowerCase();
-  const profile = useStore.getState().profile;
-  const goals = useStore.getState().goals;
-  const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
+/** The backend appends this on its own line when the reply is celebration-worthy,
+ * computed server-side from real goal progress (not string-matched from prose). */
+const CELEBRATE_MARKER = '<!--CELEBRATE-->';
 
-  if (lower.includes('save more')) {
-    return `Great question! 💡 Here are some practical tips:\n\n1. **Try the 50/30/20 rule** — allocate 20% of your income to savings\n2. **Automate small amounts** — even $5/day adds up to $150/month\n3. **Do a subscription audit** — cancel what you don't use\n4. **Try a no-spend day** once a week\n\nYou're already building great habits. Keep going! 🌱`;
+/** Strips a fully-arrived CELEBRATE_MARKER from the end of streamed text, and also
+ * hides a partially-arrived marker prefix near the tail so it never flashes mid-stream. */
+function stripCelebrateMarker(text: string): { display: string; celebrated: boolean } {
+  const fullIdx = text.lastIndexOf(CELEBRATE_MARKER);
+  if (fullIdx !== -1 && fullIdx >= text.length - CELEBRATE_MARKER.length - 4) {
+    return { display: text.slice(0, fullIdx).trimEnd(), celebrated: true };
   }
-  if (lower.includes('on track')) {
-    if (primaryGoal) {
-      const pct = Math.round((primaryGoal.savedAmount / primaryGoal.targetAmount) * 100);
-      if (pct >= 50) return `You're doing amazing! 🚀 You've saved **${pct}%** of your ${primaryGoal.name} goal. At this pace, you're well ahead. Keep the momentum going!`;
-      if (pct >= 20) return `You're making solid progress! 💪 **${pct}%** saved toward your ${primaryGoal.name}. Stay consistent and you'll get there. Every deposit counts!`;
-      return `You're getting started on your ${primaryGoal.name} journey — **${pct}%** saved so far. Remember, the hardest part is starting, and you've already done that! 🌱`;
-    }
-    return "I'd love to help you track your progress! Try creating a savings goal first, and I can give you personalized guidance. 🎯";
+  const partialIdx = text.lastIndexOf('<!--');
+  if (partialIdx !== -1 && partialIdx >= text.length - CELEBRATE_MARKER.length) {
+    return { display: text.slice(0, partialIdx).trimEnd(), celebrated: false };
   }
-  if (lower.includes('recover') || lower.includes('off track') || lower.includes('detour')) {
-    return `No worries at all! 🤗 A small detour doesn't define your journey.\n\nHere's what I suggest:\n1. **Don't stress** — one off week is totally normal\n2. **Start small** — save just $5 today to rebuild momentum\n3. **Review your expenses** — find one small cut this week\n4. **Adjust, don't abandon** — your goal is still very much achievable\n\nYou've got this! Tomorrow is a fresh start. 💙`;
-  }
-  if (lower.includes('next') || lower.includes('should')) {
-    const tips = [
-      `Complete today's saving mission to earn XP and keep your streak alive! 🔥`,
-      `Try adding a small deposit to your ${primaryGoal?.name || 'savings'} goal — even $10 makes progress.`,
-      `Review your spending from this week. Small awareness leads to big changes.`,
-    ];
-    return tips[Math.floor(Math.random() * tips.length)] + `\n\nYour current streak is **${profile.streak} days**. Let's keep it going!`;
-  }
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hey there! 👋 I'm your Piggy coach. I'm here to help you save smarter and stay motivated.\n\nWhat would you like to know? I can help with saving tips, tracking progress, or getting back on track.`;
-  }
-  return `That's a great point! 💙 Here's my advice:\n\n• **Stay consistent** — small daily actions beat big occasional efforts\n• **Celebrate progress** — you're Lv.${profile.level} already!\n• **Be kind to yourself** — financial growth is a journey, not a sprint\n\nWant me to help with something specific? Try asking about saving tips or your progress! 😊`;
+  return { display: text, celebrated: false };
 }
 
 const GREETINGS = [
@@ -112,7 +93,7 @@ export default function AICoach() {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coachRequestRef = useRef<AbortController | null>(null);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const router = useRouter();
   const { addon } = useLocalSearchParams<{ addon?: string }>();
@@ -142,11 +123,11 @@ export default function AICoach() {
     router.push(`/plans?highlight=${target}`);
   };
 
-  // Clear the pending simulated-reply timeout on unmount so it can't call
-  // setState after the screen is gone.
+  // Abort any in-flight coach request on unmount so its stream reader can't
+  // call setState after the screen is gone.
   useEffect(() => {
     return () => {
-      if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
+      coachRequestRef.current?.abort();
     };
   }, []);
 
@@ -192,7 +173,7 @@ export default function AICoach() {
 
   // Quota/feature gate (C13): the coach stays visible; blocked sends open the
   // "Upgrade your plan" popup instead of silently failing.
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!has('aiCoach')) {
       openGate('aiCoach');
       return;
@@ -218,31 +199,89 @@ export default function AICoach() {
       role: m.role === 'coach' ? 'assistant' : 'user',
       message: m.content,
     }));
-    fetch('https://n8n1.neuralops.pl/webhook-test/533526a8-8261-4bed-8202-809c7563a81e', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: last10 }),
-      // @ts-ignore
-      mode: 'no-cors',
-    }).catch((err) => log.error('Coach webhook failed:', err));
+
+    const profile = useStore.getState().profile;
+    const goals = useStore.getState().goals;
+    const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
+    const context = {
+      firstName: profile.name || undefined,
+      streak: profile.streak,
+      level: profile.level,
+      primaryGoal: primaryGoal
+        ? { name: primaryGoal.name, savedAmount: primaryGoal.savedAmount, targetAmount: primaryGoal.targetAmount }
+        : null,
+    };
 
     setInput('');
     setIsTyping(true);
 
-    if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
-    replyTimeoutRef.current = setTimeout(() => {
-      replyTimeoutRef.current = null;
-      const replyText = getCoachResponse(text);
-      const coachMsg: Message = {
-        id: Math.random().toString(36).substring(7),
-        role: 'coach',
-        content: replyText,
-        timestamp: Date.now(),
-      };
+    coachRequestRef.current?.abort();
+    const controller = new AbortController();
+    coachRequestRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), COACH_REQUEST_TIMEOUT_MS);
+
+    const showError = () => {
       setIsTyping(false);
-      setMessages((prev) => [...prev, coachMsg]);
-      if (isMilestoneReply(replyText)) celebrate();
-    }, 600);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(36).substring(7),
+          role: 'coach',
+          content: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+          timestamp: Date.now(),
+        },
+      ]);
+    };
+
+    try {
+      const response = await expoFetch(COACH_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userID, messages: last10, context }),
+        signal: controller.signal,
+      });
+      if (!response.ok || !response.body) throw new Error(`Coach request failed: ${response.status}`);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let full = '';
+      let coachMsgId: string | null = null;
+      let celebrated = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        const { display, celebrated: nowCelebrated } = stripCelebrateMarker(full);
+
+        if (coachMsgId == null) {
+          coachMsgId = Math.random().toString(36).substring(7);
+          const id = coachMsgId;
+          setIsTyping(false);
+          setMessages((prev) => [...prev, { id, role: 'coach', content: display, timestamp: Date.now() }]);
+        } else {
+          const id = coachMsgId;
+          setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content: display } : m)));
+        }
+
+        if (nowCelebrated && !celebrated) {
+          celebrated = true;
+          celebrate();
+        }
+      }
+
+      if (coachMsgId == null) showError();
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError' && coachRequestRef.current !== controller) {
+        // Superseded by a newer request (component unmounted or user sent again); not a real failure.
+      } else {
+        log.error('Coach request failed:', err);
+        showError();
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      if (coachRequestRef.current === controller) coachRequestRef.current = null;
+    }
   };
 
   const handleContentSizeChange = (_width: number, height: number) => {
