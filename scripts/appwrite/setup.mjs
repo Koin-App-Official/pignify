@@ -25,6 +25,9 @@ const { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY } = process.env
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const isConflict = (e) => e?.code === 409 || /already exists/i.test(e?.message || '');
+// Re-adding a column that already exists on a table near Appwrite's per-row byte
+// budget comes back as this size-limit error instead of a clean conflict.
+const isExistingColumnSizeLimit = (e) => /maximum number or size of columns/i.test(e?.message || '');
 
 /** Human-readable description of a column for the dry-run plan. */
 function describeColumn(a) {
@@ -129,7 +132,11 @@ async function apply() {
         console.log(`  ✓ column ${t.id}.${a.key}`);
       } catch (e) {
         if (isConflict(e)) console.log(`  • column ${t.id}.${a.key} exists`);
-        else throw e;
+        else if (isExistingColumnSizeLimit(e)) {
+          const { columns } = await db.listColumns(DATABASE_ID, t.id);
+          if (columns.some((c) => c.key === a.key)) console.log(`  • column ${t.id}.${a.key} exists`);
+          else throw e;
+        } else throw e;
       }
     }
     await waitForColumns(db, t.id);
