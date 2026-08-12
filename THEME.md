@@ -1,6 +1,6 @@
 # Application Theme Guide
 
-This document defines the official color palette and visual tokens for the **Piggnify** application. All UI components should adhere to these definitions to ensure visual consistency and a premium feel.
+This document defines the official color palette and visual tokens for the **Piggy** application. All UI components should adhere to these definitions to ensure visual consistency and a premium feel.
 
 ## 🎨 Color Palette
 

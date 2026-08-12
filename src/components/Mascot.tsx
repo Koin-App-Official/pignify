@@ -3,11 +3,8 @@ import { Image } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withSequence,
   withSpring,
-  withTiming,
-  Easing,
 } from 'react-native-reanimated';
 import { springPresets } from '@/lib/springPresets';
 
@@ -27,7 +24,6 @@ const MASCOT_IMAGE = require('../../assets/mascot.png');
  * sites won't need to change.
  */
 export function Mascot({ expression = 'idle', size = 48 }: MascotProps) {
-  const bounce = useSharedValue(0);
   const celebrateScale = useSharedValue(1);
 
   useEffect(() => {
@@ -36,20 +32,11 @@ export function Mascot({ expression = 'idle', size = 48 }: MascotProps) {
         withSpring(1.25, springPresets.press),
         withSpring(1, springPresets.press)
       );
-      return;
     }
-    bounce.value = withRepeat(
-      withSequence(
-        withTiming(-3, { duration: 900, easing: Easing.inOut(Easing.sin) }),
-        withTiming(0, { duration: 900, easing: Easing.inOut(Easing.sin) })
-      ),
-      -1,
-      true
-    );
-  }, [expression, bounce, celebrateScale]);
+  }, [expression, celebrateScale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: bounce.value }, { scale: celebrateScale.value }],
+    transform: [{ scale: celebrateScale.value }],
   }));
 
   return (
