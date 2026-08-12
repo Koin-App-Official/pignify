@@ -91,12 +91,22 @@ function getCoachResponse(input: string): string {
   return `That's a great point! 💙 Here's my advice:\n\n• **Stay consistent** — small daily actions beat big occasional efforts\n• **Celebrate progress** — you're Lv.${profile.level} already!\n• **Be kind to yourself** — financial growth is a journey, not a sprint\n\nWant me to help with something specific? Try asking about saving tips or your progress! 😊`;
 }
 
+const GREETINGS = [
+  'How can I help you today?',
+  'What’s on your mind?',
+  'What questions do you have?',
+  'Anything money-related you’d like to talk about?',
+  'What are we working on today?',
+  'What do you need help with?',
+  'Is there anything I can do for you?',
+];
+
 export default function AICoach() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'coach',
-      content: "Hi! 👋 I'm your Piggy coach. I'm here to help you save smarter and reach your goals. What's on your mind today?",
+      content: `Hi ${useStore.getState().profile.name || 'there'}! ${GREETINGS[Math.floor(Math.random() * GREETINGS.length)]}`,
       timestamp: Date.now(),
     },
   ]);
