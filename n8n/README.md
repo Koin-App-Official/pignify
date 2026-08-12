@@ -59,6 +59,8 @@ hourly over all active subs): refetch the user's Stripe subscription → same
 mirror+resolve as the `subscription` branch. Backstop for lost/delayed webhooks.
 
 ### 5. `account-delete` (client → permanent delete) — Settings → Delete account
+Import-ready: `workflows/account-delete.template.json`.
+
 HTTP webhook `POST /account-delete` `{ userId }`, called synchronously by
 `src/lib/billing.ts` `requestAccountDeletion()` — the client only wipes local
 device state (PIN/session/store) after this responds success.
@@ -66,16 +68,19 @@ device state (PIN/session/store) after this responds success.
 2. **Code** `buildDeletionPlan` (`code-nodes/account-deletion.js`) → decides
    whether a live Stripe subscription needs canceling and lists the
    user-keyed tables to purge (`subscriptions`, `entitlements`, `devices`,
-   `addon_purchases`, `goals`, `users`).
+   `addon_purchases`, `goals`).
 3. If `needsStripeCancel` → **Stripe** cancel the subscription immediately
    (not `cancel_at_period_end` — this is account deletion, not a downgrade).
 4. For each table in the plan → **Appwrite** list rows by `user_id` then
    delete each (TablesDB REST has no delete-by-query).
-5. **Appwrite** delete the Auth user via the **Users REST API**
+5. **Appwrite** delete the `users` row directly by id — unlike the other
+   tables, `users` rows are keyed by `$id` == the Appwrite Auth user id
+   (no `user_id` column), so no list step is needed there.
+6. **Appwrite** delete the Auth user via the **Users REST API**
    (`DELETE {APPWRITE_ENDPOINT}/users/{userId}`, server API key) — this is
    not possible from the client SDK, which is why deletion must go through
    n8n, same reason billing does.
-6. **Respond** `{ ok: true }`.
+7. **Respond** `{ ok: true }`.
 
 ⚠️ **Trust model**: like `billing-checkout`/`billing-addon`, this trusts the
 client-supplied `userId` with no additional server-side session check —

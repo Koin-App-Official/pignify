@@ -125,6 +125,7 @@ export default function Profile() {
               />
               <TouchableOpacity
                 onPress={saveName}
+                hitSlop={8}
                 className="h-8 w-8 items-center justify-center rounded-full bg-primary/20"
               >
                 <Check size={16} color="#1D4ED8" />

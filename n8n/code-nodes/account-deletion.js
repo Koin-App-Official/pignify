@@ -13,6 +13,9 @@
  * Row deletion happens per-table in the workflow (one HTTP Request node per
  * table in `tables`, using the Appwrite TablesDB REST `deleteRow`/list-then-
  * delete pattern) — this node only returns the plan, it does not call out.
+ *
+ * `users` is deleted separately (by row id, not listed here) since its rows
+ * are keyed by `$id` == the Appwrite Auth user id, not a `user_id` column.
  */
 
 /** Tables holding rows keyed by user_id that must be purged before Auth deletion. */
@@ -22,7 +25,6 @@ const USER_KEYED_TABLES = [
   'devices',
   'addon_purchases',
   'goals',
-  'users',
 ];
 
 function buildDeletionPlan({ userId, subscriptionRow }) {

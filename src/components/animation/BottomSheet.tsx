@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import type { ReactNode } from 'react';
 import Animated, {
@@ -106,27 +106,29 @@ export function BottomSheet({ visible, onClose, children, maxHeight }: BottomShe
   if (!mounted) return null;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      </Animated.View>
+    <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        </Animated.View>
 
-      <Animated.View
-        onLayout={handleContentLayout}
-        style={[
-          styles.sheet,
-          { maxHeight: cap, paddingBottom: Math.max(insets.bottom, 20) },
-          sheetStyle,
-        ]}
-      >
-        <GestureDetector gesture={handlePan}>
-          <View style={styles.handleZone}>
-            <View style={styles.handle} />
-          </View>
-        </GestureDetector>
-        {children}
-      </Animated.View>
-    </View>
+        <Animated.View
+          onLayout={handleContentLayout}
+          style={[
+            styles.sheet,
+            { maxHeight: cap, paddingBottom: Math.max(insets.bottom, 20) },
+            sheetStyle,
+          ]}
+        >
+          <GestureDetector gesture={handlePan}>
+            <View style={styles.handleZone}>
+              <View style={styles.handle} />
+            </View>
+          </GestureDetector>
+          {children}
+        </Animated.View>
+      </View>
+    </Modal>
   );
 }
 
