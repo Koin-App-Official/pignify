@@ -1,8 +1,10 @@
 /**
  * Idempotent TablesDB provisioning for the subscription & entitlement system.
  *
- * Targets the EXISTING database `piggnify_mobile_db` and creates only the new,
- * additive tables defined in schema.mjs. Existing tables are never touched.
+ * Targets the EXISTING database `piggnify_mobile_db` and creates the new,
+ * additive tables defined in schema.mjs. If a table already exists, its
+ * permissions/rowSecurity are synced to match schema.mjs; columns/indexes
+ * on existing tables are otherwise left untouched (only added if missing).
  *
  * Usage:
  *   node scripts/appwrite/setup.mjs            # DRY RUN (default) — prints the plan, no writes
@@ -23,6 +25,9 @@ const { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY } = process.env
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const isConflict = (e) => e?.code === 409 || /already exists/i.test(e?.message || '');
+// Re-adding a column that already exists on a table near Appwrite's per-row byte
+// budget comes back as this size-limit error instead of a clean conflict.
+const isExistingColumnSizeLimit = (e) => /maximum number or size of columns/i.test(e?.message || '');
 
 /** Human-readable description of a column for the dry-run plan. */
 function describeColumn(a) {
@@ -114,8 +119,12 @@ async function apply() {
       await db.createTable(DATABASE_ID, t.id, t.name, t.permissions ?? [], t.rowSecurity ?? false);
       console.log(`✓ table "${t.id}" created`);
     } catch (e) {
-      if (isConflict(e)) console.log(`• table "${t.id}" exists`);
-      else throw e;
+      if (isConflict(e)) {
+        // Table exists — bring its permissions/rowSecurity in line with schema.mjs
+        // (createTable only fires once; without this, permission changes here never reach the live table).
+        await db.updateTable(DATABASE_ID, t.id, t.name, t.permissions ?? [], t.rowSecurity ?? false);
+        console.log(`• table "${t.id}" exists — permissions synced`);
+      } else throw e;
     }
     for (const a of t.columns) {
       try {
@@ -123,7 +132,11 @@ async function apply() {
         console.log(`  ✓ column ${t.id}.${a.key}`);
       } catch (e) {
         if (isConflict(e)) console.log(`  • column ${t.id}.${a.key} exists`);
-        else throw e;
+        else if (isExistingColumnSizeLimit(e)) {
+          const { columns } = await db.listColumns(DATABASE_ID, t.id);
+          if (columns.some((c) => c.key === a.key)) console.log(`  • column ${t.id}.${a.key} exists`);
+          else throw e;
+        } else throw e;
       }
     }
     await waitForColumns(db, t.id);

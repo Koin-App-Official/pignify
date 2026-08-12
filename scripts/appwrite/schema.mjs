@@ -214,7 +214,9 @@ export const tables = [
   {
     id: 'devices',
     name: 'Devices',
-    permissions: [],
+    // Client writes its own row directly (see src/lib/device.ts); row-level
+    // permissions set on upsert then restrict read/update/delete to that user.
+    permissions: ['create("users")'],
     rowSecurity: true,
     columns: [
       str('user_id', 64, true),
