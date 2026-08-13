@@ -61,13 +61,21 @@ const CELEBRATE_MARKER = '<!--CELEBRATE-->';
 
 /** n8n's streaming webhook response is newline-delimited JSON events
  * ({"type":"begin"|"item"|"end", content?, metadata}), not raw text — this
- * extracts the text delta from one line, or '' if the line carries no text. */
+ * extracts the text delta from one line, or '' if the line carries no text.
+ * Logs unparseable/unexpected lines (truncated) so the actual response shape
+ * is visible if the backend ever returns something other than the expected
+ * stream — this is the one place a silent malformed-response failure would
+ * otherwise show up as nothing but a generic "trouble connecting" message. */
 function parseStreamEventLine(line: string): string {
   if (!line.trim()) return '';
   try {
     const event = JSON.parse(line);
-    return event?.type === 'item' && typeof event.content === 'string' ? event.content : '';
-  } catch {
+    if (event?.type === 'item' && typeof event.content === 'string') return event.content;
+    if (event?.type === 'begin' || event?.type === 'end') return '';
+    log.warn('Coach stream line had unexpected shape:', line.slice(0, 300));
+    return '';
+  } catch (err) {
+    log.warn('Coach stream line failed to parse as JSON:', line.slice(0, 300), err);
     return '';
   }
 }
@@ -248,6 +256,8 @@ export default function AICoach() {
       ]);
     };
 
+    log.debug('Coach request starting', { endpoint: COACH_ENDPOINT, userID, messageCount: last10.length });
+
     try {
       const response = await expoFetch(COACH_ENDPOINT, {
         method: 'POST',
@@ -255,12 +265,22 @@ export default function AICoach() {
         body: JSON.stringify({ userID, messages: last10, context }),
         signal: controller.signal,
       });
-      if (!response.ok || !response.body) throw new Error(`Coach request failed: ${response.status}`);
+      log.debug('Coach response received', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers?.get?.('content-type') ?? null,
+        hasBody: !!response.body,
+      });
+      if (!response.ok || !response.body) {
+        throw new Error(`Coach request failed: HTTP ${response.status}${response.body ? '' : ' (no response body)'}`);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let lineBuffer = '';
+      let rawText = ''; // everything decoded, for diagnostics — independent of parsed content
       let full = '';
+      let rawChunkCount = 0;
       let coachMsgId: string | null = null;
       let celebrated = false;
 
@@ -286,7 +306,10 @@ export default function AICoach() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        lineBuffer += decoder.decode(value, { stream: true });
+        rawChunkCount += 1;
+        const decoded = decoder.decode(value, { stream: true });
+        rawText += decoded;
+        lineBuffer += decoded;
 
         const lines = lineBuffer.split('\n');
         lineBuffer = lines.pop() ?? '';
@@ -308,6 +331,11 @@ export default function AICoach() {
       }
 
       if (coachMsgId == null) {
+        log.error('Coach stream produced no usable content.', {
+          rawChunkCount,
+          rawTextLength: rawText.length,
+          rawTextPreview: rawText.slice(0, 500),
+        });
         showError();
       } else if (userID) {
         // Refresh the real usage count immediately so the header label doesn't
@@ -322,10 +350,14 @@ export default function AICoach() {
         });
       }
     } catch (err) {
-      if ((err as Error)?.name === 'AbortError' && coachRequestRef.current !== controller) {
-        // Superseded by a newer request (component unmounted or user sent again); not a real failure.
+      const error = err as Error;
+      if (error?.name === 'AbortError' && coachRequestRef.current !== controller) {
+        log.debug('Coach request superseded/unmounted, ignoring AbortError.');
+      } else if (error?.name === 'AbortError') {
+        log.error(`Coach request timed out after ${COACH_REQUEST_TIMEOUT_MS}ms.`);
+        showError();
       } else {
-        log.error('Coach request failed:', err);
+        log.error('Coach request failed:', { name: error?.name, message: error?.message, error });
         showError();
       }
     } finally {
