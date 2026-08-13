@@ -48,6 +48,7 @@ export default function TabLayout() {
   const recordActivity = useStore((state) => state.recordActivity);
   const updateProfile = useStore((state) => state.updateProfile);
   const setLastProfileSync = useStore((state) => state.setLastProfileSync);
+  const setServerAiMessageUsage = useStore((state) => state.setServerAiMessageUsage);
 
   const syncUserProfile = async (signal: AbortSignal) => {
     const { profile, lastProfileSync } = useStore.getState();
@@ -59,6 +60,12 @@ export default function TabLayout() {
       const data = await res.json().catch(() => null);
       if (!data) return;
       if (data.plan) updateProfile({ plan: data.plan });
+      if (typeof data.quotaAiMessages === 'number' || typeof data.aiMessagesUsed === 'number') {
+        setServerAiMessageUsage(
+          typeof data.quotaAiMessages === 'number' ? data.quotaAiMessages : null,
+          typeof data.aiMessagesUsed === 'number' ? data.aiMessagesUsed : null
+        );
+      }
       setLastProfileSync(new Date().toISOString());
     } catch {
       // silent failure (including abort) — never block the UI
