@@ -31,6 +31,7 @@ import { PressableScale } from '@/components/animation/PressableScale';
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
+import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
 
@@ -115,6 +116,7 @@ export default function AICoach() {
 
   const { plan, config, aiMessages, has } = useEntitlements();
   const incrementCoachMessages = useStore((s) => s.incrementCoachMessages);
+  const setServerAiMessageUsage = useStore((s) => s.setServerAiMessageUsage);
   const setAddonMessageBalance = useStore((s) => s.setAddonMessageBalance);
   const userID = useStore((s) => s.profile.userID);
   const messageLimit = typeof config.quotas.aiMessages === 'number' ? config.quotas.aiMessages : Infinity;
@@ -305,7 +307,20 @@ export default function AICoach() {
         applyDelta();
       }
 
-      if (coachMsgId == null) showError();
+      if (coachMsgId == null) {
+        showError();
+      } else if (userID) {
+        // Refresh the real usage count immediately so the header label doesn't
+        // wait for the next hourly/foreground sync in _layout.tsx.
+        fetchEntitlementsSync(userID).then((data) => {
+          if (data && (typeof data.quotaAiMessages === 'number' || typeof data.aiMessagesUsed === 'number')) {
+            setServerAiMessageUsage(
+              typeof data.quotaAiMessages === 'number' ? data.quotaAiMessages : null,
+              typeof data.aiMessagesUsed === 'number' ? data.aiMessagesUsed : null
+            );
+          }
+        });
+      }
     } catch (err) {
       if ((err as Error)?.name === 'AbortError' && coachRequestRef.current !== controller) {
         // Superseded by a newer request (component unmounted or user sent again); not a real failure.
@@ -355,7 +370,7 @@ export default function AICoach() {
             <Text className="text-xs font-sans-bold text-on-surface">
               {aiMessages.unlimited
                 ? 'Unlimited'
-                : `${Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100))}% used this month`}
+                : `${Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100))}% used this period`}
             </Text>
           )}
         </View>
