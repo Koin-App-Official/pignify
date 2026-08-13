@@ -58,6 +58,19 @@ const COACH_REQUEST_TIMEOUT_MS = 30000;
  * computed server-side from real goal progress (not string-matched from prose). */
 const CELEBRATE_MARKER = '<!--CELEBRATE-->';
 
+/** n8n's streaming webhook response is newline-delimited JSON events
+ * ({"type":"begin"|"item"|"end", content?, metadata}), not raw text — this
+ * extracts the text delta from one line, or '' if the line carries no text. */
+function parseStreamEventLine(line: string): string {
+  if (!line.trim()) return '';
+  try {
+    const event = JSON.parse(line);
+    return event?.type === 'item' && typeof event.content === 'string' ? event.content : '';
+  } catch {
+    return '';
+  }
+}
+
 /** Strips a fully-arrived CELEBRATE_MARKER from the end of streamed text, and also
  * hides a partially-arrived marker prefix near the tail so it never flashes mid-stream. */
 function stripCelebrateMarker(text: string): { display: string; celebrated: boolean } {
@@ -244,14 +257,12 @@ export default function AICoach() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let lineBuffer = '';
       let full = '';
       let coachMsgId: string | null = null;
       let celebrated = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        full += decoder.decode(value, { stream: true });
+      const applyDelta = () => {
         const { display, celebrated: nowCelebrated } = stripCelebrateMarker(full);
 
         if (coachMsgId == null) {
@@ -268,6 +279,30 @@ export default function AICoach() {
           celebrated = true;
           celebrate();
         }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lineBuffer += decoder.decode(value, { stream: true });
+
+        const lines = lineBuffer.split('\n');
+        lineBuffer = lines.pop() ?? '';
+        let hasDelta = false;
+        for (const line of lines) {
+          const delta = parseStreamEventLine(line);
+          if (delta) {
+            full += delta;
+            hasDelta = true;
+          }
+        }
+        if (hasDelta) applyDelta();
+      }
+
+      const delta = parseStreamEventLine(lineBuffer);
+      if (delta) {
+        full += delta;
+        applyDelta();
       }
 
       if (coachMsgId == null) showError();
