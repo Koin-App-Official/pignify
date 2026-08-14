@@ -33,6 +33,7 @@ import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath';
 import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
+import { requestNotificationPermission } from '@/lib/notifications';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -129,6 +130,12 @@ function LegalLinksNote() {
  * AccountFinalization, which meant an under-18 user built an entire savings
  * plan across seven screens before being permanently refused. Asking second —
  * right after the name — costs a rejected user almost nothing.
+ *
+ * PushPermission sits between the blueprint and the email step for the same
+ * kind of reason: it lands right after the payoff (the plan the user just
+ * built is still on screen) and right before the highest-friction screen, and
+ * it's the only channel that can reach someone who abandons before giving us
+ * an email.
  */
 enum OnboardingStep {
   Name = 0,
@@ -139,8 +146,9 @@ enum OnboardingStep {
   Income = 5,
   Contribution = 6,
   BlueprintReview = 7,
-  AccountFinalization = 8,
-  Success = 9,
+  PushPermission = 8,
+  AccountFinalization = 9,
+  Success = 10,
 }
 
 /**
@@ -256,6 +264,7 @@ export default function Onboarding() {
   const addGoal = useStore((s) => s.addGoal);
   const updateProfile = useStore((s) => s.updateProfile);
   const unlockAchievement = useStore((s) => s.unlockAchievement);
+  const refreshNotifications = useStore((s) => s.refreshNotifications);
   const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
 
   // Restore a previous session's answers, falling back to locale detection for a
@@ -391,6 +400,41 @@ export default function Onboarding() {
       setTargetDate(new Date(targetDate).toISOString());
     }
     setStep(OnboardingStep.BlueprintReview);
+  };
+
+  /**
+   * Notification opt-in. Always advances — a declined permission must never
+   * block account creation.
+   *
+   * `notificationPrefs` defaults to all-on, which would leave a declining user
+   * looking at four enabled toggles in Settings that can never fire anything.
+   * So the outcome is written back either way: granted keeps the defaults and
+   * schedules, declined (or skipped without asking) turns them off. The user
+   * can still switch any of them on later from Settings, which re-runs its own
+   * soft-ask before the OS prompt.
+   */
+  const resolvePushChoice = async (optIn: boolean) => {
+    setIsLoading(true);
+    try {
+      const granted = optIn ? await requestNotificationPermission() : false;
+      if (granted) {
+        refreshNotifications();
+      } else {
+        updateProfile({
+          notificationPrefs: {
+            paydayReminder: false,
+            streakProtection: false,
+            milestoneAlerts: false,
+            weeklyReflection: false,
+          },
+        });
+      }
+    } catch {
+      // A permission API failure is not worth stranding onboarding over.
+    } finally {
+      setIsLoading(false);
+      setStep(OnboardingStep.AccountFinalization);
+    }
   };
 
   const handleDobEdit = () => {
@@ -733,12 +777,41 @@ export default function Onboarding() {
               <ArrowLeft size={16} color="#1D4ED8" />
             </Button>
             <Button
-              onPress={() => setStep(OnboardingStep.AccountFinalization)}
+              onPress={() => setStep(OnboardingStep.PushPermission)}
               className="flex-1 items-center justify-center flex-row gap-2 h-14"
             >
               <Text className="text-base font-bold text-primary-foreground">Create My Piggy Account</Text>
               <ArrowRight size={16} color="#ffffff" />
             </Button>
+          </View>
+        );
+
+      case OnboardingStep.PushPermission:
+        return (
+          <View>
+            <Button
+              onPress={() => resolvePushChoice(true)}
+              disabled={isLoading}
+              className="w-full flex-row items-center justify-center gap-2 h-14"
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Text className="text-base font-bold text-primary-foreground">
+                    Keep me on track
+                  </Text>
+                  <ArrowRight size={18} color="#ffffff" />
+                </>
+              )}
+            </Button>
+            <TouchableOpacity
+              onPress={() => resolvePushChoice(false)}
+              disabled={isLoading}
+              className="mt-4 items-center py-2"
+            >
+              <Text className="text-sm font-medium text-primary underline">Not now</Text>
+            </TouchableOpacity>
           </View>
         );
 
@@ -805,6 +878,7 @@ export default function Onboarding() {
       OnboardingStep.Income,
       OnboardingStep.Contribution,
       OnboardingStep.BlueprintReview,
+      OnboardingStep.PushPermission,
       OnboardingStep.AccountFinalization,
     ].includes(step) && !(step === OnboardingStep.AgeGate && ageBlocked);
 
@@ -1139,7 +1213,48 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 8: Account Finalization (email / OTP) */}
+          {/* Screen 8: Notification pre-permission. A custom screen before the
+              OS dialog — iOS allows exactly one native prompt and a denial
+              can't be re-triggered in-app, so the ask has to earn itself
+              first. Placed after the blueprint (the payoff is still fresh) and
+              before the email step (the biggest drop-off), because push is the
+              only way to reach someone who leaves before giving us an email. */}
+          {step === OnboardingStep.PushPermission && (
+            <Animated.View entering={FadeInDown.springify()}>
+              <Text className="text-6xl text-center mb-4">🔔</Text>
+              <Text className="mb-2 text-3xl font-black text-on-surface">
+                Want a nudge when{'\n'}it counts, {firstName}?
+              </Text>
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
+                Saving {formatCurrency(monthlyContribution, currency)} a month is easy to plan and
+                easy to forget. A quick reminder is what keeps a streak alive.
+              </Text>
+
+              <View className="gap-3">
+                <PermissionPoint
+                  emoji="🔥"
+                  title="Streak protection"
+                  body="A heads-up when today's set-aside is still outstanding."
+                />
+                <PermissionPoint
+                  emoji="🎯"
+                  title="Milestone celebrations"
+                  body={`We'll tell you the moment your ${goalName || 'goal'} hits 25%, 50%, 75%.`}
+                />
+                <PermissionPoint
+                  emoji="🧘"
+                  title="A weekly recap"
+                  body="One calm summary of how the week went. No spam, ever."
+                />
+              </View>
+
+              <Text className="mt-6 text-xs text-on-surface-variant text-center">
+                You can change any of this later in Settings.
+              </Text>
+            </Animated.View>
+          )}
+
+          {/* Screen 9: Account Finalization (email / OTP) */}
           {step === OnboardingStep.AccountFinalization && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
@@ -1216,7 +1331,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 9: Success */}
+          {/* Screen 10: Success */}
           {step === OnboardingStep.Success && (
             <Animated.View
               entering={FadeInDown.springify()}
@@ -1312,6 +1427,19 @@ function ProgressSegment({ active }: { active: boolean }) {
         className="h-full w-full rounded-full bg-primary"
         style={[{ transformOrigin: 'left' }, style]}
       />
+    </View>
+  );
+}
+
+/** One benefit row on the notification pre-permission screen. */
+function PermissionPoint({ emoji, title, body }: { emoji: string; title: string; body: string }) {
+  return (
+    <View className="flex-row items-start gap-3 rounded-2xl bg-surface-container-low p-4">
+      <Text className="text-xl">{emoji}</Text>
+      <View className="flex-1">
+        <Text className="text-sm font-bold text-on-surface">{title}</Text>
+        <Text className="mt-0.5 text-xs leading-5 text-on-surface-variant">{body}</Text>
+      </View>
     </View>
   );
 }
