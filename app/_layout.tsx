@@ -60,6 +60,7 @@ export default function RootLayout() {
       <AuthGate>
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="welcome" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="plans" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="change-pin" options={{ headerShown: false, presentation: 'modal' }} />
