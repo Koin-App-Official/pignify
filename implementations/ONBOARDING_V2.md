@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A and B merged, C implemented. Tick boxes as work lands.
+Status: **in progress** — A, B and C merged; D implemented. Tick boxes as work lands.
 
 ## Progress
 
@@ -9,8 +9,8 @@ Status: **in progress** — A and B merged, C implemented. Tick boxes as work la
 |---|---|---|
 | A | Onboarding structure fixes | ✅ merged ([#56](https://github.com/Koin-App-Official/pignify/pull/56)) — device check pending |
 | B | Pre-signup carousel | ✅ merged ([#58](https://github.com/Koin-App-Official/pignify/pull/58)) — copy + visuals pending review |
-| C | Trust & consent copy pass | ☑ implemented ([#59](https://github.com/Koin-App-Official/pignify/issues/59)) — "email me this plan" deferred |
-| D | Push pre-permission step | ☐ not started |
+| C | Trust & consent copy pass | ✅ merged ([#60](https://github.com/Koin-App-Official/pignify/pull/60)) — "email me this plan" deferred |
+| D | Push pre-permission step | ☑ implemented ([#61](https://github.com/Koin-App-Official/pignify/issues/61)) — device check pending |
 | E | RevenueCat backend & products | ☐ blocked on store setup |
 | F | App-side billing swap | ☐ not started |
 | G | Onboarding paywall + trial lifecycle | ☐ not started |
@@ -116,11 +116,12 @@ Slide 2 is the differentiator and is structurally true, not a policy promise. Re
 
 # Issue D — Push pre-permission step
 
-**Branch:** `feat/issue-D-push-preprompt` · **Depends on:** A · **Files:** `app/onboarding.tsx`, `src/lib/notifications.ts`
+**Branch:** `feat/issue-61-push-preprompt` ([#61](https://github.com/Koin-App-Official/pignify/issues/61)) · **Depends on:** A (merged) · **Files:** `app/onboarding.tsx`, `src/lib/notifications.ts`
 
-- [ ] New step between Blueprint Review and the email step: custom priming screen ("we'll nudge you when your streak is on the line").
-- [ ] Fire the native prompt via the existing `requestNotificationPermission()`; declining is non-blocking.
-- [ ] Wire the result into `profile.notificationPrefs` so Settings reflects reality.
+- [x] New step between Blueprint Review and the email step: custom priming screen ("we'll nudge you when your streak is on the line").
+- [x] Fire the native prompt via the existing `requestNotificationPermission()`; declining is non-blocking.
+- [x] Wire the result into `profile.notificationPrefs` so Settings reflects reality.
+- [x] Bump `DRAFT_VERSION` — inserting a step shifts the indices `onboardingDraft` stores, so pre-existing drafts must be discarded rather than restored onto the wrong screen.
 
 Rationale: post-value (the plan is already on screen), pre-friction (immediately before the email/OTP step, where abandonment concentrates), and it's the *only* channel that can reach a user who abandons before giving an email. iOS grants one shot at the native dialog, so the priming screen matters.
 
