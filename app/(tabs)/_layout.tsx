@@ -5,6 +5,7 @@ import { AppState, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useStore } from '@/lib/store';
 import { springPresets } from '@/lib/springPresets';
+import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 
 function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: string; Icon: LucideIcon }) {
   const progress = useSharedValue(focused ? 1 : 0);
@@ -37,7 +38,6 @@ function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: st
   );
 }
 
-const SYNC_URL = 'https://n8n.piggnify.com/webhook/claude-plan';
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export default function TabLayout() {
@@ -48,21 +48,22 @@ export default function TabLayout() {
   const recordActivity = useStore((state) => state.recordActivity);
   const updateProfile = useStore((state) => state.updateProfile);
   const setLastProfileSync = useStore((state) => state.setLastProfileSync);
+  const setServerAiMessageUsage = useStore((state) => state.setServerAiMessageUsage);
 
   const syncUserProfile = async (signal: AbortSignal) => {
     const { profile, lastProfileSync } = useStore.getState();
     if (!profile.userID) return;
     if (lastProfileSync && Date.now() - new Date(lastProfileSync).getTime() < SYNC_INTERVAL_MS) return;
-    try {
-      const res = await fetch(`${SYNC_URL}?user_id=${encodeURIComponent(profile.userID)}`, { signal });
-      if (!res.ok) return;
-      const data = await res.json().catch(() => null);
-      if (!data) return;
-      if (data.plan) updateProfile({ plan: data.plan });
-      setLastProfileSync(new Date().toISOString());
-    } catch {
-      // silent failure (including abort) — never block the UI
+    const data = await fetchEntitlementsSync(profile.userID, signal);
+    if (!data) return;
+    if (data.plan) updateProfile({ plan: data.plan });
+    if (typeof data.quotaAiMessages === 'number' || typeof data.aiMessagesUsed === 'number') {
+      setServerAiMessageUsage(
+        typeof data.quotaAiMessages === 'number' ? data.quotaAiMessages : null,
+        typeof data.aiMessagesUsed === 'number' ? data.aiMessagesUsed : null
+      );
     }
+    setLastProfileSync(new Date().toISOString());
   };
 
   useEffect(() => {

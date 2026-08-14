@@ -301,6 +301,15 @@ export interface PiggyState {
   lastWeeklyReset: string;
   coachMessagesUsed: number;
   coachMessagesMonth: string;
+  /**
+   * Server-authoritative AI-message quota/usage for the current billing
+   * period, synced from CLAUDE_entitlements_get (see [[coach-backend-streaming]]).
+   * null until the first successful sync — callers should fall back to the
+   * local calendar-month counter until then. This is the real enforcement;
+   * the local counter above is optimistic UI only.
+   */
+  serverAiMessagesQuota: number | null;
+  serverAiMessagesUsed: number | null;
   /** Purchased extra AI messages, not tied to a billing period (roll over indefinitely). */
   addonMessageBalance: number;
   deepAnalysisUsed: number;
@@ -355,6 +364,7 @@ export interface PiggyState {
   /** Called only after a confirmed-successful Deep Analysis webhook call. */
   incrementDeepAnalysis: () => void;
   setLastProfileSync: (ts: string) => void;
+  setServerAiMessageUsage: (quota: number | null, used: number | null) => void;
 
   resetForDemo: () => void;
 }
@@ -470,6 +480,8 @@ export const useStore = create<PiggyState>()(
       lastWeeklyReset: getWeekMondayString(),
       coachMessagesUsed: 0,
       coachMessagesMonth: getTodayString().slice(0, 7),
+      serverAiMessagesQuota: null,
+      serverAiMessagesUsed: null,
       addonMessageBalance: 0,
       deepAnalysisUsed: 0,
       deepAnalysisMonth: getTodayString().slice(0, 7),
@@ -702,6 +714,7 @@ export const useStore = create<PiggyState>()(
       },
 
       setLastProfileSync: (ts) => set({ lastProfileSync: ts }),
+      setServerAiMessageUsage: (quota, used) => set({ serverAiMessagesQuota: quota, serverAiMessagesUsed: used }),
 
       incrementCoachMessages: (messageLimit) => set((state) => {
         const thisMonth = getTodayString().slice(0, 7);

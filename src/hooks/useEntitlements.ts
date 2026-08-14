@@ -20,10 +20,12 @@ export function useEntitlements() {
   const goals = useStore((s) => s.goals);
   const monthlyIncome = useStore((s) => s.profile.monthlyIncome);
   const addonMessageBalance = useStore((s) => s.addonMessageBalance);
-  const coachMessagesUsed = useStore((s) => {
+  const localCoachMessagesUsed = useStore((s) => {
     const thisMonth = new Date().toISOString().slice(0, 7);
     return s.coachMessagesMonth === thisMonth ? s.coachMessagesUsed : 0;
   });
+  const serverAiMessagesQuota = useStore((s) => s.serverAiMessagesQuota);
+  const serverAiMessagesUsed = useStore((s) => s.serverAiMessagesUsed);
   const deepAnalysisUsed = useStore((s) => {
     const thisMonth = new Date().toISOString().slice(0, 7);
     return s.deepAnalysisMonth === thisMonth ? s.deepAnalysisUsed : 0;
@@ -37,6 +39,15 @@ export function useEntitlements() {
     // Income is currently a single value; an unset income counts as 0 used.
     const incomesUsed = monthlyIncome != null ? 1 : 0;
 
+    // Prefer the server-authoritative quota/usage (synced from CLAUDE_entitlements_get,
+    // which reflects the real enforcement in CLAUDE_coach_reply) once it's landed at
+    // least once; fall back to the local calendar-month counter before first sync.
+    // Take the max of server-known and local-optimistic usage so a message just sent
+    // shows up immediately without waiting for the next hourly/foreground sync.
+    const coachMessagesUsed =
+      serverAiMessagesQuota != null ? Math.max(serverAiMessagesUsed ?? 0, localCoachMessagesUsed) : localCoachMessagesUsed;
+    const aiMessagesLimit = serverAiMessagesQuota ?? config.quotas.aiMessages;
+
     return {
       plan,
       config,
@@ -44,12 +55,12 @@ export function useEntitlements() {
       quota: (resource: QuotaResource, used: number) => checkQuota(plan, resource, used),
       goals: checkQuota(plan, 'goals', activeGoals),
       incomes: checkQuota(plan, 'incomes', incomesUsed),
-      aiMessages: evaluatePeriodicQuota(config.quotas.aiMessages, coachMessagesUsed, addonMessageBalance),
+      aiMessages: evaluatePeriodicQuota(aiMessagesLimit, coachMessagesUsed, addonMessageBalance),
       deepAnalysis: evaluatePeriodicQuota(config.quotas.deepAnalysis, deepAnalysisUsed),
       activeGoalCount: activeGoals,
       coachMessagesUsed,
       addonMessageBalance,
       deepAnalysisUsed,
     };
-  }, [plan, goals, monthlyIncome, coachMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
+  }, [plan, goals, monthlyIncome, localCoachMessagesUsed, serverAiMessagesQuota, serverAiMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
 }

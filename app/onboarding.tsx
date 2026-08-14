@@ -91,6 +91,8 @@ enum OnboardingStep {
 
 const TOTAL_STEPS = 6;
 
+const ONBOARDING_WEBHOOK_TIMEOUT_MS = 15_000;
+
 function formatTargetDate(isoDate: string): string {
   const d = new Date(isoDate);
   return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -281,9 +283,20 @@ export default function Onboarding() {
     setIsLoading(true);
     setNetworkError('');
 
+    let userId: string;
+    let secret: string;
     try {
-      const { userId, secret } = await verifyEmailOtp(otpUserId, code.trim());
+      ({ userId, secret } = await verifyEmailOtp(otpUserId, code.trim()));
+    } catch {
+      // Bad/expired OTP — distinct from a webhook/network failure below, so the
+      // user isn't told their code was wrong when the account was actually fine.
+      setNetworkError('That code is incorrect or expired. Request a new code and try again.');
+      setCode('');
+      setIsLoading(false);
+      return;
+    }
 
+    try {
       const payload = {
         userID: userId, // canonical id = Appwrite account $id
         email,
@@ -303,14 +316,21 @@ export default function Onboarding() {
         estimatedMonthlySavings: monthlyContribution,
       };
 
-      const res = await fetch(
-        'https://n8n.piggnify.com/webhook/claude-onboarding',
-        {
+      // Onboarding is idempotent server-side (retrying with the same userID
+      // repairs rather than re-creates), so a timeout here is safe to retry.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), ONBOARDING_WEBHOOK_TIMEOUT_MS);
+      let res: Response;
+      try {
+        res = await fetch('https://n8n.piggnify.com/webhook/claude-onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-        }
-      );
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const goal: Goal = {
@@ -353,8 +373,10 @@ export default function Onboarding() {
       setPendingSession({ userId, secret });
       setStep(OnboardingStep.Success);
     } catch {
+      // Your code was already accepted above — this is a backend/network
+      // failure setting up the account, not a bad code.
       setNetworkError(
-        'That code is incorrect or expired, or the network failed. Request a new code and try again.'
+        "We verified your code but couldn't finish setting up your account. Tap Resend and try again."
       );
       setCode('');
     } finally {
