@@ -1,13 +1,13 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **approved, not started**. Tick boxes as work lands.
+Status: **in progress** — issue A implemented. Tick boxes as work lands.
 
 ## Progress
 
 | Issue | Scope | Status |
 |---|---|---|
-| A | Onboarding structure fixes | ☐ not started |
+| A | Onboarding structure fixes | ☑ implemented (#55) — device check pending |
 | B | Pre-signup carousel | ☐ not started |
 | C | Trust & consent copy pass | ☐ not started |
 | D | Push pre-permission step | ☐ not started |
@@ -60,22 +60,22 @@ Draft state persists across app kills at every step up to account creation.
 
 # Issue A — Onboarding structure fixes
 
-**Branch:** `fix/issue-A-onboarding-structure` · **Depends on:** nothing · **Files:** `app/onboarding.tsx`, new `src/lib/onboardingDraft.ts`
+**Branch:** `feat/issue-55-onboarding-structure` ([#55](https://github.com/Koin-App-Official/pignify/issues/55)) · **Depends on:** nothing · **Files:** `app/onboarding.tsx`, new `src/lib/onboardingDraft.ts`
 
 Independent of the billing work; ships first and standalone.
 
-- [ ] **Move the age gate to position 2.** Extract the DOB block (`DobWheelPicker` + `DobConfirmModal` + `ageBlocked` terminal screen, currently `onboarding.tsx:897-924`) into its own `OnboardingStep.AgeGate = 1`. `AccountFinalization` keeps only email/OTP. Renumber the enum; the enum exists precisely so this is reviewable.
-- [ ] **Honest progress.** `TOTAL_STEPS` currently = 6 while 8 interactive screens exist; the bar disappears at `BlueprintReview` (`onboarding.tsx:389`), so users hit "Step 6 of 6" then face three more screens. Make the bar span every step through the paywall, and keep it visible.
-- [ ] **Draft persistence.** New `src/lib/onboardingDraft.ts` — debounced write of the collected answers to AsyncStorage on each step advance; hydrate on mount; clear on `onboardingCompleted`.
-- [ ] Never persist `code`, `pendingSession`, or `otpUserId`.
-- [ ] On resume show a one-line "Picking up where you left off, {name}".
-- [ ] **Webhook retry.** On provisioning failure after a *successful* OTP (`onboarding.tsx:375-384`), the copy currently tells the user to tap Resend — wrong remedy. Add an explicit **Retry** that re-fires the idempotent webhook with the session already held, keeping Resend for genuine OTP problems.
+- [x] **Move the age gate to position 2.** Extract the DOB block (`DobWheelPicker` + `DobConfirmModal` + `ageBlocked` terminal screen, currently `onboarding.tsx:897-924`) into its own `OnboardingStep.AgeGate = 1`. `AccountFinalization` keeps only email/OTP. Renumber the enum; the enum exists precisely so this is reviewable.
+- [x] **Honest progress.** `TOTAL_STEPS` currently = 6 while 8 interactive screens exist; the bar disappears at `BlueprintReview` (`onboarding.tsx:389`), so users hit "Step 6 of 6" then face three more screens. Make the bar span every step through the paywall, and keep it visible.
+- [x] **Draft persistence.** New `src/lib/onboardingDraft.ts` — debounced write of the collected answers to AsyncStorage on each step advance; hydrate on mount; clear on `onboardingCompleted`.
+- [x] Never persist `code`, `pendingSession`, or `otpUserId`.
+- [x] On resume show a one-line "Picking up where you left off, {name}".
+- [x] **Webhook retry.** On provisioning failure after a *successful* OTP (`onboarding.tsx:375-384`), the copy currently tells the user to tap Resend — wrong remedy. Add an explicit **Retry** that re-fires the idempotent webhook with the session already held, keeping Resend for genuine OTP problems.
 
 **Done when:**
-- [ ] Cold-kill at any pre-account step resumes with all answers intact.
-- [ ] An under-18 user is blocked on screen 2, not screen 8.
-- [ ] The progress bar never overruns.
-- [ ] `npm run typecheck` and `npm test` clean.
+- [ ] Cold-kill at any pre-account step resumes with all answers intact. *(draft module unit-tested; not yet exercised on a device)*
+- [x] An under-18 user is blocked on screen 2, not screen 8.
+- [x] The progress bar never overruns.
+- [x] `npm run typecheck` and `npm test` clean.
 
 ---
 
@@ -122,7 +122,7 @@ Slide 2 is the differentiator and is structurally true, not a policy promise. Re
 - [ ] Fire the native prompt via the existing `requestNotificationPermission()`; declining is non-blocking.
 - [ ] Wire the result into `profile.notificationPrefs` so Settings reflects reality.
 
-Rationale: post-value (the plan is already on screen), pre-friction (before DOB/OTP where abandonment concentrates), and it's the *only* channel that can reach a user who abandons before giving an email. iOS grants one shot at the native dialog, so the priming screen matters.
+Rationale: post-value (the plan is already on screen), pre-friction (immediately before the email/OTP step, where abandonment concentrates), and it's the *only* channel that can reach a user who abandons before giving an email. iOS grants one shot at the native dialog, so the priming screen matters.
 
 **Note:** `plugins/withoutPushEntitlement` strips `aps-environment` on purpose — this is local-notifications-only, which is all the retention engine in `notifications.ts` needs. No remote-push infrastructure is introduced here.
 
