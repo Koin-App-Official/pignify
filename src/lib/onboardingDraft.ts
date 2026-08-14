@@ -23,12 +23,15 @@ const log = createLogger('onboardingDraft');
 const STORAGE_KEY = 'piggy-onboarding-draft';
 
 /**
- * Bumped whenever the shape changes incompatibly. A mismatched draft is
- * discarded rather than migrated — it's at most a few minutes of re-typing,
+ * Bumped whenever the shape changes incompatibly — including when the step
+ * numbering shifts, since `step` is a bare index into `OnboardingStep` and a
+ * stale one restores the user onto the wrong screen. (v3 = the notification
+ * pre-permission step inserted before AccountFinalization.) A mismatched draft
+ * is discarded rather than migrated: it's at most a few minutes of re-typing,
  * which is a far better failure mode than restoring a half-understood draft
  * into a differently-numbered step machine.
  */
-const DRAFT_VERSION = 2;
+const DRAFT_VERSION = 3;
 
 /** Writes are debounced so mid-step typing doesn't hit AsyncStorage per keystroke. */
 const SAVE_DEBOUNCE_MS = 500;

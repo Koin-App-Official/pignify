@@ -76,7 +76,10 @@ describe('onboardingDraft', () => {
   });
 
   it('discards a draft written by an older version', async () => {
-    store.set(KEY, JSON.stringify({ ...draft, v: 1 }));
+    // v2 is the version shipped before the notification step was inserted. Its
+    // `step` indices are off by one from AccountFinalization onward, so
+    // restoring one would drop the user onto the wrong screen.
+    store.set(KEY, JSON.stringify({ ...draft, v: 2 }));
     expect(await loadDraft()).toBeNull();
   });
 
