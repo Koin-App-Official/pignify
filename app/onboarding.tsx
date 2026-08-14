@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
-import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
+import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle, ShieldCheck } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
 import { DobWheelPicker } from '@/components/ui/dob-picker';
@@ -44,32 +44,78 @@ const GOAL_CHIPS = [
 
 const LEGAL_LINK_STYLE = 'text-primary underline';
 
+const LEGAL_LINKS = [
+  { label: 'Privacy Policy', url: 'https://piggnify.com/privacy-policy' },
+  { label: 'Terms of Service', url: 'https://piggnify.com/terms-of-service' },
+  { label: 'AI Transparency', url: 'https://piggnify.com/ai-transparency' },
+  { label: 'Services', url: 'https://piggnify.com/services' },
+  { label: 'AI & Feature Access', url: 'https://piggnify.com/ai-feature-access' },
+];
+
+/**
+ * Reassurance first, obligations second — at the email step specifically.
+ *
+ * All five legal documents used to be rendered as underlined links stacked
+ * directly under the email input, i.e. a wall of commitments at the single
+ * highest-anxiety moment in the flow. Nothing is removed here: the same five
+ * links live one tap away, and the acceptance notice is still shown in full.
+ * What changes is what the user reads first.
+ *
+ * The headline claim is worth stating plainly because, unlike every
+ * Plaid-based competitor writing the same reassurance as a promise, for Piggy
+ * it is structural — there is no bank connection to abuse.
+ */
 function LegalLinksNote() {
+  const [expanded, setExpanded] = useState(false);
   const open = (url: string) => Linking.openURL(url);
+
   return (
-    <Text className="mt-6 text-xs leading-5 text-on-surface-variant text-center">
-      By creating an account, you accept our{' '}
-      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/privacy-policy')}>
-        Privacy Policy
-      </Text>
-      ,{' '}
-      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/terms-of-service')}>
-        Terms of Service
-      </Text>
-      ,{' '}
-      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/ai-transparency')}>
-        AI Transparency
-      </Text>
-      ,{' '}
-      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/services')}>
-        Services
-      </Text>{' '}
-      and{' '}
-      <Text className={LEGAL_LINK_STYLE} onPress={() => open('https://piggnify.com/ai-feature-access')}>
-        AI &amp; Feature Access
-      </Text>{' '}
-      terms.
-    </Text>
+    <View className="mt-6">
+      <View className="rounded-2xl bg-surface-container p-4">
+        <View className="flex-row items-start gap-2">
+          <ShieldCheck size={16} color="#1D4ED8" style={{ marginTop: 1 }} />
+          <View className="flex-1">
+            <Text className="text-sm font-bold text-on-surface">
+              We're asking for your email. Not your bank.
+            </Text>
+            <Text className="mt-1 text-xs leading-5 text-on-surface-variant">
+              Piggy never connects to your accounts — there's nothing to link, and nothing for
+              anyone to steal. Your plan is encrypted and private.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => setExpanded((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        className="mt-3 flex-row items-center justify-center gap-1 py-2"
+      >
+        <Text className="text-xs font-semibold text-on-surface-variant">
+          By creating an account you accept our terms
+        </Text>
+        <ChevronDown
+          size={14}
+          color="#64748B"
+          style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
+        />
+      </TouchableOpacity>
+
+      {expanded && (
+        <Animated.View entering={FadeInDown.springify()} className="items-center gap-2 pb-2">
+          {LEGAL_LINKS.map((link) => (
+            <Text
+              key={link.url}
+              className={`text-xs ${LEGAL_LINK_STYLE}`}
+              onPress={() => open(link.url)}
+            >
+              {link.label}
+            </Text>
+          ))}
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
@@ -849,10 +895,18 @@ export default function Onboarding() {
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 When were you born,{'\n'}{firstName}?
               </Text>
-              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+              <Text className="mb-6 text-sm font-medium text-on-surface-variant">
                 Piggy is only available to users 18 and older, so we need to confirm your age before
                 we go any further.
               </Text>
+
+              <View className="mb-6 flex-row items-start gap-2 rounded-2xl bg-surface-container p-4">
+                <ShieldCheck size={16} color="#1D4ED8" style={{ marginTop: 1 }} />
+                <Text className="flex-1 text-xs leading-5 text-on-surface-variant">
+                  This is a legal age requirement, not profiling. We use your date of birth to
+                  confirm you're 18 — it's never used to target you or shared with anyone.
+                </Text>
+              </View>
 
               <DobWheelPicker value={dateOfBirth} onChange={setDateOfBirth} />
             </Animated.View>
