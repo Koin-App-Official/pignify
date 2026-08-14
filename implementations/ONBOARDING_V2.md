@@ -1,15 +1,15 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — issue A implemented. Tick boxes as work lands.
+Status: **in progress** — A and B merged, C implemented. Tick boxes as work lands.
 
 ## Progress
 
 | Issue | Scope | Status |
 |---|---|---|
-| A | Onboarding structure fixes | ☑ implemented (#55) — device check pending |
-| B | Pre-signup carousel | ☐ not started |
-| C | Trust & consent copy pass | ☐ not started |
+| A | Onboarding structure fixes | ✅ merged ([#56](https://github.com/Koin-App-Official/pignify/pull/56)) — device check pending |
+| B | Pre-signup carousel | ✅ merged ([#58](https://github.com/Koin-App-Official/pignify/pull/58)) — copy + visuals pending review |
+| C | Trust & consent copy pass | ☑ implemented ([#59](https://github.com/Koin-App-Official/pignify/issues/59)) — "email me this plan" deferred |
 | D | Push pre-permission step | ☐ not started |
 | E | RevenueCat backend & products | ☐ blocked on store setup |
 | F | App-side billing swap | ☐ not started |
@@ -81,13 +81,13 @@ Independent of the billing work; ships first and standalone.
 
 # Issue B — Pre-signup carousel
 
-**Branch:** `feat/issue-B-onboarding-carousel` · **Depends on:** nothing · **Files:** new `app/welcome.tsx`, `app/(tabs)/index.tsx:154`, `src/components/Mascot.tsx`
+**Branch:** `feat/issue-57-welcome-carousel` ([#57](https://github.com/Koin-App-Official/pignify/issues/57)) · **Depends on:** nothing · **Files:** new `app/welcome.tsx`, `app/(tabs)/index.tsx:154`, `src/components/Mascot.tsx`
 
 Today a cold install lands directly on an autofocused name field.
 
-- [ ] Build `app/welcome.tsx` — three swipeable slides, mascot-led per `MASKOT.md`.
-- [ ] Persisted "seen" flag so it shows once; route cold installs here before `/onboarding`.
-- [ ] Review + finalise the draft copy below.
+- [x] Build `app/welcome.tsx` — three swipeable slides, mascot-led per `MASKOT.md`.
+- [x] Persisted "seen" flag so it shows once; route cold installs here before `/onboarding`.
+- [x] Review + finalise the draft copy below.
 
 **Draft copy — for review, not final:**
 
@@ -105,12 +105,12 @@ Slide 2 is the differentiator and is structurally true, not a policy promise. Re
 
 # Issue C — Trust & consent copy pass
 
-**Branch:** `feat/issue-C-onboarding-trust-copy` · **Depends on:** A (touches the same screens) · **Files:** `app/onboarding.tsx`
+**Branch:** `feat/issue-59-onboarding-trust-copy` ([#59](https://github.com/Koin-App-Official/pignify/issues/59)) · **Depends on:** A (merged) · **Files:** `app/onboarding.tsx`
 
-- [ ] **Replace the legal wall.** `LegalLinksNote` (`onboarding.tsx:46-73`) drops five underlined legal links directly under the email field, at the single highest-anxiety moment. Replace with one trust line — *"We're asking for your email. Not your bank."* — plus a collapsed "Legal" expander holding all five links unchanged. No links removed, just not shouted.
-- [ ] **Trust copy at the DOB step**, explaining why a savings app wants a birthdate (legal 18+ requirement, not profiling).
-- [ ] **"Email me this plan"** — optional secondary action on Blueprint Review. Consented capture one screen earlier than today, from a self-selected high-intent slice; prefills the OTP step.
-- [ ] Supporting n8n send-blueprint webhook. *(Cuttable without affecting the rest if we'd rather not add a backend surface now.)*
+- [x] **Replace the legal wall.** `LegalLinksNote` (`onboarding.tsx:46-73`) drops five underlined legal links directly under the email field, at the single highest-anxiety moment. Replace with one trust line — *"We're asking for your email. Not your bank."* — plus a collapsed "Legal" expander holding all five links unchanged. No links removed, just not shouted.
+- [x] **Trust copy at the DOB step**, explaining why a savings app wants a birthdate (legal 18+ requirement, not profiling).
+- [ ] **"Email me this plan"** — optional secondary action on Blueprint Review. Consented capture one screen earlier than today, from a self-selected high-intent slice; prefills the OTP step. **DEFERRED — blocked:** the n8n backend has no email-sending workflow or provider credential at all today (no SMTP/SendGrid/Resend), and provisioning one needs account access. Also blocks the paid tiers' `emailReports` feature, which is likewise unimplemented.
+- [ ] Supporting n8n send-blueprint webhook. **DEFERRED** with the item above — needs an email provider configured in n8n first.
 
 ---
 
