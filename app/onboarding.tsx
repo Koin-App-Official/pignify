@@ -32,6 +32,7 @@ import { useCelebrate } from '@/components/animation/useCelebrate';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath';
+import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -73,23 +74,35 @@ function LegalLinksNote() {
 }
 
 /**
- * Named steps instead of raw indices — reordering (income now before the
- * contribution question) touches every conditional, progress dot, and
- * back-navigation call, so magic numbers would make that swap unreviewable.
+ * Named steps instead of raw indices — reordering (income before the
+ * contribution question; the age gate hoisted out of account finalization)
+ * touches every conditional, progress dot, and back-navigation call, so magic
+ * numbers would make those swaps unreviewable.
+ *
+ * The age gate sits at position 1 deliberately. It used to live inside
+ * AccountFinalization, which meant an under-18 user built an entire savings
+ * plan across seven screens before being permanently refused. Asking second —
+ * right after the name — costs a rejected user almost nothing.
  */
 enum OnboardingStep {
   Name = 0,
-  Localization = 1,
-  GoalDeclaration = 2,
-  TargetAmount = 3,
-  Income = 4,
-  Contribution = 5,
-  BlueprintReview = 6,
-  AccountFinalization = 7,
-  Success = 8,
+  AgeGate = 1,
+  Localization = 2,
+  GoalDeclaration = 3,
+  TargetAmount = 4,
+  Income = 5,
+  Contribution = 6,
+  BlueprintReview = 7,
+  AccountFinalization = 8,
+  Success = 9,
 }
 
-const TOTAL_STEPS = 6;
+/**
+ * Every step that shows the progress bar, i.e. all of them except Success.
+ * Derived rather than hardcoded: the previous literal 6 drifted out of sync with
+ * the real screen count and told users "Step 6 of 6" with three screens to go.
+ */
+const TOTAL_STEPS = OnboardingStep.Success;
 
 const ONBOARDING_WEBHOOK_TIMEOUT_MS = 15_000;
 
@@ -153,14 +166,14 @@ export default function Onboarding() {
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [incomeSkipped, setIncomeSkipped] = useState(false);
 
-  // Age gate (18+, legal requirement) — gates the email/OTP sub-flow below it
-  // within the same AccountFinalization step. Once confirmed underage, this
-  // is a terminal state: no path back to re-enter a different DOB. Seeded
-  // with a plausible default (not left blank) since the wheel picker is
-  // inline and always shows a selected date.
+  // Age gate (18+, legal requirement), its own step right after the name.
+  // Once confirmed underage this is a terminal state: no path back to re-enter
+  // a different DOB, and it's persisted in the draft so relaunching the app
+  // doesn't reset it. Seeded with a plausible default (not left blank) since
+  // the wheel picker is inline and always shows a selected date.
+  // Confirmation isn't tracked separately — being past AgeGate *is* the proof.
   const [dateOfBirth, setDateOfBirth] = useState(() => `${new Date().getFullYear() - 25}-01-01`);
   const [dobConfirmModalVisible, setDobConfirmModalVisible] = useState(false);
-  const [dobConfirmed, setDobConfirmed] = useState(false);
   const [ageBlocked, setAgeBlocked] = useState(false);
 
   const [email, setEmail] = useState('');
@@ -173,6 +186,20 @@ export default function Onboarding() {
   const [code, setCode] = useState('');
   // Session captured at verification, handed to the lock state machine on finish.
   const [pendingSession, setPendingSession] = useState<{ userId: string; secret: string } | null>(null);
+  /**
+   * Set once the OTP has been accepted but provisioning hasn't finished. An OTP
+   * is single-use, so after this point re-verifying the same code is guaranteed
+   * to fail — the only correct recovery is retrying the (idempotent) webhook
+   * with the session we already hold.
+   */
+  const [verifiedSession, setVerifiedSession] = useState<{ userId: string; secret: string } | null>(
+    null
+  );
+
+  // Draft restore. Nothing is persisted until the draft has been read back,
+  // otherwise the first render's empty defaults would overwrite it.
+  const [hydrated, setHydrated] = useState(false);
+  const [resumed, setResumed] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [networkError, setNetworkError] = useState('');
@@ -185,11 +212,95 @@ export default function Onboarding() {
   const unlockAchievement = useStore((s) => s.unlockAchievement);
   const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
 
+  // Restore a previous session's answers, falling back to locale detection for a
+  // fresh start. Both live in one effect so the detected country/currency can't
+  // race ahead and clobber what the user already picked.
   useEffect(() => {
-    const detected = detectLocaleCountry();
-    setCountry(detected.country);
-    setCurrency(detected.currency);
+    let cancelled = false;
+    (async () => {
+      const draft = await loadDraft();
+      if (cancelled) return;
+
+      if (draft) {
+        setFirstName(draft.firstName);
+        setCountry(draft.country);
+        setCurrency(draft.currency);
+        setGoalName(draft.goalName);
+        setTargetAmount(draft.targetAmount);
+        setPlanningMode(draft.planningMode);
+        setContributionInput(draft.contributionInput);
+        setTargetDate(draft.targetDate);
+        setMonthlyContribution(draft.monthlyContribution);
+        setMonthlyIncome(draft.monthlyIncome);
+        setIncomeSkipped(draft.incomeSkipped);
+        setDateOfBirth(draft.dateOfBirth);
+        setAgeBlocked(draft.ageBlocked);
+        setEmail(draft.email);
+        // Success is never restored: the session secret behind it is memory-only
+        // and deliberately never persisted, so there's nothing to hand to the
+        // lock machine. Such a user re-enters email/OTP — Appwrite resolves the
+        // same account and the provisioning webhook is idempotent.
+        const restoredStep = Math.min(draft.step, OnboardingStep.AccountFinalization);
+        setStep(restoredStep);
+        // No cheery "welcome back" for someone the age gate already refused.
+        setResumed(restoredStep > OnboardingStep.Name && !draft.ageBlocked);
+      } else {
+        const detected = detectLocaleCountry();
+        setCountry(detected.country);
+        setCurrency(detected.currency);
+      }
+      setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  // Persist after every change (debounced inside saveDraft).
+  useEffect(() => {
+    if (!hydrated || step === OnboardingStep.Success) return;
+    saveDraft({
+      step,
+      firstName,
+      country,
+      currency,
+      goalName,
+      targetAmount,
+      planningMode,
+      contributionInput,
+      targetDate,
+      monthlyContribution,
+      monthlyIncome,
+      incomeSkipped,
+      dateOfBirth,
+      ageBlocked,
+      email,
+    });
+  }, [
+    hydrated,
+    step,
+    firstName,
+    country,
+    currency,
+    goalName,
+    targetAmount,
+    planningMode,
+    contributionInput,
+    targetDate,
+    monthlyContribution,
+    monthlyIncome,
+    incomeSkipped,
+    dateOfBirth,
+    ageBlocked,
+    email,
+  ]);
+
+  // The resume banner is a one-time acknowledgement, not a persistent state.
+  useEffect(() => {
+    if (!resumed) return;
+    const t = setTimeout(() => setResumed(false), 6000);
+    return () => clearTimeout(t);
+  }, [resumed]);
 
   useEffect(() => {
     if (step === OnboardingStep.Success) celebrate();
@@ -245,7 +356,7 @@ export default function Onboarding() {
     if (computeAge(dateOfBirth) < 18) {
       setAgeBlocked(true);
     } else {
-      setDobConfirmed(true);
+      setStep(OnboardingStep.Localization);
     }
   };
 
@@ -273,29 +384,13 @@ export default function Onboarding() {
     }
   };
 
-  // Step 2: verify the OTP (establishes the session), then provision the profile
-  // via the n8n webhook keyed off the canonical Appwrite account id.
-  const handleVerifyAndCreate = async () => {
-    if (code.length !== 6) {
-      setNetworkError('Enter the 6-digit code from your email.');
-      return;
-    }
+  // Step 2b: provision the profile via the n8n webhook, keyed off the canonical
+  // Appwrite account id. Split out from OTP verification so a backend failure
+  // here can be retried directly — the code has already been consumed by then,
+  // so re-verifying it would always fail.
+  const provisionAccount = async (userId: string, secret: string) => {
     setIsLoading(true);
     setNetworkError('');
-
-    let userId: string;
-    let secret: string;
-    try {
-      ({ userId, secret } = await verifyEmailOtp(otpUserId, code.trim()));
-    } catch {
-      // Bad/expired OTP — distinct from a webhook/network failure below, so the
-      // user isn't told their code was wrong when the account was actually fine.
-      setNetworkError('That code is incorrect or expired. Request a new code and try again.');
-      setCode('');
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const payload = {
         userID: userId, // canonical id = Appwrite account $id
@@ -368,15 +463,20 @@ export default function Onboarding() {
         // into a second login round-trip. Set together with onLoggedIn below.
       });
       unlockAchievement('a1');
+      // Provisioning is done; the draft has nothing left to protect.
+      await clearDraft();
       // Hold the session; hand it to the lock machine after the success screen so
       // the user is routed into PIN setup.
+      setVerifiedSession(null);
       setPendingSession({ userId, secret });
       setStep(OnboardingStep.Success);
     } catch {
-      // Your code was already accepted above — this is a backend/network
-      // failure setting up the account, not a bad code.
+      // The code was already accepted — this is a backend/network failure
+      // setting up the account, not a bad code. Keep the verified session so
+      // the footer can offer a direct retry instead of a pointless resend.
+      setVerifiedSession({ userId, secret });
       setNetworkError(
-        "We verified your code but couldn't finish setting up your account. Tap Resend and try again."
+        "We verified your email but couldn't finish setting up your account. Your code is still good — tap Retry."
       );
       setCode('');
     } finally {
@@ -384,9 +484,41 @@ export default function Onboarding() {
     }
   };
 
+  // Step 2a: verify the OTP (establishes the session), then provision.
+  const handleVerifyAndCreate = async () => {
+    // Already past verification and only provisioning failed — go straight back
+    // to the webhook rather than burning the (now spent) code.
+    if (verifiedSession) {
+      await provisionAccount(verifiedSession.userId, verifiedSession.secret);
+      return;
+    }
+
+    if (code.length !== 6) {
+      setNetworkError('Enter the 6-digit code from your email.');
+      return;
+    }
+    setIsLoading(true);
+    setNetworkError('');
+
+    let userId: string;
+    let secret: string;
+    try {
+      ({ userId, secret } = await verifyEmailOtp(otpUserId, code.trim()));
+    } catch {
+      // Bad/expired OTP — distinct from a webhook/network failure, so the user
+      // isn't told their code was wrong when the account was actually fine.
+      setNetworkError('That code is incorrect or expired. Request a new code and try again.');
+      setCode('');
+      setIsLoading(false);
+      return;
+    }
+
+    await provisionAccount(userId, secret);
+  };
+
   const goBack = () => setStep((s) => (s - 1) as OnboardingStep);
 
-  const showProgress = step < OnboardingStep.BlueprintReview;
+  const showProgress = step < OnboardingStep.Success;
 
   // Fixed footer for the paginated steps — pulled out of the scrolling
   // content so it docks right above the keyboard (via the KeyboardAvoidingView
@@ -405,13 +537,31 @@ export default function Onboarding() {
                 setFirstNameError("Hey, we'd love to know your name! 😊");
                 return;
               }
-              setStep(OnboardingStep.Localization);
+              setStep(OnboardingStep.AgeGate);
             }}
             className="w-full flex-row items-center justify-center gap-2 h-14"
           >
             <Text className="text-base font-bold text-primary-foreground">Next</Text>
             <ArrowRight size={18} color="#ffffff" />
           </Button>
+        );
+
+      case OnboardingStep.AgeGate:
+        // The blocked state is terminal — renderFooter isn't reached for it
+        // (see showFixedFooter), so there's deliberately no way forward or back.
+        return (
+          <View className="flex-row gap-3">
+            <Button variant="outline" onPress={goBack} className="w-14 h-14 items-center justify-center">
+              <ArrowLeft size={16} color="#1D4ED8" />
+            </Button>
+            <Button
+              onPress={() => setDobConfirmModalVisible(true)}
+              className="flex-1 items-center justify-center flex-row gap-2 h-14"
+            >
+              <Text className="text-base font-bold text-primary-foreground">Continue</Text>
+              <ArrowRight size={16} color="#ffffff" />
+            </Button>
+          </View>
         );
 
       case OnboardingStep.Localization:
@@ -547,29 +697,13 @@ export default function Onboarding() {
         );
 
       case OnboardingStep.AccountFinalization:
-        if (ageBlocked) return null;
-
-        if (!dobConfirmed) {
-          return (
-            <View className="flex-row gap-3">
-              <Button variant="outline" onPress={goBack} className="w-14 h-14 items-center justify-center">
-                <ArrowLeft size={16} color="#1D4ED8" />
-              </Button>
-              <Button
-                onPress={() => setDobConfirmModalVisible(true)}
-                className="flex-1 items-center justify-center flex-row gap-2 h-14"
-              >
-                <Text className="text-base font-bold text-primary-foreground">Continue</Text>
-                <ArrowRight size={16} color="#ffffff" />
-              </Button>
-            </View>
-          );
-        }
-
         return (
           <View className="flex-row gap-3">
             <Button
               variant="outline"
+              // Once the code is spent, "back to the email field" would strand the
+              // user on a screen whose only working action is the retry.
+              disabled={!!verifiedSession}
               onPress={
                 otpSent
                   ? () => {
@@ -586,7 +720,10 @@ export default function Onboarding() {
             </Button>
             <Button
               onPress={otpSent ? handleVerifyAndCreate : handleRequestCode}
-              disabled={isLoading || (otpSent ? code.length !== 6 : !isEmailValid(email))}
+              disabled={
+                isLoading ||
+                (verifiedSession ? false : otpSent ? code.length !== 6 : !isEmailValid(email))
+              }
               className="flex-1 items-center justify-center flex-row gap-2 h-14"
             >
               {isLoading ? (
@@ -594,7 +731,11 @@ export default function Onboarding() {
               ) : (
                 <>
                   <Text className="text-base font-bold text-primary-foreground">
-                    {otpSent ? 'Verify & Create Account' : 'Send Code'}
+                    {verifiedSession
+                      ? 'Retry'
+                      : otpSent
+                        ? 'Verify & Create Account'
+                        : 'Send Code'}
                   </Text>
                   <ArrowRight size={16} color="#ffffff" />
                 </>
@@ -608,16 +749,24 @@ export default function Onboarding() {
     }
   };
 
-  const showFixedFooter = [
-    OnboardingStep.Name,
-    OnboardingStep.Localization,
-    OnboardingStep.GoalDeclaration,
-    OnboardingStep.TargetAmount,
-    OnboardingStep.Income,
-    OnboardingStep.Contribution,
-    OnboardingStep.BlueprintReview,
-    OnboardingStep.AccountFinalization,
-  ].includes(step) && !(step === OnboardingStep.AccountFinalization && ageBlocked);
+  const showFixedFooter =
+    [
+      OnboardingStep.Name,
+      OnboardingStep.AgeGate,
+      OnboardingStep.Localization,
+      OnboardingStep.GoalDeclaration,
+      OnboardingStep.TargetAmount,
+      OnboardingStep.Income,
+      OnboardingStep.Contribution,
+      OnboardingStep.BlueprintReview,
+      OnboardingStep.AccountFinalization,
+    ].includes(step) && !(step === OnboardingStep.AgeGate && ageBlocked);
+
+  // Hold the first frame until the draft has been read, so a resuming user never
+  // sees the name step flash before being moved to where they left off.
+  if (!hydrated) {
+    return <SafeAreaView className="flex-1 bg-surface" />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -627,12 +776,24 @@ export default function Onboarding() {
             <Text className="mb-2 text-xs font-semibold text-on-surface-variant text-center">
               Step {step + 1} of {TOTAL_STEPS}
             </Text>
-            <View className="flex-row gap-1.5">
+            <View className="flex-row gap-1">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                 <ProgressSegment key={i} active={i <= step} />
               ))}
             </View>
           </View>
+        )}
+
+        {resumed && (
+          <Animated.View entering={FadeInDown.springify()} className="px-5 pb-1">
+            <View className="rounded-2xl bg-surface-container px-4 py-3">
+              <Text className="text-xs font-medium text-on-surface-variant text-center">
+                {firstName
+                  ? `Welcome back, ${firstName} — picking up where you left off.`
+                  : 'Picking up where you left off.'}
+              </Text>
+            </View>
+          </Animated.View>
         )}
 
         <ScrollView className="flex-1 px-5 py-6" keyboardShouldPersistTaps="handled">
@@ -666,7 +827,38 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 1: Localization */}
+          {/* Screen 1a: Age gate blocked (terminal — no retry, and persisted in
+              the draft so relaunching the app doesn't hand out a fresh gate) */}
+          {step === OnboardingStep.AgeGate && ageBlocked && (
+            <Animated.View entering={FadeInDown.springify()} className="items-center pt-10">
+              <Text className="text-6xl text-center mb-4">🔒</Text>
+              <Text className="mb-3 text-2xl font-black text-on-surface text-center">
+                Piggy is for adults 18+
+              </Text>
+              <Text className="text-sm font-medium text-on-surface-variant text-center px-4">
+                We're not able to create an account for you based on the date of birth you confirmed.
+                This app isn't available to users under 18.
+              </Text>
+            </Animated.View>
+          )}
+
+          {/* Screen 1b: Age gate — DOB not yet confirmed */}
+          {step === OnboardingStep.AgeGate && !ageBlocked && (
+            <Animated.View entering={FadeInDown.springify()}>
+              <Text className="text-6xl text-center mb-4">🎂</Text>
+              <Text className="mb-2 text-3xl font-black text-on-surface">
+                When were you born,{'\n'}{firstName}?
+              </Text>
+              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
+                Piggy is only available to users 18 and older, so we need to confirm your age before
+                we go any further.
+              </Text>
+
+              <DobWheelPicker value={dateOfBirth} onChange={setDateOfBirth} />
+            </Animated.View>
+          )}
+
+          {/* Screen 2: Localization */}
           {step === OnboardingStep.Localization && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
@@ -704,7 +896,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 2: Goal Declaration */}
+          {/* Screen 3: Goal Declaration */}
           {step === OnboardingStep.GoalDeclaration && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
@@ -758,7 +950,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 3: Target Amount */}
+          {/* Screen 4: Target Amount */}
           {step === OnboardingStep.TargetAmount && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
@@ -789,7 +981,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 4: Income (moved before the contribution question, so the
+          {/* Screen 5: Income (moved before the contribution question, so the
               suggestion chips have an anchor to prefill from) */}
           {step === OnboardingStep.Income && (
             <Animated.View entering={FadeInDown.springify()}>
@@ -815,7 +1007,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 5: Contribution (replaces the old timeline/date-chip screen) */}
+          {/* Screen 6: Contribution (replaces the old timeline/date-chip screen) */}
           {step === OnboardingStep.Contribution && (
             <Animated.View entering={FadeInDown.springify()}>
               <ContributionStep
@@ -841,7 +1033,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 6: Blueprint Review */}
+          {/* Screen 7: Blueprint Review */}
           {step === OnboardingStep.BlueprintReview && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
@@ -893,47 +1085,19 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 7a: Age gate blocked (terminal — no retry) */}
-          {step === OnboardingStep.AccountFinalization && ageBlocked && (
-            <Animated.View entering={FadeInDown.springify()} className="items-center pt-10">
-              <Text className="text-6xl text-center mb-4">🔒</Text>
-              <Text className="mb-3 text-2xl font-black text-on-surface text-center">
-                Piggy is for adults 18+
-              </Text>
-              <Text className="text-sm font-medium text-on-surface-variant text-center px-4">
-                We're not able to create an account for you based on the date of birth you confirmed.
-                This app isn't available to users under 18.
-              </Text>
-            </Animated.View>
-          )}
-
-          {/* Screen 7b: Age gate — DOB not yet confirmed */}
-          {step === OnboardingStep.AccountFinalization && !ageBlocked && !dobConfirmed && (
-            <Animated.View entering={FadeInDown.springify()}>
-              <Text className="text-6xl text-center mb-4">🎂</Text>
-              <Text className="mb-2 text-3xl font-black text-on-surface">
-                Just one more thing,{'\n'}{firstName}
-              </Text>
-              <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                Piggy is only available to users 18 and older. We need your date of birth to confirm
-                that before we create your account.
-              </Text>
-
-              <DobWheelPicker value={dateOfBirth} onChange={setDateOfBirth} />
-            </Animated.View>
-          )}
-
-          {/* Screen 7c: Account Finalization (email / OTP) */}
-          {step === OnboardingStep.AccountFinalization && !ageBlocked && dobConfirmed && (
+          {/* Screen 8: Account Finalization (email / OTP) */}
+          {step === OnboardingStep.AccountFinalization && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🐷</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Your Piggy Plan is ready!
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                {otpSent
-                  ? `Enter the 6-digit code we emailed to ${email} to finish setting up your account.`
-                  : `Enter your email — we'll send a sign-in code to lock in your plan for your ${goalName} by ${formatTargetDate(targetDate)}.`}
+                {verifiedSession
+                  ? `Your email is confirmed — we just need to finish building your plan for your ${goalName}.`
+                  : otpSent
+                    ? `Enter the 6-digit code we emailed to ${email} to finish setting up your account.`
+                    : `Enter your email — we'll send a sign-in code to lock in your plan for your ${goalName} by ${formatTargetDate(targetDate)}.`}
               </Text>
 
               <Input
@@ -962,7 +1126,9 @@ export default function Onboarding() {
                 <Text className="mt-2 text-xs text-destructive">{emailError}</Text>
               ) : null}
 
-              {otpSent && (
+              {/* Hidden once the code has been accepted — it's single-use, so
+                  re-entering or resending it can only make things worse. */}
+              {otpSent && !verifiedSession && (
                 <View className="mt-4">
                   <Text className="mb-2 text-xs font-semibold text-on-surface-variant">
                     Sign-in code (this is not your app PIN)
@@ -996,7 +1162,7 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 8: Success */}
+          {/* Screen 9: Success */}
           {step === OnboardingStep.Success && (
             <Animated.View
               entering={FadeInDown.springify()}
