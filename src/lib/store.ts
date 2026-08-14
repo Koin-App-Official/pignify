@@ -144,6 +144,17 @@ export interface UserProfile {
   /** Tally of app-foreground events per local hour-of-day (index 0-23) — the send-time personalization signal. */
   activityHourCounts: number[];
   onboardingCompleted: boolean;
+  /**
+   * True once the pre-signup value-proposition carousel has been dismissed
+   * (finished or skipped). Lives here rather than in its own storage key so it
+   * is cleared by "Reset Data" along with everything else — a demo reset should
+   * replay the real first-launch experience, carousel included.
+   *
+   * Existing installs rehydrate this as `undefined`, which is falsy; that's
+   * harmless because they also have `onboardingCompleted: true`, and the
+   * carousel is only ever reachable when onboarding hasn't been completed.
+   */
+  welcomeSeen: boolean;
   expenses: Expense[];
   notificationPrefs: {
     paydayReminder: boolean;
@@ -184,6 +195,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   checkinIgnoredStreak: 0,
   activityHourCounts: new Array(24).fill(0),
   onboardingCompleted: false,
+  welcomeSeen: false,
   expenses: [],
   notificationPrefs: {
     paydayReminder: true,

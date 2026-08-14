@@ -54,6 +54,7 @@ export default function Dashboard() {
   const currency = useStore((s) => s.profile.currency);
   const expenses = useStore((s) => s.profile.expenses);
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
+  const welcomeSeen = useStore((s) => s.profile.welcomeSeen);
   const incomeSkipped = useStore((s) => s.profile.incomeSkipped);
   const name = useStore((s) => s.profile.name);
   const streak = useStore((s) => s.profile.streak);
@@ -152,7 +153,10 @@ export default function Dashboard() {
   );
 
   if (!onboardingCompleted) {
-    return <Redirect href="/onboarding" />;
+    // Cold install: pitch first, ask for data second. Once the carousel has been
+    // finished or skipped this falls through to onboarding on every later launch,
+    // including a resumed half-finished onboarding.
+    return <Redirect href={welcomeSeen ? '/onboarding' : '/welcome'} />;
   }
 
   const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
