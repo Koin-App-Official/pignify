@@ -166,6 +166,8 @@ export interface UserProfile {
   streak: number;
   /** Lifetime count of claimed missions — drives the 'Mission Master' achievement. */
   missionsCompletedTotal: number;
+  /** Lesson ids answered correctly — see lessons.ts. Backs the money-quiz mission's verifier. */
+  lessonsCompleted: string[];
   lastActiveDate: string;
   /** Last calendar day `checkAndUpdateStreak` has fully evaluated — prevents double-counting a day. */
   lastStreakCheckDate: string;
@@ -221,6 +223,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   xp: 0,
   streak: 0,
   missionsCompletedTotal: 0,
+  lessonsCompleted: [],
   lastActiveDate: new Date().toISOString().split('T')[0],
   lastStreakCheckDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
   checkinIgnoredStreak: 0,
@@ -384,6 +387,13 @@ export interface PiggyState {
    * that isn't actually met. Returns whether the claim succeeded.
    */
   claimMission: (defId: string) => boolean;
+  /**
+   * Record a correctly-answered lesson (idempotent — answering the same
+   * lesson twice is a no-op). Does NOT claim the money-quiz mission itself;
+   * the caller does that as a separate claimMission('money-quiz') call once
+   * this has landed, same two-step shape as every other mission.
+   */
+  completeLesson: (lessonId: string) => void;
 
   /** Walks forward from `lastStreakCheckDate` to today, incrementing/breaking the streak per missed day. */
   checkAndUpdateStreak: () => void;
@@ -454,6 +464,7 @@ function toMissionContext(state: PiggyState): MissionContext {
       lastActiveDate: state.profile.lastActiveDate,
     },
     expenses: state.profile.expenses,
+    lessonsCompleted: state.profile.lessonsCompleted,
   });
 }
 
@@ -666,6 +677,12 @@ export const useStore = create<PiggyState>()(
 
         return true;
       },
+
+      completeLesson: (lessonId) => set((s) =>
+        s.profile.lessonsCompleted.includes(lessonId)
+          ? s
+          : { profile: { ...s.profile, lessonsCompleted: [...s.profile.lessonsCompleted, lessonId] } }
+      ),
 
       checkAndUpdateStreak: () => {
         const { goals, profile } = get();

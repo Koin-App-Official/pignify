@@ -24,6 +24,8 @@ import {
   type MissionDef,
   type MissionTier,
 } from '@/lib/missions';
+import { lessonForDate, type Lesson } from '@/lib/lessons';
+import { LessonQuizModal } from '@/components/LessonQuizModal';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
@@ -68,8 +70,10 @@ export default function Missions() {
   const lastActiveDate = useStore((s) => s.profile.lastActiveDate);
   const expenses = useStore((s) => s.profile.expenses);
   const claimMissionAction = useStore((state) => state.claimMission);
+  const completeLessonAction = useStore((state) => state.completeLesson);
 
   const [tab, setTab] = useState<'missions' | 'achievements'>('missions');
+  const [quizOpen, setQuizOpen] = useState(false);
   const replay = useFocusReplay();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
@@ -101,8 +105,27 @@ export default function Missions() {
   const weeklyMissions = resolved.filter((r) => r.am.cadence === 'weekly');
   const claimedCount = resolved.filter((r) => r.am.claimed).length;
 
+  const todaysLesson: Lesson = useMemo(() => lessonForDate(ctx.today), [ctx.today]);
+
   const handleClaim = (defId: string) => {
     if (claimMissionAction(defId)) celebrate();
+  };
+
+  // The money-quiz mission can't be claimed by a bare tap like everything
+  // else — answering correctly IS the verification, so it needs the quiz UI
+  // in between. Every other category still goes straight through claimMission.
+  const handleCardPress = (entry: ResolvedMission) => {
+    if (entry.def.category === 'learning' && !entry.am.claimed) {
+      setQuizOpen(true);
+      return;
+    }
+    handleClaim(entry.am.defId);
+  };
+
+  const handleQuizClaim = () => {
+    completeLessonAction(todaysLesson.id);
+    if (claimMissionAction('money-quiz')) celebrate();
+    setQuizOpen(false);
   };
 
   return (
@@ -137,13 +160,13 @@ export default function Missions() {
             <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Daily Missions</Text>
             <View className="mb-6 gap-3">
               {dailyMissions.map((r, index) => (
-                <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleClaim(r.am.defId)} index={index} replay={replay} />
+                <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleCardPress(r)} index={index} replay={replay} />
               ))}
             </View>
             <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Weekly Missions</Text>
             <View className="mb-6 gap-3">
               {weeklyMissions.map((r, index) => (
-                <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleClaim(r.am.defId)} index={index} replay={replay} />
+                <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleCardPress(r)} index={index} replay={replay} />
               ))}
             </View>
           </View>
@@ -168,6 +191,13 @@ export default function Missions() {
         </View>
       </ScrollView>
       {confettiActive && <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />}
+      <LessonQuizModal
+        visible={quizOpen}
+        lesson={todaysLesson}
+        reward={MISSION_CATALOG.find((d) => d.id === 'money-quiz')?.reward ?? 0}
+        onClose={() => setQuizOpen(false)}
+        onClaim={handleQuizClaim}
+      />
     </SafeAreaView>
     </ScreenTransition>
   );
@@ -293,16 +323,19 @@ function MissionCard({
   const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency));
   const progress = state === 'locked' || state === 'ready' ? getMissionProgress(def, ctx) : null;
   const styles = CARD_STATE_STYLES[state];
+  // A locked money-quiz card still needs to be tappable — the tap opens the
+  // quiz rather than attempting (and silently failing) a direct claim.
+  const isLockedQuiz = state === 'locked' && def.category === 'learning';
 
   const circle = (
-    <PressableScale onPress={onComplete} disabled={state === 'claimed' || state === 'locked'}>
+    <PressableScale onPress={onComplete} disabled={state === 'claimed' || (state === 'locked' && !isLockedQuiz)}>
       <View className={`h-10 w-10 items-center justify-center rounded-full border-2 ${styles.circle}`}>
         {state === 'claimed' && (
           <Animated.View entering={ZoomIn.springify()}>
             <Check size={16} color="#FFFFFF" />
           </Animated.View>
         )}
-        {state === 'locked' && <Lock size={14} color="#94A3B8" />}
+        {state === 'locked' && !isLockedQuiz && <Lock size={14} color="#94A3B8" />}
       </View>
     </PressableScale>
   );

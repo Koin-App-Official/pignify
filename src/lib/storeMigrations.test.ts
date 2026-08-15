@@ -107,6 +107,10 @@ describe('migratePiggyState — v0 (pre-#63) → current', () => {
     expect(migrated.profile.missionsCompletedTotal).toBe(0);
   });
 
+  it('backfills lessonsCompleted to []', () => {
+    expect(migrated.profile.lessonsCompleted).toEqual([]);
+  });
+
   it('preserves unrelated profile and goal fields untouched', () => {
     expect(migrated.profile.name).toBe('Jamie');
     expect(migrated.profile.xp).toBe(240);
@@ -153,11 +157,39 @@ describe('migratePiggyState — v1 (post-#63, pre-Phase-2) → current', () => {
     expect(migrated.recentMissionIds).toEqual([]);
     expect(migrated.profile.missionsCompletedTotal).toBe(0);
   });
+
+  it('also runs the v2 → v3 lessons step', () => {
+    expect(migrated.profile.lessonsCompleted).toEqual([]);
+  });
 });
 
-describe('migratePiggyState — already current (v2)', () => {
+describe('migratePiggyState — v2 (post-Phase-2, pre-Phase-4) → current', () => {
+  // Missions already replaced by activeMissions (the v1 → v2 step already
+  // ran); no lessonsCompleted yet.
+  const v2Payload = {
+    profile: { ...V0_PAYLOAD.profile, missionsCompletedTotal: 4 },
+    goals: [{ ...V0_PAYLOAD.goals[0], deposits: [{ date: '2026-08-10', amount: 20 }] }],
+    activeMissions: [{ defId: 'save-today', cadence: 'daily', periodKey: '2026-08-15', claimed: false }],
+    recentMissionIds: ['skip-coffee'],
+    achievements: V0_PAYLOAD.achievements,
+  };
+
+  const migrated = migratePiggyState(v2Payload, 2) as any;
+
+  it('backfills lessonsCompleted to [] without touching missionsCompletedTotal', () => {
+    expect(migrated.profile.lessonsCompleted).toEqual([]);
+    expect(migrated.profile.missionsCompletedTotal).toBe(4);
+  });
+
+  it('leaves activeMissions/recentMissionIds untouched (that step already ran)', () => {
+    expect(migrated.activeMissions).toEqual(v2Payload.activeMissions);
+    expect(migrated.recentMissionIds).toEqual(v2Payload.recentMissionIds);
+  });
+});
+
+describe('migratePiggyState — already current (v3)', () => {
   const currentPayload = {
-    profile: { ...V0_PAYLOAD.profile, missionsCompletedTotal: 7 },
+    profile: { ...V0_PAYLOAD.profile, missionsCompletedTotal: 7, lessonsCompleted: ['apy', 'emergency-fund'] },
     goals: [{ ...V0_PAYLOAD.goals[0], deposits: [{ date: '2026-08-10', amount: 20 }] }],
     activeMissions: [{ defId: 'save-today', cadence: 'daily', periodKey: '2026-08-15', claimed: false }],
     recentMissionIds: ['skip-coffee'],
@@ -169,11 +201,12 @@ describe('migratePiggyState — already current (v2)', () => {
     expect(migrated).toEqual(currentPayload);
   });
 
-  it('does not clobber an existing missionsCompletedTotal if re-run from an older `from`', () => {
+  it('does not clobber existing missionsCompletedTotal/lessonsCompleted if re-run from an older `from`', () => {
     // Defensive case: shouldn't happen in practice (zustand only calls migrate
-    // when from < version), but the backfill must prefer an existing value.
+    // when from < version), but every backfill must prefer an existing value.
     const migrated = migratePiggyState(currentPayload, 1) as any;
     expect(migrated.profile.missionsCompletedTotal).toBe(7);
+    expect(migrated.profile.lessonsCompleted).toEqual(['apy', 'emergency-fund']);
   });
 });
 
@@ -189,7 +222,7 @@ describe('migratePiggyState — edge cases', () => {
 
   it('PIGGY_STORE_VERSION matches the highest migration step', () => {
     // Sanity guard: if a step is added above without bumping this, zustand
-    // would never invoke migrate for it on a fresh v2 install.
-    expect(PIGGY_STORE_VERSION).toBe(2);
+    // would never invoke migrate for it on a fresh install already at the old version.
+    expect(PIGGY_STORE_VERSION).toBe(3);
   });
 });

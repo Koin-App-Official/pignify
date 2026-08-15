@@ -9,7 +9,7 @@
 import { migrateGoalDepositDates } from './deposits';
 
 /** Bump alongside a new migration step below, and in store.ts's persist config. */
-export const PIGGY_STORE_VERSION = 2;
+export const PIGGY_STORE_VERSION = 3;
 
 /**
  * Runs every migration step the persisted blob hasn't seen yet, in order.
@@ -48,6 +48,15 @@ export function migratePiggyState(persisted: unknown, from: number): unknown {
       activeMissions: [],
       recentMissionIds: [],
       profile: { ...rest.profile, missionsCompletedTotal: rest.profile?.missionsCompletedTotal ?? 0 },
+    };
+  }
+
+  // v2 → v3: adds profile.lessonsCompleted (Phase 4, #67) for the money-quiz
+  // mission's verifier. Older installs simply never answered any lesson.
+  if (from < 3) {
+    state = {
+      ...state,
+      profile: { ...state.profile, lessonsCompleted: state.profile?.lessonsCompleted ?? [] },
     };
   }
 
