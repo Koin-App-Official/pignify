@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MISSION_CATALOG,
   buildMissionContext,
+  getMissionProgress,
   getTier,
   microAmount,
   renderMissionCopy,
@@ -302,6 +303,57 @@ describe('renderMissionCopy', () => {
     const copy = renderMissionCopy(def, ctx, fmt);
     expect(copy.title).toBe('Skip a coffee');
     expect(copy.amount).toBeNull();
+  });
+});
+
+describe('getMissionProgress', () => {
+  it('returns null for defs with no natural running total', () => {
+    const def = MISSION_CATALOG.find((d) => d.id === 'skip-coffee')!; // manual
+    expect(getMissionProgress(def, ctxFrom({}))).toBeNull();
+
+    const firstGoal = MISSION_CATALOG.find((d) => d.id === 'first-goal')!;
+    expect(getMissionProgress(firstGoal, ctxFrom({ goals: [] }))).toBeNull();
+
+    const beatLastWeek = MISSION_CATALOG.find((d) => d.id === 'beat-last-week')!;
+    expect(getMissionProgress(beatLastWeek, ctxFrom({}))).toBeNull();
+  });
+
+  it('reports a currency amount progress for save-today', () => {
+    const def = MISSION_CATALOG.find((d) => d.id === 'save-today')!;
+    const goal = GOAL({ deposits: [{ date: '2026-08-15', amount: 3 }] });
+    const progress = getMissionProgress(def, ctxFrom({ goals: [goal] }))!;
+    expect(progress.isCurrency).toBe(true);
+    expect(progress.current).toBe(3);
+    expect(progress.target).toBeGreaterThan(0);
+  });
+
+  it('reports a count progress for log-five-expenses', () => {
+    const def = MISSION_CATALOG.find((d) => d.id === 'log-five-expenses')!;
+    const expenses = [
+      { amount: 5, date: '2026-08-11' },
+      { amount: 5, date: '2026-08-12' },
+    ];
+    const progress = getMissionProgress(def, ctxFrom({ expenses }))!;
+    expect(progress).toEqual({ current: 2, target: 5, isCurrency: false });
+  });
+
+  it('reports streak progress for streak-seven', () => {
+    const def = MISSION_CATALOG.find((d) => d.id === 'streak-seven')!;
+    const progress = getMissionProgress(def, ctxFrom({ profile: PROFILE({ streak: 4 }) }))!;
+    expect(progress).toEqual({ current: 4, target: 7, isCurrency: false });
+  });
+
+  it('reports active-goal-count progress for add-second-goal', () => {
+    const def = MISSION_CATALOG.find((d) => d.id === 'add-second-goal')!;
+    const progress = getMissionProgress(def, ctxFrom({ goals: [GOAL()] }))!;
+    expect(progress).toEqual({ current: 1, target: 2, isCurrency: false });
+  });
+
+  it('never throws across the whole catalog on an empty context', () => {
+    const emptyCtx = ctxFrom({ goals: [], expenses: [] });
+    for (const def of MISSION_CATALOG) {
+      expect(() => getMissionProgress(def, emptyCtx)).not.toThrow();
+    }
   });
 });
 

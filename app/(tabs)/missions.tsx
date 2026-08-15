@@ -1,11 +1,29 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { View, Text, ScrollView, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
-import { Zap, Trophy, Check } from 'lucide-react-native';
+import { Zap, Trophy, Check, Lock } from 'lucide-react-native';
 import { useStore, formatCurrency, type ActiveMission } from '@/lib/store';
-import { MISSION_CATALOG, buildMissionContext, renderMissionCopy, type MissionDef } from '@/lib/missions';
+import {
+  MISSION_CATALOG,
+  buildMissionContext,
+  getMissionProgress,
+  getTier,
+  renderMissionCopy,
+  type MissionContext,
+  type MissionDef,
+  type MissionTier,
+} from '@/lib/missions';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
@@ -22,6 +40,16 @@ const CARD_SHADOW = {
   shadowRadius: 8,
   elevation: 4,
 };
+
+const TIER_LABELS: Record<MissionTier, string> = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
+
+type CardState = 'claimed' | 'ready' | 'locked' | 'manual';
+
+function getCardState(am: ActiveMission, def: MissionDef, ctx: MissionContext): CardState {
+  if (am.claimed) return 'claimed';
+  if (def.verify === 'manual') return 'manual';
+  return def.verify(ctx) ? 'ready' : 'locked';
+}
 
 interface ResolvedMission {
   am: ActiveMission;
@@ -46,19 +74,17 @@ export default function Missions() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
 
-  // The full locked/ready/manual/progress-bar treatment for these cards is
-  // Phase 3 (#66) — this only resolves catalog defs against the current
-  // assignments and wires tap-to-claim through the store, which now owns
-  // verification (claimMission re-checks before granting XP either way).
-  const ctx = useMemo(
-    () =>
-      buildMissionContext({
-        goals,
-        profile: { level, streak, monthlyContribution, currency, lastActiveDate },
-        expenses,
-      }),
-    [goals, level, streak, monthlyContribution, currency, lastActiveDate, expenses]
+  const profileSlice = useMemo(
+    () => ({ level, streak, monthlyContribution, currency, lastActiveDate }),
+    [level, streak, monthlyContribution, currency, lastActiveDate]
   );
+
+  const ctx = useMemo(
+    () => buildMissionContext({ goals, profile: profileSlice, expenses }),
+    [goals, profileSlice, expenses]
+  );
+
+  const tier = useMemo(() => getTier(profileSlice), [profileSlice]);
 
   const resolved = useMemo<ResolvedMission[]>(
     () =>
@@ -93,6 +119,9 @@ export default function Missions() {
             <View className="flex-row items-center gap-2">
               <Zap size={18} color="#22C55E" />
               <Text className="text-sm font-bold text-on-surface">Saver Lv.{level}</Text>
+              <View className="rounded-full bg-primary-container px-2 py-0.5">
+                <Text className="text-[10px] font-bold text-primary">{TIER_LABELS[tier]}</Text>
+              </View>
             </View>
             <Text className="text-xs font-bold text-on-surface-variant">{xp % 100}/100 XP</Text>
           </View>
@@ -203,6 +232,47 @@ function SegmentedControl({
   );
 }
 
+/** Ambient "tap me" breathing ring for the ready state — state-driven, not gesture-driven, so a looping withTiming is the right tool (guide §3 rule 3). */
+function PulsingRing({ children }: { children: React.ReactNode }) {
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 700, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
+    );
+    return () => {
+      pulse.value = 0;
+    };
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + pulse.value * 0.08 }],
+    opacity: 1 - pulse.value * 0.15,
+  }));
+
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+const CARD_STATE_STYLES: Record<CardState, { row: string; circle: string; dimmed: boolean }> = {
+  claimed: { row: 'bg-tertiary-container', circle: 'border-tertiary bg-tertiary', dimmed: false },
+  ready: { row: 'bg-primary-container border border-primary/30', circle: 'border-primary bg-transparent', dimmed: false },
+  locked: { row: 'bg-surface border border-outline-variant', circle: 'border-outline bg-transparent', dimmed: true },
+  manual: { row: 'bg-surface border border-outline-variant', circle: 'border-outline bg-transparent', dimmed: false },
+};
+
+function formatProgress(progress: { current: number; target: number; isCurrency: boolean }, currency: string): string {
+  if (progress.isCurrency) {
+    return `${formatCurrency(Math.max(0, progress.current), currency)} of ${formatCurrency(progress.target, currency)} saved`;
+  }
+  const current = Math.max(0, Math.min(progress.current, progress.target));
+  return `${current} of ${progress.target}`;
+}
+
 function MissionCard({
   entry,
   ctx,
@@ -212,48 +282,61 @@ function MissionCard({
   replay,
 }: {
   entry: ResolvedMission;
-  ctx: ReturnType<typeof buildMissionContext>;
+  ctx: MissionContext;
   currency: string;
   onComplete: () => void;
   index?: number;
   replay: SharedValue<number>;
 }) {
   const { am, def } = entry;
+  const state = getCardState(am, def, ctx);
   const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency));
+  const progress = state === 'locked' || state === 'ready' ? getMissionProgress(def, ctx) : null;
+  const styles = CARD_STATE_STYLES[state];
+
+  const circle = (
+    <PressableScale onPress={onComplete} disabled={state === 'claimed' || state === 'locked'}>
+      <View className={`h-10 w-10 items-center justify-center rounded-full border-2 ${styles.circle}`}>
+        {state === 'claimed' && (
+          <Animated.View entering={ZoomIn.springify()}>
+            <Check size={16} color="#FFFFFF" />
+          </Animated.View>
+        )}
+        {state === 'locked' && <Lock size={14} color="#94A3B8" />}
+      </View>
+    </PressableScale>
+  );
 
   return (
     <FadeInStagger index={index} delayStep={100} replay={replay}>
       <View
-        className={`flex-row items-center gap-4 rounded-2xl p-4 min-h-[72px] ${
-          am.claimed ? 'bg-tertiary-container' : 'bg-surface border border-outline-variant'
-        }`}
-        style={am.claimed ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
+        className={`gap-3 rounded-2xl p-4 min-h-[72px] ${styles.row}`}
+        style={state === 'claimed' || state === 'ready' ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
       >
-        <TouchableOpacity
-          onPress={onComplete}
-          disabled={am.claimed}
-          hitSlop={4}
-          className={`h-10 w-10 items-center justify-center rounded-full border-2 ${
-            am.claimed
-              ? 'border-tertiary bg-tertiary'
-              : 'border-outline bg-transparent'
-          }`}
-        >
-          {am.claimed && (
-            <Animated.View entering={ZoomIn.springify()}>
-              <Check size={16} color="#FFFFFF" />
-            </Animated.View>
-          )}
-        </TouchableOpacity>
-        <View className="flex-1">
-          <Text className={`text-sm font-bold mb-1 ${am.claimed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
-            {copy.title}
-          </Text>
-          <Text className="text-xs text-on-surface-variant">{copy.description}</Text>
+        <View className="flex-row items-center gap-4">
+          {state === 'ready' ? <PulsingRing>{circle}</PulsingRing> : circle}
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2 mb-1">
+              <Text className={`text-sm font-bold ${state === 'claimed' ? 'line-through text-on-surface-variant' : styles.dimmed ? 'text-on-surface-variant' : 'text-on-surface'}`}>
+                {copy.title}
+              </Text>
+              {state === 'manual' && (
+                <View className="rounded-full bg-surface-container px-2 py-0.5">
+                  <Text className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant">On your honour</Text>
+                </View>
+              )}
+            </View>
+            <Text className="text-xs text-on-surface-variant">
+              {progress ? formatProgress(progress, currency) : copy.description}
+            </Text>
+          </View>
+          <View className="bg-primary-container rounded-full px-3 py-1">
+            <Text className="text-xs font-bold text-primary">+{def.reward} XP</Text>
+          </View>
         </View>
-        <View className="bg-primary-container rounded-full px-3 py-1">
-          <Text className="text-xs font-bold text-primary">+{def.reward} XP</Text>
-        </View>
+        {progress && progress.target > 0 && (
+          <AnimatedProgressBar progress={Math.max(0, Math.min(1, progress.current / progress.target))} height={6} />
+        )}
       </View>
     </FadeInStagger>
   );
