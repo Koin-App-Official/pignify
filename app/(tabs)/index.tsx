@@ -24,6 +24,7 @@ import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { AnimatedCurrency } from '@/components/animation/AnimatedCurrency';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
 import { springPresets } from '@/lib/springPresets';
+import { getTodayString, normalizeDay, sumDepositsForDate } from '@/lib/deposits';
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
@@ -113,15 +114,14 @@ export default function Dashboard() {
   }, [expenses]);
 
   const { savedToday, savedThisMonth } = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayString();
     const thisMonth = today.slice(0, 7);
     return {
-      savedToday: goals.reduce(
-        (sum, g) => sum + g.deposits.filter((d) => d.date === today).reduce((s, d) => s + d.amount, 0),
-        0
-      ),
+      savedToday: sumDepositsForDate(goals, today),
       savedThisMonth: goals.reduce(
-        (sum, g) => sum + g.deposits.filter((d) => d.date.startsWith(thisMonth)).reduce((s, d) => s + d.amount, 0),
+        (sum, g) =>
+          sum +
+          g.deposits.filter((d) => normalizeDay(d.date).startsWith(thisMonth)).reduce((s, d) => s + d.amount, 0),
         0
       ),
     };

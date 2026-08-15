@@ -7,6 +7,16 @@ import {
   getNotificationPermissionStatus,
   DEFAULT_HOUR,
 } from './notifications';
+import {
+  computeStreak,
+  getDailySavingsTarget,
+  getTodayString,
+  getWeekMondayString,
+  isValidDateString,
+  migrateGoalDepositDates,
+  sumDepositsForDate,
+  sumDepositsSince,
+} from './deposits';
 
 export interface Goal {
   id: string;
@@ -17,6 +27,12 @@ export interface Goal {
   savedAmount: number;
   deadline: string;
   createdAt: string;
+  /**
+   * `date` is a plain calendar day (`YYYY-MM-DD`), matching `Expense.date` and
+   * the streak fields — NOT a full ISO timestamp. Per-day readers compare on
+   * day strings, so a timestamp here silently breaks the streak. Builds before
+   * the v1 persist migration wrote timestamps; see src/lib/deposits.ts.
+   */
   deposits: { date: string; amount: number }[];
   isPrimary: boolean;
   /**
@@ -381,58 +397,10 @@ export interface PiggyState {
   resetForDemo: () => void;
 }
 
-function getTodayString() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function getWeekMondayString() {
-  // UTC throughout: mixing local getDay()/setDate() with a UTC toISOString()
-  // serialization is the same bug class as addDaysString below — in any
-  // timezone ahead of UTC it can silently roll the result back a day.
-  const d = new Date();
-  const day = d.getUTCDay();
-  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
-  return d.toISOString().split('T')[0];
-}
-
-function isValidDateString(s: unknown): s is string {
-  return typeof s === 'string' && !Number.isNaN(new Date(`${s}T00:00:00Z`).getTime());
-}
-
-/**
- * UTC throughout — these are plain calendar-day strings (no timezone of their
- * own), so parsing/mutating in local time and then serializing via
- * toISOString() (always UTC) is inconsistent: in any timezone ahead of UTC,
- * local midnight of `dateStr + days` can land on the previous UTC day,
- * returning the SAME string back for `days = 1`. Callers that loop by
- * incrementing a cursor with this (e.g. checkAndUpdateStreak) would then spin
- * forever, since the cursor never advances. Doing everything in UTC removes
- * the round-trip entirely.
- */
-function addDaysString(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
-/** (monthly contribution across active goals) / 30 — the amount a "day" requires to count toward the streak. */
-export function getDailySavingsTarget(goals: Goal[]): number {
-  return goals.filter((g) => !g.archived).reduce((sum, g) => sum + (g.monthlyContribution ?? 0), 0) / 30;
-}
-
-function sumDepositsForDate(goals: Goal[], dateStr: string): number {
-  return goals.reduce(
-    (sum, g) => sum + g.deposits.filter((d) => d.date === dateStr).reduce((s, d) => s + d.amount, 0),
-    0
-  );
-}
-
-function sumDepositsSince(goals: Goal[], sinceDateStr: string): number {
-  return goals.reduce(
-    (sum, g) => sum + g.deposits.filter((d) => d.date >= sinceDateStr).reduce((s, d) => s + d.amount, 0),
-    0
-  );
-}
+// Calendar-day helpers, deposit reads and the streak walk live in ./deposits so
+// they can be unit-tested without pulling AsyncStorage/expo-notifications in.
+// Re-exported here because existing call sites import them from the store.
+export { getDailySavingsTarget };
 
 /** The most-active hour-of-day from the tally, or `DEFAULT_HOUR` until there's enough signal (fewer than 5 samples). */
 function getPreferredHour(counts: number[]): number {
@@ -639,22 +607,14 @@ export const useStore = create<PiggyState>()(
 
         if (profile.lastStreakCheckDate >= today) return;
 
-        const target = getDailySavingsTarget(goals);
-        let streak = profile.streak;
-        let ignored = profile.checkinIgnoredStreak ?? 0;
-        let cursor = addDaysString(profile.lastStreakCheckDate, 1);
-        while (cursor < today) {
-          if (target > 0) {
-            if (sumDepositsForDate(goals, cursor) >= target) {
-              streak += 1;
-              ignored = 0;
-            } else {
-              streak = 0;
-              ignored += 1;
-            }
-          }
-          cursor = addDaysString(cursor, 1);
-        }
+        const { streak, ignored } = computeStreak({
+          streak: profile.streak,
+          ignored: profile.checkinIgnoredStreak ?? 0,
+          lastCheckedDate: profile.lastStreakCheckDate,
+          today,
+          goals,
+          dailyTarget: getDailySavingsTarget(goals),
+        });
 
         set((state) => ({
           profile: {
@@ -769,6 +729,21 @@ export const useStore = create<PiggyState>()(
     {
       name: 'piggy-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      /**
+       * v0 → v1: normalize `goals[].deposits[].date` from full ISO timestamps
+       * to `YYYY-MM-DD`. Older builds wrote `new Date().toISOString()` while
+       * every reader compared against a day string, so per-day deposit reads
+       * always returned 0 — pinning the streak at 0 for anyone with a target.
+       *
+       * Readers normalize defensively too (see ./deposits), so this migration
+       * is about cleaning the stored shape, not about correctness of reads.
+       */
+      migrate: (persisted, from) => {
+        const state = persisted as PiggyState | undefined;
+        if (!state || from >= 1) return state as PiggyState;
+        return { ...state, goals: migrateGoalDepositDates(state.goals ?? []) };
+      },
     }
   )
 );
