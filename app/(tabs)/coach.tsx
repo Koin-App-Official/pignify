@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, TextInput, Alert, useWindowDimensions } from 'react-native';
+import { fetch as expoFetch } from 'expo/fetch';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Send, Sparkles } from 'lucide-react-native';
@@ -30,6 +31,7 @@ import { PressableScale } from '@/components/animation/PressableScale';
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
+import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
 
@@ -50,45 +52,46 @@ function formatTimestamp(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-/** Sentinel matching the "≥50% on track" branch of getCoachResponse — used to
- * fire a restrained celebration only on genuine milestone replies, not every message. */
-function isMilestoneReply(text: string): boolean {
-  return text.includes("You're doing amazing!");
+const COACH_ENDPOINT = 'https://n8n.piggnify.com/webhook/claude-coach';
+const COACH_REQUEST_TIMEOUT_MS = 30000;
+
+/** The backend appends this on its own line when the reply is celebration-worthy,
+ * computed server-side from real goal progress (not string-matched from prose). */
+const CELEBRATE_MARKER = '<!--CELEBRATE-->';
+
+/** n8n's streaming webhook response is newline-delimited JSON events
+ * ({"type":"begin"|"item"|"end", content?, metadata}), not raw text — this
+ * extracts the text delta from one line, or '' if the line carries no text.
+ * Logs unparseable/unexpected lines (truncated) so the actual response shape
+ * is visible if the backend ever returns something other than the expected
+ * stream — this is the one place a silent malformed-response failure would
+ * otherwise show up as nothing but a generic "trouble connecting" message. */
+function parseStreamEventLine(line: string): string {
+  if (!line.trim()) return '';
+  try {
+    const event = JSON.parse(line);
+    if (event?.type === 'item' && typeof event.content === 'string') return event.content;
+    if (event?.type === 'begin' || event?.type === 'end') return '';
+    log.warn('Coach stream line had unexpected shape:', line.slice(0, 300));
+    return '';
+  } catch (err) {
+    log.warn('Coach stream line failed to parse as JSON:', line.slice(0, 300), err);
+    return '';
+  }
 }
 
-function getCoachResponse(input: string): string {
-  const lower = input.toLowerCase();
-  const profile = useStore.getState().profile;
-  const goals = useStore.getState().goals;
-  const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
-
-  if (lower.includes('save more')) {
-    return `Great question! 💡 Here are some practical tips:\n\n1. **Try the 50/30/20 rule** — allocate 20% of your income to savings\n2. **Automate small amounts** — even $5/day adds up to $150/month\n3. **Do a subscription audit** — cancel what you don't use\n4. **Try a no-spend day** once a week\n\nYou're already building great habits. Keep going! 🌱`;
+/** Strips a fully-arrived CELEBRATE_MARKER from the end of streamed text, and also
+ * hides a partially-arrived marker prefix near the tail so it never flashes mid-stream. */
+function stripCelebrateMarker(text: string): { display: string; celebrated: boolean } {
+  const fullIdx = text.lastIndexOf(CELEBRATE_MARKER);
+  if (fullIdx !== -1 && fullIdx >= text.length - CELEBRATE_MARKER.length - 4) {
+    return { display: text.slice(0, fullIdx).trimEnd(), celebrated: true };
   }
-  if (lower.includes('on track')) {
-    if (primaryGoal) {
-      const pct = Math.round((primaryGoal.savedAmount / primaryGoal.targetAmount) * 100);
-      if (pct >= 50) return `You're doing amazing! 🚀 You've saved **${pct}%** of your ${primaryGoal.name} goal. At this pace, you're well ahead. Keep the momentum going!`;
-      if (pct >= 20) return `You're making solid progress! 💪 **${pct}%** saved toward your ${primaryGoal.name}. Stay consistent and you'll get there. Every deposit counts!`;
-      return `You're getting started on your ${primaryGoal.name} journey — **${pct}%** saved so far. Remember, the hardest part is starting, and you've already done that! 🌱`;
-    }
-    return "I'd love to help you track your progress! Try creating a savings goal first, and I can give you personalized guidance. 🎯";
+  const partialIdx = text.lastIndexOf('<!--');
+  if (partialIdx !== -1 && partialIdx >= text.length - CELEBRATE_MARKER.length) {
+    return { display: text.slice(0, partialIdx).trimEnd(), celebrated: false };
   }
-  if (lower.includes('recover') || lower.includes('off track') || lower.includes('detour')) {
-    return `No worries at all! 🤗 A small detour doesn't define your journey.\n\nHere's what I suggest:\n1. **Don't stress** — one off week is totally normal\n2. **Start small** — save just $5 today to rebuild momentum\n3. **Review your expenses** — find one small cut this week\n4. **Adjust, don't abandon** — your goal is still very much achievable\n\nYou've got this! Tomorrow is a fresh start. 💙`;
-  }
-  if (lower.includes('next') || lower.includes('should')) {
-    const tips = [
-      `Complete today's saving mission to earn XP and keep your streak alive! 🔥`,
-      `Try adding a small deposit to your ${primaryGoal?.name || 'savings'} goal — even $10 makes progress.`,
-      `Review your spending from this week. Small awareness leads to big changes.`,
-    ];
-    return tips[Math.floor(Math.random() * tips.length)] + `\n\nYour current streak is **${profile.streak} days**. Let's keep it going!`;
-  }
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hey there! 👋 I'm your Piggy coach. I'm here to help you save smarter and stay motivated.\n\nWhat would you like to know? I can help with saving tips, tracking progress, or getting back on track.`;
-  }
-  return `That's a great point! 💙 Here's my advice:\n\n• **Stay consistent** — small daily actions beat big occasional efforts\n• **Celebrate progress** — you're Lv.${profile.level} already!\n• **Be kind to yourself** — financial growth is a journey, not a sprint\n\nWant me to help with something specific? Try asking about saving tips or your progress! 😊`;
+  return { display: text, celebrated: false };
 }
 
 const GREETINGS = [
@@ -112,7 +115,7 @@ export default function AICoach() {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coachRequestRef = useRef<AbortController | null>(null);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const router = useRouter();
   const { addon } = useLocalSearchParams<{ addon?: string }>();
@@ -121,6 +124,7 @@ export default function AICoach() {
 
   const { plan, config, aiMessages, has } = useEntitlements();
   const incrementCoachMessages = useStore((s) => s.incrementCoachMessages);
+  const setServerAiMessageUsage = useStore((s) => s.setServerAiMessageUsage);
   const setAddonMessageBalance = useStore((s) => s.setAddonMessageBalance);
   const userID = useStore((s) => s.profile.userID);
   const messageLimit = typeof config.quotas.aiMessages === 'number' ? config.quotas.aiMessages : Infinity;
@@ -142,11 +146,11 @@ export default function AICoach() {
     router.push(`/plans?highlight=${target}`);
   };
 
-  // Clear the pending simulated-reply timeout on unmount so it can't call
-  // setState after the screen is gone.
+  // Abort any in-flight coach request on unmount so its stream reader can't
+  // call setState after the screen is gone.
   useEffect(() => {
     return () => {
-      if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
+      coachRequestRef.current?.abort();
     };
   }, []);
 
@@ -192,7 +196,7 @@ export default function AICoach() {
 
   // Quota/feature gate (C13): the coach stays visible; blocked sends open the
   // "Upgrade your plan" popup instead of silently failing.
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!has('aiCoach')) {
       openGate('aiCoach');
       return;
@@ -218,31 +222,148 @@ export default function AICoach() {
       role: m.role === 'coach' ? 'assistant' : 'user',
       message: m.content,
     }));
-    fetch('https://n8n1.neuralops.pl/webhook-test/533526a8-8261-4bed-8202-809c7563a81e', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: last10 }),
-      // @ts-ignore
-      mode: 'no-cors',
-    }).catch((err) => log.error('Coach webhook failed:', err));
+
+    const profile = useStore.getState().profile;
+    const goals = useStore.getState().goals;
+    const primaryGoal = goals.find((g) => g.isPrimary) || goals[0];
+    const context = {
+      firstName: profile.name || undefined,
+      streak: profile.streak,
+      level: profile.level,
+      primaryGoal: primaryGoal
+        ? { name: primaryGoal.name, savedAmount: primaryGoal.savedAmount, targetAmount: primaryGoal.targetAmount }
+        : null,
+    };
 
     setInput('');
     setIsTyping(true);
 
-    if (replyTimeoutRef.current != null) clearTimeout(replyTimeoutRef.current);
-    replyTimeoutRef.current = setTimeout(() => {
-      replyTimeoutRef.current = null;
-      const replyText = getCoachResponse(text);
-      const coachMsg: Message = {
-        id: Math.random().toString(36).substring(7),
-        role: 'coach',
-        content: replyText,
-        timestamp: Date.now(),
-      };
+    coachRequestRef.current?.abort();
+    const controller = new AbortController();
+    coachRequestRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), COACH_REQUEST_TIMEOUT_MS);
+
+    const showError = () => {
       setIsTyping(false);
-      setMessages((prev) => [...prev, coachMsg]);
-      if (isMilestoneReply(replyText)) celebrate();
-    }, 600);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Math.random().toString(36).substring(7),
+          role: 'coach',
+          content: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+          timestamp: Date.now(),
+        },
+      ]);
+    };
+
+    log.debug('Coach request starting', { endpoint: COACH_ENDPOINT, userID, messageCount: last10.length });
+
+    try {
+      const response = await expoFetch(COACH_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userID, messages: last10, context }),
+        signal: controller.signal,
+      });
+      log.debug('Coach response received', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers?.get?.('content-type') ?? null,
+        hasBody: !!response.body,
+      });
+      if (!response.ok || !response.body) {
+        throw new Error(`Coach request failed: HTTP ${response.status}${response.body ? '' : ' (no response body)'}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let lineBuffer = '';
+      let rawText = ''; // everything decoded, for diagnostics — independent of parsed content
+      let full = '';
+      let rawChunkCount = 0;
+      let coachMsgId: string | null = null;
+      let celebrated = false;
+
+      const applyDelta = () => {
+        const { display, celebrated: nowCelebrated } = stripCelebrateMarker(full);
+
+        if (coachMsgId == null) {
+          coachMsgId = Math.random().toString(36).substring(7);
+          const id = coachMsgId;
+          setIsTyping(false);
+          setMessages((prev) => [...prev, { id, role: 'coach', content: display, timestamp: Date.now() }]);
+        } else {
+          const id = coachMsgId;
+          setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content: display } : m)));
+        }
+
+        if (nowCelebrated && !celebrated) {
+          celebrated = true;
+          celebrate();
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        rawChunkCount += 1;
+        const decoded = decoder.decode(value, { stream: true });
+        rawText += decoded;
+        lineBuffer += decoded;
+
+        const lines = lineBuffer.split('\n');
+        lineBuffer = lines.pop() ?? '';
+        let hasDelta = false;
+        for (const line of lines) {
+          const delta = parseStreamEventLine(line);
+          if (delta) {
+            full += delta;
+            hasDelta = true;
+          }
+        }
+        if (hasDelta) applyDelta();
+      }
+
+      const delta = parseStreamEventLine(lineBuffer);
+      if (delta) {
+        full += delta;
+        applyDelta();
+      }
+
+      if (coachMsgId == null) {
+        log.error('Coach stream produced no usable content.', {
+          rawChunkCount,
+          rawTextLength: rawText.length,
+          rawTextPreview: rawText.slice(0, 500),
+        });
+        showError();
+      } else if (userID) {
+        // Refresh the real usage count immediately so the header label doesn't
+        // wait for the next hourly/foreground sync in _layout.tsx.
+        fetchEntitlementsSync(userID).then((data) => {
+          if (data && (typeof data.quotaAiMessages === 'number' || typeof data.aiMessagesUsed === 'number')) {
+            setServerAiMessageUsage(
+              typeof data.quotaAiMessages === 'number' ? data.quotaAiMessages : null,
+              typeof data.aiMessagesUsed === 'number' ? data.aiMessagesUsed : null
+            );
+          }
+        });
+      }
+    } catch (err) {
+      const error = err as Error;
+      if (error?.name === 'AbortError' && coachRequestRef.current !== controller) {
+        log.debug('Coach request superseded/unmounted, ignoring AbortError.');
+      } else if (error?.name === 'AbortError') {
+        log.error(`Coach request timed out after ${COACH_REQUEST_TIMEOUT_MS}ms.`);
+        showError();
+      } else {
+        log.error('Coach request failed:', { name: error?.name, message: error?.message, error });
+        showError();
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      if (coachRequestRef.current === controller) coachRequestRef.current = null;
+    }
   };
 
   const handleContentSizeChange = (_width: number, height: number) => {
@@ -281,7 +402,7 @@ export default function AICoach() {
             <Text className="text-xs font-sans-bold text-on-surface">
               {aiMessages.unlimited
                 ? 'Unlimited'
-                : `${Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100))}% used this month`}
+                : `${Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100))}% used this period`}
             </Text>
           )}
         </View>

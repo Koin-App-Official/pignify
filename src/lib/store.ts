@@ -144,6 +144,17 @@ export interface UserProfile {
   /** Tally of app-foreground events per local hour-of-day (index 0-23) — the send-time personalization signal. */
   activityHourCounts: number[];
   onboardingCompleted: boolean;
+  /**
+   * True once the pre-signup value-proposition carousel has been dismissed
+   * (finished or skipped). Lives here rather than in its own storage key so it
+   * is cleared by "Reset Data" along with everything else — a demo reset should
+   * replay the real first-launch experience, carousel included.
+   *
+   * Existing installs rehydrate this as `undefined`, which is falsy; that's
+   * harmless because they also have `onboardingCompleted: true`, and the
+   * carousel is only ever reachable when onboarding hasn't been completed.
+   */
+  welcomeSeen: boolean;
   expenses: Expense[];
   notificationPrefs: {
     paydayReminder: boolean;
@@ -184,6 +195,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   checkinIgnoredStreak: 0,
   activityHourCounts: new Array(24).fill(0),
   onboardingCompleted: false,
+  welcomeSeen: false,
   expenses: [],
   notificationPrefs: {
     paydayReminder: true,
@@ -301,6 +313,15 @@ export interface PiggyState {
   lastWeeklyReset: string;
   coachMessagesUsed: number;
   coachMessagesMonth: string;
+  /**
+   * Server-authoritative AI-message quota/usage for the current billing
+   * period, synced from CLAUDE_entitlements_get (see [[coach-backend-streaming]]).
+   * null until the first successful sync — callers should fall back to the
+   * local calendar-month counter until then. This is the real enforcement;
+   * the local counter above is optimistic UI only.
+   */
+  serverAiMessagesQuota: number | null;
+  serverAiMessagesUsed: number | null;
   /** Purchased extra AI messages, not tied to a billing period (roll over indefinitely). */
   addonMessageBalance: number;
   deepAnalysisUsed: number;
@@ -355,6 +376,7 @@ export interface PiggyState {
   /** Called only after a confirmed-successful Deep Analysis webhook call. */
   incrementDeepAnalysis: () => void;
   setLastProfileSync: (ts: string) => void;
+  setServerAiMessageUsage: (quota: number | null, used: number | null) => void;
 
   resetForDemo: () => void;
 }
@@ -470,6 +492,8 @@ export const useStore = create<PiggyState>()(
       lastWeeklyReset: getWeekMondayString(),
       coachMessagesUsed: 0,
       coachMessagesMonth: getTodayString().slice(0, 7),
+      serverAiMessagesQuota: null,
+      serverAiMessagesUsed: null,
       addonMessageBalance: 0,
       deepAnalysisUsed: 0,
       deepAnalysisMonth: getTodayString().slice(0, 7),
@@ -702,6 +726,7 @@ export const useStore = create<PiggyState>()(
       },
 
       setLastProfileSync: (ts) => set({ lastProfileSync: ts }),
+      setServerAiMessageUsage: (quota, used) => set({ serverAiMessagesQuota: quota, serverAiMessagesUsed: used }),
 
       incrementCoachMessages: (messageLimit) => set((state) => {
         const thisMonth = getTodayString().slice(0, 7);
