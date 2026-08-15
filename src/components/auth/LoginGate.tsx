@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
-import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
+import { requestEmailOtp, verifyEmailOtp, SessionSecretUnavailableError } from '@/lib/auth';
 import { clearClientSession } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
 import NitroCookies from 'react-native-nitro-cookies';
@@ -70,8 +70,16 @@ export function LoginGate() {
       onLoggedIn(userId, secret); // → needs_pin_setup or needs_pin_confirm
     } catch (err) {
       log.error('verify failed:', err);
-      setError('That code is incorrect or expired. Request a new one.');
-      setCode('');
+      if (err instanceof SessionSecretUnavailableError) {
+        // The code was right and createSession succeeded — only reading back the
+        // token failed. Don't imply the code was wrong, but it IS consumed now,
+        // so a retry needs a fresh one.
+        setError('Signed in, but we could not secure the session. Request a new code and try again.');
+        setCode('');
+      } else {
+        setError('That code is incorrect or expired. Request a new one.');
+        setCode('');
+      }
     } finally {
       setBusy(false);
     }

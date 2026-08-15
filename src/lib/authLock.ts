@@ -28,6 +28,10 @@ import { hasPin, verifyPin, setPin, clearPin, demoteToStale, getLockoutState } f
 import { unlockWithBiometric, disableBiometric, isBiometricEnabled, enableBiometric } from './biometrics';
 import { registerDevice } from './device';
 import { useStore } from './store';
+import { isUsableSecret } from './sessionSecret';
+import { createLogger } from './logger';
+
+const log = createLogger('authLock');
 
 export type LockStatus =
   | 'loading'
@@ -117,6 +121,18 @@ async function activateSession(
   secret: string,
   set: (s: Partial<AuthLockState>) => void
 ): Promise<ActivateOutcome> {
+  // A blank secret can only come from a blob written by a build that let one
+  // through (see SessionSecretUnavailableError). It's unusable, but the PIN
+  // itself is still valid — deliberately do NOT clearPin() here, so the user
+  // re-logs in and confirmExistingPin re-wraps the fresh secret around the PIN
+  // they already know, rather than being forced to set a new one.
+  if (!isUsableSecret(secret)) {
+    log.error('stored session secret is empty — forcing re-login, keeping the PIN');
+    clearClientSession();
+    set({ status: 'unauthenticated', userId: null, sessionSecret: null });
+    return 'invalid_session';
+  }
+
   applySession(secret);
   let accountId: string | null;
   try {

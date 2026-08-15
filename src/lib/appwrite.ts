@@ -52,6 +52,14 @@ export { ID };
  * stored secret. Passing an empty string clears the session.
  */
 export function applySession(secret: string): void {
+  // `client.setSession('')` is silently accepted and produces a GUEST client —
+  // every subsequent request then fails with `missing scopes (["account"])`,
+  // far from wherever the secret actually went missing. Refuse the empty case
+  // so it surfaces at the source. Use clearClientSession() to deliberately
+  // drop the session.
+  if (typeof secret !== 'string' || secret.trim().length === 0) {
+    throw new Error('applySession called with an empty secret — refusing to create a guest client');
+  }
   client.setSession(secret);
 }
 

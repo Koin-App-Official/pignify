@@ -25,6 +25,12 @@ import { AppwriteException } from 'react-native-appwrite';
 import { account, ID, applySession, clearClientSession, endpoint, projectId } from './appwrite';
 import { createLogger } from './logger';
 import NitroCookies from 'react-native-nitro-cookies';
+import {
+  describeCookieNames,
+  isUsableSecret,
+  parseCookieHeader,
+  pickSessionCookie,
+} from './sessionSecret';
 
 const log = createLogger('auth');
 
@@ -40,22 +46,91 @@ const VALIDATE_SESSION_TIMEOUT_MS = 10_000;
 export class SessionCheckNetworkError extends Error {}
 
 /**
+ * Thrown when the session secret could not be recovered from the cookie jar.
+ *
+ * This is fatal to the login attempt and must NOT be treated as a bad OTP code
+ * or as an invalid session: the account and the server-side session are both
+ * fine, we just failed to get hold of the token. Callers should surface it as a
+ * retryable "couldn't complete sign-in" rather than wiping any local state.
+ */
+export class SessionSecretUnavailableError extends Error {}
+
+/** How hard to chase the cookie before giving up. ~6 × 60ms ≈ 360ms worst case. */
+const SECRET_RECOVERY_ATTEMPTS = 6;
+const SECRET_RECOVERY_DELAY_MS = 60;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * One pass over every place the session cookie might be visible. Returns null
+ * if this attempt found nothing — the caller retries.
+ */
+function readSessionCookieOnce(): { secret: string | null; seen: string } {
+  // Structured lookup first — the normal path.
+  const cookies = NitroCookies.getSync(endpoint);
+  const fromMap = pickSessionCookie(cookies, projectId);
+  if (fromMap) return { secret: fromMap, seen: describeCookieNames(cookies) };
+
+  // Fallback: the header form sometimes has it when the map lookup misses
+  // (different normalization of domain/path between the two native calls).
+  const header = parseCookieHeader(NitroCookies.getCookieHeaderSync(endpoint));
+  const fromHeader = pickSessionCookie(header, projectId);
+  if (fromHeader) return { secret: fromHeader, seen: describeCookieNames(header) };
+
+  return { secret: null, seen: describeCookieNames(cookies) };
+}
+
+/**
  * Recover the real session token from the native cookie jar when the SDK
  * response's own `secret` field is blank (the normal case — see module doc).
  * The cookie's value is the full opaque token Appwrite expects verbatim in
  * the `X-Appwrite-Session` header (confirmed from the SDK's own realtime-auth
  * code, which forwards this exact cookie value unmodified) — it must NOT be
- * base64/JSON-decoded first. Clears the cookie afterward: from this point on
- * the header-based session (`applySession`) and our PIN-encrypted copy are
+ * base64/JSON-decoded first. Clears the cookie once recovered: from this point
+ * on the header-based session (`applySession`) and our PIN-encrypted copy are
  * the only places it lives.
+ *
+ * Retries rather than reading once. `getSync` is synchronous and runs the
+ * instant the SDK's promise resolves, but the native cookie store
+ * (NSHTTPCookieStorage / Android CookieManager) commits the `Set-Cookie`
+ * independently of that promise — so a single read can lose a race it will win
+ * 50ms later.
+ *
+ * @throws SessionSecretUnavailableError when the secret can't be recovered.
+ *   Never returns an empty string: an empty secret is silently accepted by
+ *   `client.setSession`, which is what made this fail three steps downstream.
  */
 async function resolveSessionSecret(sdkSecret: string): Promise<string> {
-  if (sdkSecret) return sdkSecret;
-  const cookies = NitroCookies.getSync(endpoint);
-  const cookie = cookies[`a_session_${projectId}`] ?? cookies[`a_session_${projectId}_legacy`];
-  if (!cookie) return sdkSecret; // nothing to recover; caller handles the empty-secret case
-  await NitroCookies.clearAll();
-  return cookie.value;
+  if (isUsableSecret(sdkSecret)) return sdkSecret;
+
+  let lastSeen = '<none>';
+  for (let attempt = 0; attempt < SECRET_RECOVERY_ATTEMPTS; attempt++) {
+    if (attempt > 0) await sleep(SECRET_RECOVERY_DELAY_MS);
+
+    let result: { secret: string | null; seen: string };
+    try {
+      result = readSessionCookieOnce();
+    } catch (err) {
+      // A malformed-URL throw from the native side is not retryable, but it is
+      // also not worth crashing the login over — record and keep trying.
+      log.warn('cookie read failed:', err);
+      continue;
+    }
+
+    lastSeen = result.seen;
+    if (result.secret) {
+      await NitroCookies.clearAll();
+      return result.secret;
+    }
+  }
+
+  // Names only — never log the values; the session token is a credential.
+  log.error(
+    `session secret not recoverable after ${SECRET_RECOVERY_ATTEMPTS} attempts; cookies present: ${lastSeen}`
+  );
+  throw new SessionSecretUnavailableError(
+    'Signed in, but the session token could not be read from the cookie store.'
+  );
 }
 
 export interface EmailOtpRequest {
