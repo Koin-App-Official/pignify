@@ -78,6 +78,13 @@ export interface MissionContext {
 
 export type MissionVerifier = 'manual' | ((ctx: MissionContext) => boolean);
 
+export interface MissionProgressState {
+  current: number;
+  target: number;
+  /** True when `current`/`target` are a currency amount rather than a count. */
+  isCurrency: boolean;
+}
+
 export interface MissionDef {
   id: string;
   category: MissionCategory;
@@ -92,6 +99,13 @@ export interface MissionDef {
   verify: MissionVerifier;
   /** Gates whether this def is even offered — distinct from `verify` (whether it's DONE). */
   eligible?: (ctx: MissionContext) => boolean;
+  /**
+   * Present only on missions with a natural numeric progress toward a known
+   * target (a running total or count) — omitted for one-shot/comparison
+   * verifiers (e.g. "beat last week's spending", "create your first goal")
+   * where a progress bar wouldn't mean anything.
+   */
+  progress?: (ctx: MissionContext) => MissionProgressState;
 }
 
 // ---------------------------------------------------------------------------
@@ -270,6 +284,7 @@ const SAVE_TODAY: MissionDef = {
   amount: (ctx) => dailyAmount(ctx, 0.5),
   eligible: hasActiveGoal,
   verify: (ctx) => ctx.depositsToday >= dailyAmount(ctx, 0.5),
+  progress: (ctx) => ({ current: ctx.depositsToday, target: dailyAmount(ctx, 0.5), isCurrency: true }),
 };
 
 const HIT_DAILY_TARGET: MissionDef = {
@@ -283,6 +298,7 @@ const HIT_DAILY_TARGET: MissionDef = {
   amount: (ctx) => roundHuman(ctx.dailyTarget),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsToday >= ctx.dailyTarget,
+  progress: (ctx) => ({ current: ctx.depositsToday, target: ctx.dailyTarget, isCurrency: true }),
 };
 
 const LOG_EXPENSE: MissionDef = {
@@ -362,6 +378,7 @@ const SAVE_THIS_WEEK: MissionDef = {
   amount: (ctx) => weeklyAmount(ctx, 1),
   eligible: hasActiveGoal,
   verify: (ctx) => ctx.depositsThisWeek >= weeklyAmount(ctx, 1),
+  progress: (ctx) => ({ current: ctx.depositsThisWeek, target: weeklyAmount(ctx, 1), isCurrency: true }),
 };
 
 const FIRST_GOAL: MissionDef = {
@@ -385,6 +402,7 @@ const LOG_FIVE_EXPENSES: MissionDef = {
   title: 'Log 5 expenses this week',
   description: 'Build the habit of tracking spending.',
   verify: (ctx) => ctx.expensesThisWeek.length >= 5,
+  progress: (ctx) => ({ current: ctx.expensesThisWeek.length, target: 5, isCurrency: false }),
 };
 
 const NO_SPEND_WEEKEND: MissionDef = {
@@ -413,6 +431,7 @@ const SAVE_1_5X_TARGET: MissionDef = {
   amount: (ctx) => roundHuman(ctx.dailyTarget * 1.5),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsToday >= ctx.dailyTarget * 1.5,
+  progress: (ctx) => ({ current: ctx.depositsToday, target: ctx.dailyTarget * 1.5, isCurrency: true }),
 };
 
 const LOG_THREE_EXPENSES: MissionDef = {
@@ -424,6 +443,7 @@ const LOG_THREE_EXPENSES: MissionDef = {
   title: 'Log every expense today',
   description: 'Track at least 3 things you spent today.',
   verify: (ctx) => ctx.expensesToday.length >= 3,
+  progress: (ctx) => ({ current: ctx.expensesToday.length, target: 3, isCurrency: false }),
 };
 
 const EXPENSE_WITH_NOTE: MissionDef = {
@@ -492,6 +512,7 @@ const STREAK_SEVEN: MissionDef = {
   title: 'Hit a 7-day streak',
   description: 'Save toward your target 7 days in a row.',
   verify: (ctx) => ctx.profile.streak >= 7,
+  progress: (ctx) => ({ current: ctx.profile.streak, target: 7, isCurrency: false }),
 };
 
 const SAVE_20_PERCENT_OVER: MissionDef = {
@@ -505,6 +526,7 @@ const SAVE_20_PERCENT_OVER: MissionDef = {
   amount: (ctx) => roundHuman(ctx.dailyTarget * 7 * 1.2),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsThisWeek >= ctx.dailyTarget * 7 * 1.2,
+  progress: (ctx) => ({ current: ctx.depositsThisWeek, target: ctx.dailyTarget * 7 * 1.2, isCurrency: true }),
 };
 
 // Deferred to Phase 4 (#67): a "today's money quiz" learning mission belongs
@@ -513,6 +535,19 @@ const SAVE_20_PERCENT_OVER: MissionDef = {
 
 // ---------------------------------------------------------------------------
 // Catalog — Tier 3 (stretch)
+//
+// XP calibration (Phase 3, #66): daily selection always picks exactly
+// DAILY_MISSION_COUNT defs regardless of tier, but weighting biases higher-
+// tier users toward higher-tier (higher-reward) defs — so reward growth
+// across tiers compounds with that bias rather than adding on top of it.
+// The original tier-3 values (up to 50 XP on a single weekly claim) would
+// have let a tier-3 user's daily XP pace roughly triple a tier-1 user's,
+// well past "harder missions pay a bit more" into "leveling runs away at the
+// top" — the opposite of the source report's Duolingo-tier finding (higher
+// tiers should feel EARNED, i.e. slower, not faster). Trimmed the standout
+// values below rather than touching the flat xp/100 level formula in
+// store.ts, which is out of this phase's scope and affects every XP source,
+// not just missions.
 // ---------------------------------------------------------------------------
 
 const SAVE_2X_TARGET: MissionDef = {
@@ -520,12 +555,13 @@ const SAVE_2X_TARGET: MissionDef = {
   category: 'saving',
   cadence: 'daily',
   tier: 3,
-  reward: 18,
+  reward: 15, // was 18 — see calibration note above
   title: 'Save 2× today’s target',
   description: 'A serious push today.',
   amount: (ctx) => roundHuman(ctx.dailyTarget * 2),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsToday >= ctx.dailyTarget * 2,
+  progress: (ctx) => ({ current: ctx.depositsToday, target: ctx.dailyTarget * 2, isCurrency: true }),
 };
 
 const TWO_DEPOSITS_TODAY: MissionDef = {
@@ -533,11 +569,12 @@ const TWO_DEPOSITS_TODAY: MissionDef = {
   category: 'saving',
   cadence: 'daily',
   tier: 3,
-  reward: 15,
+  reward: 12, // was 15 — see calibration note above
   title: 'Two deposits today',
   description: 'Save twice today instead of once.',
   eligible: hasActiveGoal,
   verify: (ctx) => countDepositsForDate(ctx.goals, ctx.today) >= 2,
+  progress: (ctx) => ({ current: countDepositsForDate(ctx.goals, ctx.today), target: 2, isCurrency: false }),
 };
 
 const PANTRY_DAY: MissionDef = {
@@ -556,7 +593,7 @@ const PUSH_GOAL_TEN_PERCENT: MissionDef = {
   category: 'saving',
   cadence: 'weekly',
   tier: 3,
-  reward: 40,
+  reward: 28, // was 40 — see calibration note above; no progress bar (band-crossing is a comparison, not a running total)
   title: 'Push your goal to the next 10%',
   description: 'Cross into a new tenth of your goal this week.',
   eligible: hasActiveGoal,
@@ -568,10 +605,11 @@ const STREAK_THIRTY: MissionDef = {
   category: 'habit',
   cadence: 'weekly',
   tier: 3,
-  reward: 50,
+  reward: 35, // was 50 — see calibration note above
   title: 'Hit a 30-day streak',
   description: 'A full month of hitting your target.',
   verify: (ctx) => ctx.profile.streak >= 30,
+  progress: (ctx) => ({ current: ctx.profile.streak, target: 30, isCurrency: false }),
 };
 
 /**
@@ -600,6 +638,7 @@ const ADD_SECOND_GOAL: MissionDef = {
   description: 'Start saving toward something else too.',
   eligible: hasExactlyOneActiveGoal,
   verify: (ctx) => activeGoals(ctx).length >= 2,
+  progress: (ctx) => ({ current: activeGoals(ctx).length, target: 2, isCurrency: false }),
 };
 
 const NEGOTIATE_BILL: MissionDef = {
@@ -774,4 +813,9 @@ export function renderMissionCopy(
   const amount = def.amount ? def.amount(ctx) : null;
   const title = amount != null ? def.title.replace('{amount}', formatAmount(amount)) : def.title;
   return { title, description: def.description, amount };
+}
+
+/** Progress toward a def's target, or null for defs with no natural running total (see `MissionDef.progress`). */
+export function getMissionProgress(def: MissionDef, ctx: MissionContext): MissionProgressState | null {
+  return def.progress ? def.progress(ctx) : null;
 }
