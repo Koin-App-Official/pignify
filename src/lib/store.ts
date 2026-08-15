@@ -13,10 +13,17 @@ import {
   getTodayString,
   getWeekMondayString,
   isValidDateString,
-  migrateGoalDepositDates,
   sumDepositsForDate,
   sumDepositsSince,
 } from './deposits';
+import {
+  MISSION_CATALOG,
+  buildMissionContext,
+  selectMissions,
+  type MissionCadence,
+  type MissionContext,
+} from './missions';
+import { PIGGY_STORE_VERSION, migratePiggyState } from './storeMigrations';
 
 export interface Goal {
   id: string;
@@ -62,14 +69,19 @@ export interface Expense {
   note?: string;
 }
 
-export interface Mission {
-  id: string;
-  title: string;
-  description: string;
-  type: 'daily' | 'weekly';
-  reward: number;
-  completed: boolean;
-  completedAt?: string;
+/**
+ * One catalog def assigned to the current period. The catalog content itself
+ * (title, reward, verifier) lives in `missions.ts` and is never persisted —
+ * only the assignment is. See implementations/MISSIONS.md Phase 2.
+ */
+export interface ActiveMission {
+  /** Foreign key into MISSION_CATALOG — resolve via MISSION_CATALOG.find(). */
+  defId: string;
+  cadence: MissionCadence;
+  /** Calendar day (daily) or that week's Monday (weekly) this was assigned for. */
+  periodKey: string;
+  claimed: boolean;
+  claimedAt?: string;
 }
 
 export interface Achievement {
@@ -152,6 +164,8 @@ export interface UserProfile {
   level: number;
   xp: number;
   streak: number;
+  /** Lifetime count of claimed missions — drives the 'Mission Master' achievement. */
+  missionsCompletedTotal: number;
   lastActiveDate: string;
   /** Last calendar day `checkAndUpdateStreak` has fully evaluated — prevents double-counting a day. */
   lastStreakCheckDate: string;
@@ -206,6 +220,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   level: 1,
   xp: 0,
   streak: 0,
+  missionsCompletedTotal: 0,
   lastActiveDate: new Date().toISOString().split('T')[0],
   lastStreakCheckDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
   checkinIgnoredStreak: 0,
@@ -221,15 +236,6 @@ export const DEFAULT_PROFILE: UserProfile = {
   },
   autoLockMinutes: 0,
 };
-
-const DEFAULT_MISSIONS: Mission[] = [
-  { id: 'm1', title: 'Skip a coffee', description: 'Save by making coffee at home', type: 'daily', reward: 5, completed: false },
-  { id: 'm2', title: 'No-spend lunch', description: 'Pack lunch instead of buying', type: 'daily', reward: 10, completed: false },
-  { id: 'm3', title: 'Save $5 today', description: 'Move $5 to your goal', type: 'daily', reward: 5, completed: false },
-  { id: 'm4', title: 'Walk instead of ride', description: 'Save on transport', type: 'daily', reward: 3, completed: false },
-  { id: 'm5', title: 'Weekly savings boost', description: 'Save an extra $20 this week', type: 'weekly', reward: 20, completed: false },
-  { id: 'm6', title: 'Cancel a subscription', description: 'Review and cancel one unused subscription', type: 'weekly', reward: 15, completed: false },
-];
 
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   { id: 'a1', title: 'First Step', description: 'Create your first savings goal', icon: '🎯', unlocked: false },
@@ -323,7 +329,9 @@ export const EXPENSE_CATEGORIES = [
 export interface PiggyState {
   profile: UserProfile;
   goals: Goal[];
-  missions: Mission[];
+  activeMissions: ActiveMission[];
+  /** Last ~10 defIds assigned, FIFO — selectMissions avoids repeating these. */
+  recentMissionIds: string[];
   achievements: Achievement[];
   lastDailyReset: string;
   lastWeeklyReset: string;
@@ -368,9 +376,14 @@ export interface PiggyState {
   addGoal: (g: Goal) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
 
-  setMissions: (m: Mission[]) => void;
-  completeMission: (id: string) => void;
-  checkAndResetMissions: () => void;
+  /** Ensures 3 daily + 1 weekly assignments exist for the current period, rotating stale ones. Idempotent. */
+  refreshActiveMissions: () => void;
+  /**
+   * Claim an assigned mission. Re-runs its verifier (if not manual) against
+   * fresh state before granting XP — a stale UI can never grant a mission
+   * that isn't actually met. Returns whether the claim succeeded.
+   */
+  claimMission: (defId: string) => boolean;
 
   /** Walks forward from `lastStreakCheckDate` to today, incrementing/breaking the streak per missed day. */
   checkAndUpdateStreak: () => void;
@@ -419,6 +432,31 @@ function getPreferredHour(counts: number[]): number {
 }
 
 /** Reads current state and (re)schedules every local notification category. Swallows failures — never blocks the UI. */
+const DAILY_MISSION_COUNT = 3;
+const WEEKLY_MISSION_COUNT = 1;
+/** FIFO cap on recentMissionIds — just enough history to avoid immediate repeats. */
+const RECENT_MISSION_CAP = 10;
+
+function pushRecentMissionIds(recent: string[], newIds: string[]): string[] {
+  const merged = [...recent, ...newIds];
+  return merged.slice(Math.max(0, merged.length - RECENT_MISSION_CAP));
+}
+
+/** Builds the pure MissionContext from live store state — see missions.ts. */
+function toMissionContext(state: PiggyState): MissionContext {
+  return buildMissionContext({
+    goals: state.goals,
+    profile: {
+      level: state.profile.level,
+      streak: state.profile.streak,
+      monthlyContribution: state.profile.monthlyContribution,
+      currency: state.profile.currency,
+      lastActiveDate: state.profile.lastActiveDate,
+    },
+    expenses: state.profile.expenses,
+  });
+}
+
 function buildAndRefreshSchedule(state: PiggyState) {
   const { profile, goals } = state;
   const target = getDailySavingsTarget(goals);
@@ -454,7 +492,8 @@ export const useStore = create<PiggyState>()(
     (set, get) => ({
       profile: DEFAULT_PROFILE,
       goals: [],
-      missions: DEFAULT_MISSIONS,
+      activeMissions: [],
+      recentMissionIds: [],
       achievements: DEFAULT_ACHIEVEMENTS,
       lastDailyReset: getTodayString(),
       lastWeeklyReset: getWeekMondayString(),
@@ -561,31 +600,71 @@ export const useStore = create<PiggyState>()(
         buildAndRefreshSchedule(get());
       },
 
-      setMissions: (missions) => set({ missions }),
-      completeMission: (id) => set((state) => ({
-        missions: state.missions.map((m) =>
-          m.id === id ? { ...m, completed: true, completedAt: new Date().toISOString() } : m
-        ),
-      })),
-      checkAndResetMissions: () => {
+      refreshActiveMissions: () => {
+        const state = get();
         const today = getTodayString();
         const thisMonday = getWeekMondayString();
-        const { lastDailyReset, lastWeeklyReset, missions } = get();
+        const { lastDailyReset, lastWeeklyReset, activeMissions, recentMissionIds } = state;
 
-        const dailyDue = lastDailyReset !== today;
-        const weeklyDue = lastWeeklyReset !== thisMonday;
+        const dailyCount = activeMissions.filter((am) => am.cadence === 'daily' && am.periodKey === today).length;
+        const weeklyCount = activeMissions.filter((am) => am.cadence === 'weekly' && am.periodKey === thisMonday).length;
+
+        // Due on a period rollover (the persisted marker) OR when the current
+        // period is simply missing assignments (first run, or after
+        // resetForDemo left activeMissions empty) — either way, self-heal
+        // rather than leave the screen with nothing to show.
+        const dailyDue = lastDailyReset !== today || dailyCount < DAILY_MISSION_COUNT;
+        const weeklyDue = lastWeeklyReset !== thisMonday || weeklyCount < WEEKLY_MISSION_COUNT;
         if (!dailyDue && !weeklyDue) return;
 
+        const ctx = toMissionContext(state);
+        // Keep whichever cadence ISN'T due; the due one gets fully replaced
+        // below (not just topped up) so stale prior-period entries don't linger.
+        let next = activeMissions.filter((am) => (am.cadence === 'daily' ? !dailyDue : !weeklyDue));
+        let recent = recentMissionIds;
+
+        if (dailyDue) {
+          const picked = selectMissions(ctx, { cadence: 'daily', count: DAILY_MISSION_COUNT, periodKey: today, recentIds: recent });
+          next = [...next, ...picked.map((def) => ({ defId: def.id, cadence: 'daily' as const, periodKey: today, claimed: false }))];
+          recent = pushRecentMissionIds(recent, picked.map((d) => d.id));
+        }
+        if (weeklyDue) {
+          const picked = selectMissions(ctx, { cadence: 'weekly', count: WEEKLY_MISSION_COUNT, periodKey: thisMonday, recentIds: recent });
+          next = [...next, ...picked.map((def) => ({ defId: def.id, cadence: 'weekly' as const, periodKey: thisMonday, claimed: false }))];
+          recent = pushRecentMissionIds(recent, picked.map((d) => d.id));
+        }
+
         set({
-          missions: missions.map((m) => {
-            if ((m.type === 'daily' && dailyDue) || (m.type === 'weekly' && weeklyDue)) {
-              return { ...m, completed: false, completedAt: undefined };
-            }
-            return m;
-          }),
+          activeMissions: next,
+          recentMissionIds: recent,
           ...(dailyDue ? { lastDailyReset: today } : {}),
           ...(weeklyDue ? { lastWeeklyReset: thisMonday } : {}),
         });
+      },
+
+      claimMission: (defId) => {
+        const state = get();
+        const entry = state.activeMissions.find((am) => am.defId === defId && !am.claimed);
+        if (!entry) return false;
+
+        const def = MISSION_CATALOG.find((d) => d.id === defId);
+        if (!def) return false;
+
+        if (def.verify !== 'manual' && !def.verify(toMissionContext(state))) return false;
+
+        set((s) => ({
+          activeMissions: s.activeMissions.map((am) =>
+            am.defId === defId && !am.claimed ? { ...am, claimed: true, claimedAt: new Date().toISOString() } : am
+          ),
+        }));
+
+        get().addXP(def.reward);
+
+        const missionsCompletedTotal = get().profile.missionsCompletedTotal + 1;
+        set((s) => ({ profile: { ...s.profile, missionsCompletedTotal } }));
+        if (missionsCompletedTotal >= 5) get().unlockAchievement('a4');
+
+        return true;
       },
 
       checkAndUpdateStreak: () => {
@@ -722,28 +801,24 @@ export const useStore = create<PiggyState>()(
         // XP and level are lifetime achievements — never reset under any circumstances.
         profile: { ...DEFAULT_PROFILE, xp: state.profile.xp, level: state.profile.level },
         goals: [],
-        missions: DEFAULT_MISSIONS,
+        // Left empty rather than repopulated here: refreshActiveMissions() is
+        // self-healing (see its dailyCount/weeklyCount check) and runs again
+        // on the next tab mount — which always happens next, since resetting
+        // profile.onboardingCompleted to false redirects through onboarding
+        // before the tabs (and missions.tsx) are reachable again.
+        activeMissions: [],
+        recentMissionIds: [],
         achievements: DEFAULT_ACHIEVEMENTS,
       })),
     }),
     {
       name: 'piggy-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 1,
-      /**
-       * v0 → v1: normalize `goals[].deposits[].date` from full ISO timestamps
-       * to `YYYY-MM-DD`. Older builds wrote `new Date().toISOString()` while
-       * every reader compared against a day string, so per-day deposit reads
-       * always returned 0 — pinning the streak at 0 for anyone with a target.
-       *
-       * Readers normalize defensively too (see ./deposits), so this migration
-       * is about cleaning the stored shape, not about correctness of reads.
-       */
-      migrate: (persisted, from) => {
-        const state = persisted as PiggyState | undefined;
-        if (!state || from >= 1) return state as PiggyState;
-        return { ...state, goals: migrateGoalDepositDates(state.goals ?? []) };
-      },
+      version: PIGGY_STORE_VERSION,
+      // Migration steps live in storeMigrations.ts (pure, unit-tested) — this
+      // module transitively pulls in react-native (AsyncStorage,
+      // expo-notifications) and can't be imported under vitest at all.
+      migrate: (persisted, from) => migratePiggyState(persisted, from) as PiggyState,
     }
   )
 );

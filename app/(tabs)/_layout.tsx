@@ -41,7 +41,7 @@ function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: st
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export default function TabLayout() {
-  const checkAndResetMissions = useStore((state) => state.checkAndResetMissions);
+  const refreshActiveMissions = useStore((state) => state.refreshActiveMissions);
   const checkAndUpdateStreak = useStore((state) => state.checkAndUpdateStreak);
   const refreshNotifications = useStore((state) => state.refreshNotifications);
   const syncNotificationPermission = useStore((state) => state.syncNotificationPermission);
@@ -68,14 +68,14 @@ export default function TabLayout() {
 
   useEffect(() => {
     const controller = new AbortController();
-    checkAndResetMissions();
+    refreshActiveMissions();
     checkAndUpdateStreak();
     recordActivity();
     syncNotificationPermission().then(refreshNotifications);
     syncUserProfile(controller.signal);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        checkAndResetMissions();
+        refreshActiveMissions();
         checkAndUpdateStreak();
         recordActivity();
         syncNotificationPermission().then(refreshNotifications);

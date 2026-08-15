@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import { Zap, Trophy, Check } from 'lucide-react-native';
-import { useStore, Mission } from '@/lib/store';
+import { useStore, formatCurrency, type ActiveMission } from '@/lib/store';
+import { MISSION_CATALOG, buildMissionContext, renderMissionCopy, type MissionDef } from '@/lib/missions';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
@@ -22,36 +23,61 @@ const CARD_SHADOW = {
   elevation: 4,
 };
 
+interface ResolvedMission {
+  am: ActiveMission;
+  def: MissionDef;
+}
+
 export default function Missions() {
-  const missions = useStore((state) => state.missions);
+  const activeMissions = useStore((state) => state.activeMissions);
   const achievements = useStore((state) => state.achievements);
+  const goals = useStore((s) => s.goals);
   const level = useStore((s) => s.profile.level);
   const xp = useStore((s) => s.profile.xp);
-  const completeMissionAction = useStore((state) => state.completeMission);
-  const addXP = useStore((state) => state.addXP);
-  const unlockAchievement = useStore((state) => state.unlockAchievement);
+  const streak = useStore((s) => s.profile.streak);
+  const monthlyContribution = useStore((s) => s.profile.monthlyContribution);
+  const currency = useStore((s) => s.profile.currency);
+  const lastActiveDate = useStore((s) => s.profile.lastActiveDate);
+  const expenses = useStore((s) => s.profile.expenses);
+  const claimMissionAction = useStore((state) => state.claimMission);
 
   const [tab, setTab] = useState<'missions' | 'achievements'>('missions');
   const replay = useFocusReplay();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
 
-  const completeMission = (m: Mission) => {
-    completeMissionAction(m.id);
-    addXP(m.reward);
+  // The full locked/ready/manual/progress-bar treatment for these cards is
+  // Phase 3 (#66) — this only resolves catalog defs against the current
+  // assignments and wires tap-to-claim through the store, which now owns
+  // verification (claimMission re-checks before granting XP either way).
+  const ctx = useMemo(
+    () =>
+      buildMissionContext({
+        goals,
+        profile: { level, streak, monthlyContribution, currency, lastActiveDate },
+        expenses,
+      }),
+    [goals, level, streak, monthlyContribution, currency, lastActiveDate, expenses]
+  );
 
-    celebrate();
+  const resolved = useMemo<ResolvedMission[]>(
+    () =>
+      activeMissions
+        .map((am) => {
+          const def = MISSION_CATALOG.find((d) => d.id === am.defId);
+          return def ? { am, def } : null;
+        })
+        .filter((r): r is ResolvedMission => r !== null),
+    [activeMissions]
+  );
 
-    const currentMissions = useStore.getState().missions;
-    const completedCount = currentMissions.filter(x => x.completed).length;
-    if (completedCount >= 5) {
-      unlockAchievement('a4');
-    }
+  const dailyMissions = resolved.filter((r) => r.am.cadence === 'daily');
+  const weeklyMissions = resolved.filter((r) => r.am.cadence === 'weekly');
+  const claimedCount = resolved.filter((r) => r.am.claimed).length;
+
+  const handleClaim = (defId: string) => {
+    if (claimMissionAction(defId)) celebrate();
   };
-
-  const dailyMissions = missions.filter(m => m.type === 'daily');
-  const weeklyMissions = missions.filter(m => m.type === 'weekly');
-  const completedCount = missions.filter(m => m.completed).length;
 
   return (
     <ScreenTransition>
@@ -71,7 +97,7 @@ export default function Missions() {
             <Text className="text-xs font-bold text-on-surface-variant">{xp % 100}/100 XP</Text>
           </View>
           <AnimatedProgressBar progress={(xp % 100) / 100} />
-          <Text className="mt-3 text-xs font-medium text-on-surface-variant">{completedCount}/{missions.length} missions completed</Text>
+          <Text className="mt-3 text-xs font-medium text-on-surface-variant">{claimedCount}/{resolved.length} missions completed</Text>
         </View>
 
         {/* Segmented Button */}
@@ -81,14 +107,14 @@ export default function Missions() {
           <View className="pb-10">
             <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Daily Missions</Text>
             <View className="mb-6 gap-3">
-              {dailyMissions.map((m, index) => (
-                <MissionCard key={m.id} mission={m} onComplete={() => completeMission(m)} index={index} replay={replay} />
+              {dailyMissions.map((r, index) => (
+                <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleClaim(r.am.defId)} index={index} replay={replay} />
               ))}
             </View>
             <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Weekly Missions</Text>
             <View className="mb-6 gap-3">
-              {weeklyMissions.map((m, index) => (
-                <MissionCard key={m.id} mission={m} onComplete={() => completeMission(m)} index={index} replay={replay} />
+              {weeklyMissions.map((r, index) => (
+                <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleClaim(r.am.defId)} index={index} replay={replay} />
               ))}
             </View>
           </View>
@@ -178,48 +204,55 @@ function SegmentedControl({
 }
 
 function MissionCard({
-  mission,
+  entry,
+  ctx,
+  currency,
   onComplete,
   index = 0,
   replay,
 }: {
-  mission: Mission;
+  entry: ResolvedMission;
+  ctx: ReturnType<typeof buildMissionContext>;
+  currency: string;
   onComplete: () => void;
   index?: number;
   replay: SharedValue<number>;
 }) {
+  const { am, def } = entry;
+  const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency));
+
   return (
     <FadeInStagger index={index} delayStep={100} replay={replay}>
       <View
         className={`flex-row items-center gap-4 rounded-2xl p-4 min-h-[72px] ${
-          mission.completed ? 'bg-tertiary-container' : 'bg-surface border border-outline-variant'
+          am.claimed ? 'bg-tertiary-container' : 'bg-surface border border-outline-variant'
         }`}
-        style={mission.completed ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
+        style={am.claimed ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
       >
         <TouchableOpacity
           onPress={onComplete}
-          disabled={mission.completed}
+          disabled={am.claimed}
           hitSlop={4}
           className={`h-10 w-10 items-center justify-center rounded-full border-2 ${
-            mission.completed
+            am.claimed
               ? 'border-tertiary bg-tertiary'
               : 'border-outline bg-transparent'
           }`}
         >
-          {mission.completed && (
+          {am.claimed && (
             <Animated.View entering={ZoomIn.springify()}>
               <Check size={16} color="#FFFFFF" />
             </Animated.View>
           )}
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className={`text-sm font-bold mb-1 ${mission.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
-            {mission.title}
+          <Text className={`text-sm font-bold mb-1 ${am.claimed ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
+            {copy.title}
           </Text>
-          <Text className="text-xs text-on-surface-variant">{mission.description}</Text>
+          <Text className="text-xs text-on-surface-variant">{copy.description}</Text>
         </View>
         <View className="bg-primary-container rounded-full px-3 py-1">
-          <Text className="text-xs font-bold text-primary">+{mission.reward} XP</Text>
+          <Text className="text-xs font-bold text-primary">+{def.reward} XP</Text>
         </View>
       </View>
     </FadeInStagger>
