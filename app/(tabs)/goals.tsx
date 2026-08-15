@@ -18,6 +18,7 @@ import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { resolveMonthlyContribution } from '@/lib/goalMath';
+import { getTodayString } from '@/lib/deposits';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
@@ -182,7 +183,9 @@ export default function Goals() {
     const amount = Number(depositAmount);
     const updated = {
       savedAmount: goal.savedAmount + amount,
-      deposits: [...goal.deposits, { date: new Date().toISOString(), amount }],
+      // Calendar day (YYYY-MM-DD), not a timestamp — per-day readers compare
+      // against day strings. See the contract note in src/lib/deposits.ts.
+      deposits: [...goal.deposits, { date: getTodayString(), amount }],
     };
     updateGoal(goal.id, updated);
     const newGoal = { ...goal, ...updated };
