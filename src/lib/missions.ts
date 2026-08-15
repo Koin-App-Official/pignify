@@ -17,6 +17,16 @@
  *
  * Class A is the backbone. `selectMissions` caps Class B at one of the three
  * daily slots so an unverifiable checkbox never dominates the surfaced set.
+ *
+ * ## Phase 4 (#67) decision: no `profile.monthlyBudget` field
+ *
+ * The plan flagged a decision point: back budget-dependent planning missions
+ * with real data, or cut them. There turned out to be nothing to decide
+ * either way — no catalog def here has ever depended on a monthly-budget
+ * concept (REVIEW_CONTRIBUTION reads the `monthlyContribution` field that
+ * already exists; it's Class B for an unrelated reason, not a missing-budget
+ * one). Deferred: no field added, nothing cut, revisit only if a future
+ * mission actually needs it.
  */
 
 import type { DepositBearingGoal } from './deposits';
@@ -28,6 +38,7 @@ import {
   sumDepositsForDate,
   sumDepositsSince,
 } from './deposits';
+import { lessonForDate } from './lessons';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,6 +85,8 @@ export interface MissionContext {
   expensesLastWeek: MissionExpense[];
   dailyTarget: number;
   currency: string;
+  /** Lesson ids already answered correctly — see lessons.ts and the money-quiz def below. */
+  lessonsCompleted: string[];
 }
 
 export type MissionVerifier = 'manual' | ((ctx: MissionContext) => boolean);
@@ -118,6 +131,8 @@ export interface MissionContextInput {
   expenses: MissionExpense[];
   /** Injectable for tests; defaults to the real today. */
   today?: string;
+  /** Defaults to []. Pre-Phase-4 callers/tests need no changes. */
+  lessonsCompleted?: string[];
 }
 
 function sumExpenseAmounts(expenses: MissionExpense[]): number {
@@ -147,6 +162,7 @@ export function buildMissionContext(input: MissionContextInput): MissionContext 
     expensesLastWeek,
     dailyTarget: getDailySavingsTarget(input.goals),
     currency: input.profile.currency,
+    lessonsCompleted: input.lessonsCompleted ?? [],
   };
 }
 
@@ -492,6 +508,12 @@ const DINE_OUT_DETOX: MissionDef = {
   verify: 'manual',
 };
 
+/**
+ * Phase 4 (#67) decision: stays Class B (manual) permanently, not a stopgap.
+ * The app has no subscriptions-list feature (no data on what a user is
+ * subscribed to), so there is nothing to verify against. Revisit only if that
+ * feature gets built — don't half-wire a verifier without the data it needs.
+ */
 const CANCEL_SUBSCRIPTION: MissionDef = {
   id: 'cancel-subscription',
   category: 'spending',
@@ -529,9 +551,22 @@ const SAVE_20_PERCENT_OVER: MissionDef = {
   progress: (ctx) => ({ current: ctx.depositsThisWeek, target: ctx.dailyTarget * 7 * 1.2, isCurrency: true }),
 };
 
-// Deferred to Phase 4 (#67): a "today's money quiz" learning mission belongs
-// here once lessonsCompleted exists to verify against. Adding a half-wired
-// entry now (permanently ineligible) would be dead weight until then.
+const MONEY_QUIZ: MissionDef = {
+  id: 'money-quiz',
+  category: 'learning',
+  cadence: 'daily',
+  tier: 2,
+  reward: 8,
+  title: "Today's money quiz",
+  description: 'Answer a 30-second question about money.',
+  // Both read the SAME day-fixed lesson (lessonForDate is not
+  // completion-aware — see its doc comment). If eligible/verify each
+  // recomputed "today's lesson" from the live lessonsCompleted list, the
+  // moment of answering would shift which lesson counts as "today's" and the
+  // claim would fail against a lesson the user never saw.
+  eligible: (ctx) => !ctx.lessonsCompleted.includes(lessonForDate(ctx.today).id),
+  verify: (ctx) => ctx.lessonsCompleted.includes(lessonForDate(ctx.today).id),
+};
 
 // ---------------------------------------------------------------------------
 // Catalog — Tier 3 (stretch)
@@ -663,7 +698,7 @@ export const MISSION_CATALOG: MissionDef[] = [
   SAVE_THIS_WEEK, FIRST_GOAL, LOG_FIVE_EXPENSES, NO_SPEND_WEEKEND,
   // Tier 2
   SAVE_1_5X_TARGET, LOG_THREE_EXPENSES, EXPENSE_WITH_NOTE, SAVE_ALMOST_BOUGHT,
-  BEAT_LAST_WEEK, DINE_OUT_DETOX, CANCEL_SUBSCRIPTION, STREAK_SEVEN, SAVE_20_PERCENT_OVER,
+  BEAT_LAST_WEEK, DINE_OUT_DETOX, CANCEL_SUBSCRIPTION, STREAK_SEVEN, SAVE_20_PERCENT_OVER, MONEY_QUIZ,
   // Tier 3
   SAVE_2X_TARGET, TWO_DEPOSITS_TODAY, PANTRY_DAY,
   PUSH_GOAL_TEN_PERCENT, STREAK_THIRTY, REVIEW_CONTRIBUTION, ADD_SECOND_GOAL, NEGOTIATE_BILL,

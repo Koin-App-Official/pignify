@@ -13,6 +13,7 @@ import {
   type MissionGoal,
   type MissionProfileSlice,
 } from './missions';
+import { lessonForDate } from './lessons';
 
 const PROFILE = (overrides: Partial<MissionProfileSlice> = {}): MissionProfileSlice => ({
   level: 1,
@@ -303,6 +304,49 @@ describe('renderMissionCopy', () => {
     const copy = renderMissionCopy(def, ctx, fmt);
     expect(copy.title).toBe('Skip a coffee');
     expect(copy.amount).toBeNull();
+  });
+});
+
+describe('money-quiz mission', () => {
+  const def = MISSION_CATALOG.find((d) => d.id === 'money-quiz')!;
+  const verify = def.verify as (ctx: MissionContext) => boolean;
+  const today = '2026-08-15';
+  const todaysLessonId = lessonForDate(today).id;
+
+  it('is eligible when today\'s lesson has not been answered', () => {
+    expect(def.eligible?.(ctxFrom({ today, lessonsCompleted: [] }))).toBe(true);
+  });
+
+  it('is not eligible once today\'s lesson has been answered', () => {
+    expect(def.eligible?.(ctxFrom({ today, lessonsCompleted: [todaysLessonId] }))).toBe(false);
+  });
+
+  it('does not verify before answering', () => {
+    expect(verify(ctxFrom({ today, lessonsCompleted: [] }))).toBe(false);
+  });
+
+  it('verifies once today\'s specific lesson id is recorded', () => {
+    expect(verify(ctxFrom({ today, lessonsCompleted: [todaysLessonId] }))).toBe(true);
+  });
+
+  it('does not verify against a different day\'s lesson id', () => {
+    const otherDayLessonId = lessonForDate('2020-01-01').id;
+    if (otherDayLessonId === todaysLessonId) return; // same lesson by coincidence — nothing to assert
+    expect(verify(ctxFrom({ today, lessonsCompleted: [otherDayLessonId] }))).toBe(false);
+  });
+
+  it('eligible and verify agree on which lesson counts as "today" at every point in the answer flow', () => {
+    // Regression guard for the exact bug the fixed day->lesson mapping avoids:
+    // recomputing "today's lesson" from a live, mutating lessonsCompleted list
+    // would make eligible() and verify() disagree the instant the lesson is
+    // marked complete.
+    const before = ctxFrom({ today, lessonsCompleted: [] });
+    expect(def.eligible?.(before)).toBe(true);
+    expect(verify(before)).toBe(false);
+
+    const after = ctxFrom({ today, lessonsCompleted: [todaysLessonId] });
+    expect(def.eligible?.(after)).toBe(false);
+    expect(verify(after)).toBe(true);
   });
 });
 
