@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
-import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
+import { requestEmailOtp, verifyEmailOtp, SessionSecretUnavailableError } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
@@ -352,11 +352,19 @@ export default function Onboarding() {
       // the user is routed into PIN setup.
       setPendingSession({ userId, secret });
       setStep(OnboardingStep.Success);
-    } catch {
-      setNetworkError(
-        'That code is incorrect or expired, or the network failed. Request a new code and try again.'
-      );
-      setCode('');
+    } catch (err) {
+      if (err instanceof SessionSecretUnavailableError) {
+        // The code was right and createSession succeeded — only reading back the
+        // token failed. Don't imply the code was wrong, but it IS consumed now,
+        // so a retry needs a fresh one.
+        setNetworkError('Signed in, but we could not secure the session. Request a new code and try again.');
+        setCode('');
+      } else {
+        setNetworkError(
+          'That code is incorrect or expired, or the network failed. Request a new code and try again.'
+        );
+        setCode('');
+      }
     } finally {
       setIsLoading(false);
     }
