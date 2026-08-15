@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
-import { requestEmailOtp, verifyEmailOtp } from '@/lib/auth';
+import { requestEmailOtp, verifyEmailOtp, SessionSecretUnavailableError } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle, ShieldCheck } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/store';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
@@ -594,10 +594,21 @@ export default function Onboarding() {
     let secret: string;
     try {
       ({ userId, secret } = await verifyEmailOtp(otpUserId, code.trim()));
-    } catch {
-      // Bad/expired OTP — distinct from a webhook/network failure, so the user
-      // isn't told their code was wrong when the account was actually fine.
-      setNetworkError('That code is incorrect or expired. Request a new code and try again.');
+    } catch (err) {
+      if (err instanceof SessionSecretUnavailableError) {
+        // createSession actually succeeded — only reading the token back out of
+        // the cookie jar failed. Same "request a new code" remedy (the code is
+        // spent either way), but don't tell the user their code was wrong when
+        // it wasn't. Deliberately no setVerifiedSession: there is no usable
+        // secret to retry provisioning with.
+        setNetworkError(
+          'Signed in, but we could not secure the session. Request a new code and try again.'
+        );
+      } else {
+        // Bad/expired OTP — distinct from a webhook/network failure, so the user
+        // isn't told their code was wrong when the account was actually fine.
+        setNetworkError('That code is incorrect or expired. Request a new code and try again.');
+      }
       setCode('');
       setIsLoading(false);
       return;
