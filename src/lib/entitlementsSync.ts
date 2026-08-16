@@ -30,14 +30,14 @@ function normalizePlan(raw: unknown): UserPlan | undefined {
   return undefined;
 }
 
-const KNOWN_STATUSES: PlanStatus[] = ['active', 'trialing', 'canceled', 'expired'];
+const KNOWN_STATUSES: PlanStatus[] = ['active', 'trialing', 'canceled', 'expired', 'past_due'];
 
 /**
  * The Appwrite enum carries states the client has no separate handling for
- * (`past_due`, `cancel_scheduled`, `incomplete`). Rather than widen `PlanStatus`
- * for states nothing branches on, anything unrecognised is dropped and the
- * stored status is left as-is; `locked` still comes through and is what actually
- * gates access.
+ * (`cancel_scheduled`, `incomplete`). Rather than widen `PlanStatus` for states
+ * nothing branches on, anything unrecognised is dropped and the stored status
+ * is left as-is; `locked` still comes through and is what actually gates
+ * access.
  */
 function normalizeStatus(raw: unknown): PlanStatus | undefined {
   return KNOWN_STATUSES.includes(raw as PlanStatus) ? (raw as PlanStatus) : undefined;

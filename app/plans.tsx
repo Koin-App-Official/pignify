@@ -290,7 +290,9 @@ export default function Plans() {
                           ? 'Trial ended — features paused'
                           : profile.planStatus === 'trialing'
                             ? 'Current plan (free trial)'
-                            : 'Current plan'}
+                            : profile.planStatus === 'past_due'
+                              ? 'Payment failed — update your card to avoid losing access'
+                              : 'Current plan'}
                     </Text>
                   )}
                   {isPending && (

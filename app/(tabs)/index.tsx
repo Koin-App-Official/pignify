@@ -31,6 +31,7 @@ import { UpgradeModal } from '@/components/UpgradeModal';
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { triggerDeepAnalysis } from '@/lib/deepAnalysis';
+import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
 
 function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
   return (n: number): string => {
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
   const welcomeSeen = useStore((s) => s.profile.welcomeSeen);
   const justOnboarded = useStore((s) => s.profile.justOnboarded);
+  const planStatus = useStore((s) => s.profile.planStatus);
   const incomeSkipped = useStore((s) => s.profile.incomeSkipped);
   const name = useStore((s) => s.profile.name);
   const streak = useStore((s) => s.profile.streak);
@@ -79,9 +81,14 @@ export default function Dashboard() {
 
   // Onboarding hands straight off to the plan gate and PIN setup, so the
   // "you're all set" moment belongs here — the first time the finished app is
-  // actually on screen, with their goal in view — rather than mid-flow.
+  // actually on screen, with their goal in view — rather than mid-flow. The
+  // banner's own visibility is separate local state, captured once at mount:
+  // the effect below clears `justOnboarded` in the store immediately, and a
+  // condition bound directly to it would make the banner vanish on the very
+  // next render, before anyone could read it.
   const { confettiProgress, celebrate } = useCelebrate();
   const updateProfile = useStore((s) => s.updateProfile);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(justOnboarded);
   useEffect(() => {
     if (!justOnboarded) return;
     celebrate();
@@ -191,6 +198,45 @@ export default function Dashboard() {
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
         <View>
+        {showWelcomeBanner && (
+          <FadeInStagger index={0} delayStep={60} replay={replay}>
+            <TouchableOpacity
+              onPress={() => setShowWelcomeBanner(false)}
+              activeOpacity={0.85}
+              className="mb-4 rounded-2xl bg-primary-container p-4"
+            >
+              <Text className="text-sm font-bold text-on-primary-container">
+                You're all set{name ? `, ${name}` : ''}! 🎉
+              </Text>
+              <Text className="mt-1 text-xs leading-5 text-on-primary-container">
+                Your Piggy Plan is live.
+                {primaryGoal ? ` Time to start saving for your ${primaryGoal.name}.` : ''}
+              </Text>
+            </TouchableOpacity>
+          </FadeInStagger>
+        )}
+
+        {planStatus === 'past_due' && (
+          <FadeInStagger index={0} delayStep={60} replay={replay}>
+            <TouchableOpacity
+              onPress={() =>
+                safeOpenURL(
+                  `mailto:${SUPPORT_EMAIL}`,
+                  `No email app is set up on this device. Reach us at ${SUPPORT_EMAIL}.`
+                )
+              }
+              activeOpacity={0.85}
+              className="mb-4 rounded-2xl bg-warning-container p-4"
+              style={{ borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}
+            >
+              <Text className="text-sm font-semibold text-warning">
+                ⚠️ Your last payment failed. Update your card to keep your plan — tap to contact
+                support.
+              </Text>
+            </TouchableOpacity>
+          </FadeInStagger>
+        )}
+
         {incomeSkipped && (
           <FadeInStagger index={0} delayStep={60} replay={replay}>
             <View className="mb-4 rounded-2xl bg-warning-container p-4" style={{ borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}>

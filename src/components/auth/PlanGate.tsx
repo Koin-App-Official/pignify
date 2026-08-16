@@ -18,8 +18,8 @@
  * here has to stay visible: a checkout that can't start says so rather than
  * doing nothing, which would be indistinguishable from a dead button.
  */
-import { useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowRight, Check, ShieldCheck } from 'lucide-react-native';
@@ -114,6 +114,34 @@ export function PlanGate() {
       setChecking(false);
     }
   };
+
+  /**
+   * The Stripe return deep link (`piggy://plans?checkout=success`) can't reach
+   * plans.tsx while locked — this gate replaces the whole navigation stack, so
+   * that route never mounts to consume the parameter. Re-running the same
+   * check on every real return from the background (checkout opens in the
+   * external browser) covers that case without needing the deep link at all.
+   * "I've already subscribed" below stays as the manual fallback.
+   *
+   * Watches specifically for a background→active round trip, not just any
+   * 'active' event — 'inactive' also fires for transient interruptions
+   * (control center, a phone call banner) that aren't a return from checkout.
+   */
+  useEffect(() => {
+    if (reason !== 'locked') return;
+    let wasBackgrounded = false;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'background') {
+        wasBackgrounded = true;
+        return;
+      }
+      if (next === 'active' && wasBackgrounded) {
+        wasBackgrounded = false;
+        refreshAfterCheckout();
+      }
+    });
+    return () => sub.remove();
+  }, [reason, profile.userID]);
 
   /**
    * A locked user has exactly two ways out short of subscribing: log out, or
