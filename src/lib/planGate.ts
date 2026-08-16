@@ -58,6 +58,23 @@ export function planGateReason(input: PlanGateInput): PlanGateReason | null {
 }
 
 /**
+ * Whether picking `target` should go through checkout, independent of tier
+ * ranking. A trialing user is provisioned onto Family — the top tier —
+ * regardless of what they'll actually pay for, so ranking `target` against
+ * `current` makes every other tier read as a downgrade and hides checkout
+ * entirely: the exact bug this exists to prevent. Same reasoning for
+ * `expired` — there's no real subscription left to rank against. `active`
+ * and `canceled` users have a real paid tier, so ranking still applies:
+ * `isUpgradeTarget` is left to the caller (entitlements.ts's `isUpgrade`),
+ * since this module stays free of `store.ts`'s value exports so it keeps
+ * loading under vitest.
+ */
+export function canSubscribe(planStatus: PlanStatus, isUpgradeTarget: boolean): boolean {
+  if (planStatus === 'trialing' || planStatus === 'expired') return true;
+  return isUpgradeTarget;
+}
+
+/**
  * The lapsed check runs on every transition to unlocked, so a trial that ends
  * mid-week is caught on the next unlock rather than only at login. The intro is
  * deliberately excluded: it belongs to the onboarding hand-off, and surfacing it

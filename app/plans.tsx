@@ -16,6 +16,7 @@ import {
   type PlanConfig,
 } from '@/lib/entitlements';
 import { startCheckout, requestSubscriptionSync } from '@/lib/billing';
+import { canSubscribe } from '@/lib/planGate';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
 
@@ -155,10 +156,14 @@ export default function Plans() {
       return;
     }
 
-    if (isUpgrade(currentPlan, target)) {
-      // Upgrade — paid via Stripe Checkout (web/external, P1). The plan is
-      // applied only after a confirmed return + sync (see effect above), not
-      // when the browser merely opens.
+    if (canSubscribe(profile.planStatus, isUpgrade(currentPlan, target))) {
+      // Paid via Stripe Checkout (web/external, P1). While trialing (or
+      // expired) every tier goes through checkout, not just ranked upgrades —
+      // the trial provisions Family regardless of what the user will actually
+      // pay for, so ranking against it would hide checkout for every other
+      // tier (see ONBOARDING_FIXES.md #4). The plan is applied only after a
+      // confirmed return + sync (see effect above), not when the browser
+      // merely opens.
       setBusy(target);
       try {
         const result = await startCheckout(target, profile.userID);

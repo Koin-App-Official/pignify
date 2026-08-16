@@ -5,6 +5,7 @@ import {
   trialDaysRemaining,
   lockoutEnforced,
   LOCKOUT_INTENDED,
+  canSubscribe,
 } from './planGate';
 import type { PlanGateInput } from './planGate';
 
@@ -93,6 +94,31 @@ describe('trialDaysRemaining', () => {
 
   it('returns null on an unparseable date rather than NaN', () => {
     expect(trialDaysRemaining('not-a-date', now)).toBeNull();
+  });
+});
+
+describe('canSubscribe', () => {
+  it('allows checkout for a trialing user regardless of tier ranking', () => {
+    // The trial provisions Family (the top tier), so every other target
+    // would rank as a downgrade if ranking were consulted here — this is
+    // the exact bug (#4/#5 in ONBOARDING_FIXES.md) the helper exists to fix.
+    expect(canSubscribe('trialing', true)).toBe(true);
+    expect(canSubscribe('trialing', false)).toBe(true);
+  });
+
+  it('allows checkout for an expired trial regardless of tier ranking', () => {
+    expect(canSubscribe('expired', true)).toBe(true);
+    expect(canSubscribe('expired', false)).toBe(true);
+  });
+
+  it('defers to tier ranking for an active subscriber', () => {
+    expect(canSubscribe('active', true)).toBe(true);
+    expect(canSubscribe('active', false)).toBe(false);
+  });
+
+  it('defers to tier ranking for a canceled subscription', () => {
+    expect(canSubscribe('canceled', true)).toBe(true);
+    expect(canSubscribe('canceled', false)).toBe(false);
   });
 });
 

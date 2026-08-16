@@ -396,6 +396,10 @@ export interface PiggyState {
    * Apply a plan change. Upgrades (higher rank) take effect immediately (C1);
    * downgrades (lower rank) are scheduled for the next billing cycle (C2) and
    * stored in `pendingPlan` without mutating the active plan or any data (C4).
+   * A trialing user has no real subscription to rank against — they're
+   * provisioned onto Family regardless of what they'll pay for, so every
+   * other tier would rank as a "downgrade" and get scheduled instead of
+   * applied. Any target applies immediately while trialing, same as C1.
    *
    * NOTE: In production this state is authoritative on the backend and driven by
    * a Stripe webhook -> Appwrite sync, not the client. This client action is the
@@ -564,8 +568,9 @@ export const useStore = create<PiggyState>()(
           // Re-selecting the active plan cancels any pending downgrade.
           return { profile: { ...state.profile, pendingPlan: null, planStatus: 'active' } };
         }
-        if (PLAN_RANK[target] > PLAN_RANK[current]) {
+        if (PLAN_RANK[target] > PLAN_RANK[current] || state.profile.planStatus === 'trialing') {
           // Upgrade — immediate (C1). Resets loyalty tenure and clears pending state.
+          // Also immediate for any target while trialing (see doc comment above).
           const now = new Date();
           const periodEnd = new Date(now);
           periodEnd.setMonth(periodEnd.getMonth() + 1);
