@@ -223,6 +223,45 @@ describe('migratePiggyState — edge cases', () => {
   it('PIGGY_STORE_VERSION matches the highest migration step', () => {
     // Sanity guard: if a step is added above without bumping this, zustand
     // would never invoke migrate for it on a fresh install already at the old version.
-    expect(PIGGY_STORE_VERSION).toBe(3);
+    expect(PIGGY_STORE_VERSION).toBe(4);
+  });
+});
+
+describe('migratePiggyState — v3 → v4 (free → beginner rename)', () => {
+  it('renames the entry tier on an installed profile', () => {
+    const migrated = migratePiggyState({ profile: { plan: 'free', pendingPlan: null } }, 3) as any;
+    expect(migrated.profile.plan).toBe('beginner');
+  });
+
+  it('renames a scheduled downgrade target too', () => {
+    // A stale `free` here would be applied verbatim at the next billing cycle.
+    const migrated = migratePiggyState(
+      { profile: { plan: 'family', pendingPlan: 'free' } },
+      3
+    ) as any;
+    expect(migrated.profile.plan).toBe('family');
+    expect(migrated.profile.pendingPlan).toBe('beginner');
+  });
+
+  it('leaves paid tiers and a null pendingPlan untouched', () => {
+    const migrated = migratePiggyState(
+      { profile: { plan: 'medium', pendingPlan: null } },
+      3
+    ) as any;
+    expect(migrated.profile.plan).toBe('medium');
+    expect(migrated.profile.pendingPlan).toBeNull();
+  });
+
+  it('carries the rename through a full v0 payload', () => {
+    // V0_PAYLOAD predates every step, so this proves the rename still lands
+    // after the goal/mission/lesson steps have rewritten the state object.
+    const migrated = migratePiggyState(V0_PAYLOAD, 0) as any;
+    expect(migrated.profile.plan).toBe('beginner');
+  });
+
+  it('does not invent a profile on a payload that has none', () => {
+    const migrated = migratePiggyState({ goals: [] }, 3) as any;
+    expect(migrated.profile.plan).toBeUndefined();
+    expect(migrated.goals).toEqual([]);
   });
 });

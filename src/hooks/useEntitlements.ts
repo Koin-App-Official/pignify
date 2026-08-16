@@ -16,7 +16,7 @@ import {
 import { evaluatePeriodicQuota } from '@/lib/quota';
 
 export function useEntitlements() {
-  const plan = useStore((s) => s.profile.plan ?? 'free');
+  const plan = useStore((s) => s.profile.plan ?? 'beginner');
   const goals = useStore((s) => s.goals);
   const monthlyIncome = useStore((s) => s.profile.monthlyIncome);
   const addonMessageBalance = useStore((s) => s.addonMessageBalance);

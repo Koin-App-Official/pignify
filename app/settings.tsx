@@ -145,9 +145,13 @@ export default function Settings() {
                     <Text className="text-[14px] font-medium text-on-surface-variant mt-[2px]">
                       {profile.planStatus === 'canceled'
                         ? 'Canceled — active until period end'
-                        : pendingConfig
-                          ? `Switching to ${pendingConfig.displayName} next cycle`
-                          : `${formatUSD(planConfig.priceUSD)}/mo`}
+                        : profile.planStatus === 'expired'
+                          ? 'Free trial ended'
+                          : profile.planStatus === 'trialing'
+                            ? 'Free trial'
+                            : pendingConfig
+                              ? `Switching to ${pendingConfig.displayName} next cycle`
+                              : `${formatUSD(planConfig.priceUSD)}/mo`}
                     </Text>
                   </View>
                 </View>

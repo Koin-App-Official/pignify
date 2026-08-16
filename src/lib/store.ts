@@ -93,7 +93,13 @@ export interface Achievement {
   unlockedAt?: string;
 }
 
-export type UserPlan = 'free' | 'medium' | 'family';
+/**
+ * Plan tiers. `beginner` is the $5.99 entry tier — it was called `free` on the
+ * client until #83, while the backend (`entitlements.effective_plan_id`, the
+ * `plans` table) always called it `beginner`. The names now match; persisted
+ * `free` values are migrated in storeMigrations.ts v3 -> v4.
+ */
+export type UserPlan = 'beginner' | 'medium' | 'family';
 
 /**
  * Ascending tier rank. Used to decide upgrade (immediate) vs downgrade
@@ -101,7 +107,7 @@ export type UserPlan = 'free' | 'medium' | 'family';
  * use it without importing the entitlements module — entitlements imports this.
  */
 export const PLAN_RANK: Record<UserPlan, number> = {
-  free: 0,
+  beginner: 0,
   medium: 1,
   family: 2,
 };
@@ -112,12 +118,18 @@ export const PLAN_RANK: Record<UserPlan, number> = {
  * with existing imports; prefer the entitlements module.
  */
 export const PLAN_MESSAGE_LIMITS: Record<UserPlan, number> = {
-  free: 0,
+  beginner: 0,
   medium: 6,
   family: 20,
 };
 
-export type PlanStatus = 'active' | 'trialing' | 'canceled';
+/**
+ * Subscription lifecycle. `expired` is a lapsed 14-day trial that never
+ * converted — distinct from `canceled` (a paid subscription the user ended), so
+ * the lockout screen can tell the two apart. Mirrors the Appwrite
+ * `entitlements.status` enum.
+ */
+export type PlanStatus = 'active' | 'trialing' | 'canceled' | 'expired';
 
 export interface UserProfile {
   userID?: string;
@@ -140,6 +152,12 @@ export interface UserProfile {
   currentPeriodEnd: string | null;
   /** ISO timestamp the current plan began — basis for loyalty tenure (C18/C19). */
   planSince: string | null;
+  /**
+   * ISO timestamp the 14-day no-card trial ends, as granted by CLAUDE_onboarding
+   * and reported by CLAUDE_entitlements_get. null once a real subscription
+   * exists, or before the first entitlements sync has landed.
+   */
+  trialEndsAt: string | null;
   monthlyIncome: number | null;
   incomeSkipped: boolean;
   /**
@@ -209,11 +227,12 @@ export const DEFAULT_PROFILE: UserProfile = {
   dateOfBirth: '',
   country: '',
   currency: 'USD',
-  plan: 'free',
+  plan: 'beginner',
   planStatus: 'active',
   pendingPlan: null,
   currentPeriodEnd: null,
   planSince: null,
+  trialEndsAt: null,
   monthlyIncome: null,
   incomeSkipped: false,
   planningMode: 'contribution',
@@ -493,7 +512,11 @@ function buildAndRefreshSchedule(state: PiggyState) {
     savedThisWeekLabel: formatCurrency(savedThisWeek, profile.currency),
     expenseCountThisWeek,
     planStatus: profile.planStatus,
-    currentPeriodEnd: profile.currentPeriodEnd,
+    // `trialEndsAt` first: it's the only one of the two the entitlements sync
+    // actually writes. `currentPeriodEnd` is set solely by the checkout-return
+    // path in plans.tsx, so for a trial user it stays null — and the
+    // trial-ending reminder would never be scheduled at all.
+    currentPeriodEnd: profile.trialEndsAt ?? profile.currentPeriodEnd,
     planDisplayName: profile.plan,
   }).catch(() => {});
 }

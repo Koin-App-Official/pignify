@@ -7,10 +7,9 @@
  * authority. Today's client checks are UX gating only; do not treat them as the
  * security boundary (see requirements doc, assumption A2 / question Q-authority).
  *
- * Naming note: the enum value `free` is the spec's paid "Beginner" tier. Renaming
- * the persisted enum (`free` -> `beginner`) is a separate migration (question
- * Q-naming) and deliberately out of scope for this slice; we surface the correct
- * label via `displayName` instead.
+ * Naming note: the entry tier is `beginner` on both client and server as of #83.
+ * It was `free` on the client only, which was actively misleading for a $5.99
+ * tier and never matched the backend's `effective_plan_id`.
  *
  * Encryption note (decision K4 = "strong baseline for all"): every tier receives
  * strong encryption of financial data. `exclusiveProtection` represents an
@@ -55,13 +54,17 @@ export interface PlanConfig {
   /** Internal soft cap used only when emailReportsSoftLimited is true. */
   emailReportsSoftCap: number;
   features: PlanFeatures;
-  /** Free-trial length in days; 0 means no trial. Only Family offers a trial (C5). */
+  /**
+   * Free-trial length in days. Every tier now gets the same 14-day no-card
+   * trial (decision D1); the trial itself is granted server-side by
+   * CLAUDE_onboarding, so this is descriptive copy, not the authority.
+   */
   trialDays: number;
 }
 
 export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
-  free: {
-    id: 'free',
+  beginner: {
+    id: 'beginner',
     displayName: 'Beginner',
     priceUSD: 5.99,
     quotas: { incomes: 1, goals: 1, devices: 1, aiMessages: 0, emailReports: 0, deepAnalysis: 0 },
@@ -77,7 +80,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
       goalBonus: false,
       loyaltyDiscount: false,
     },
-    trialDays: 0,
+    trialDays: 14,
   },
   medium: {
     id: 'medium',
@@ -96,7 +99,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
       goalBonus: false,
       loyaltyDiscount: false,
     },
-    trialDays: 0,
+    trialDays: 14,
   },
   family: {
     id: 'family',
@@ -122,7 +125,7 @@ export const PLAN_CONFIG: Record<UserPlan, PlanConfig> = {
       goalBonus: true,
       loyaltyDiscount: true,
     },
-    trialDays: 7,
+    trialDays: 14,
   },
 };
 
@@ -132,7 +135,7 @@ export const PLAN_ORDER: UserPlan[] = (Object.keys(PLAN_CONFIG) as UserPlan[]).s
 );
 
 export function getPlanConfig(plan: UserPlan): PlanConfig {
-  return PLAN_CONFIG[plan] ?? PLAN_CONFIG.free;
+  return PLAN_CONFIG[plan] ?? PLAN_CONFIG.beginner;
 }
 
 export function isUnlimited(q: QuotaValue): q is 'unlimited' {
