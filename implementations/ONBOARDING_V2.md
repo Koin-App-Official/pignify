@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A, B and C merged; D implemented. Tick boxes as work lands.
+Status: **in progress** — A–D merged. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
 
 ## Progress
 
@@ -10,66 +10,85 @@ Status: **in progress** — A, B and C merged; D implemented. Tick boxes as work
 | A | Onboarding structure fixes | ✅ merged ([#56](https://github.com/Koin-App-Official/pignify/pull/56)) — device check pending |
 | B | Pre-signup carousel | ✅ merged ([#58](https://github.com/Koin-App-Official/pignify/pull/58)) — copy + visuals pending review |
 | C | Trust & consent copy pass | ✅ merged ([#60](https://github.com/Koin-App-Official/pignify/pull/60)) — "email me this plan" deferred |
-| D | Push pre-permission step | ☑ implemented ([#61](https://github.com/Koin-App-Official/pignify/issues/61)) — device check pending |
-| E | RevenueCat backend & products | ☐ blocked on store setup |
-| F | App-side billing swap | ☐ not started |
-| G | Onboarding paywall + trial lifecycle | ☐ not started |
+| D | Push pre-permission step | ✅ merged ([#62](https://github.com/Koin-App-Official/pignify/pull/62)) — device check pending |
+| E | Trial entitlement machinery (no payment) | ☐ ready to start |
+| F | App-side trial state | ☐ blocked on E |
+| G | Trial gate + day-15 lockout | ☐ blocked on F |
+| H | Payment rail | ⛔ deferred — rail undecided, see open decisions |
 
-## Decisions locked with the user (2026-08-14)
+## Decisions
+
+Locked 2026-08-14, **revised 2026-08-16** where marked.
 
 | # | Decision |
 |---|---|
-| D1 | No free tier. **14-day free trial on every plan**, then auto-charge on day 15. |
-| D2 | **RevenueCat replaces Stripe entirely.** Both iOS and Android. |
-| D3 | Trial end without conversion (cancelled in store / billing failure) = **full lockout**, consistent with the existing cancel rule. |
-| D4 | Age gate (DOB) **moves early**, out of the terminal position after 7 screens of work. |
-| D5 | **Paywall before PIN creation**, after account creation. |
-| D6 | "No bank connection" is a **lead marketing message**, not a footnote. |
-| D7 | Verified email stays at the **end** of onboarding; push becomes the drop-off recovery channel. |
-| D8 | Ship as **separate issues/branches**, not one PR. |
+| D1 | **REVISED.** 14-day free trial on every plan, **no card required**. Was: card-up-front via store IAP. |
+| D2 | **REVISED — RevenueCat is dropped.** Was: "RevenueCat replaces Stripe entirely." The existing Stripe rail is *retained, not archived*. |
+| D3 | **REVISED.** The trial always runs its full 14 days, whenever the user cancels. After expiry without a subscription: full lockout. Was: immediate cutoff on cancel. |
+| D4 | Age gate (DOB) moves early. ✅ done in A |
+| D5 | Plan selection before PIN creation, after account creation. |
+| D6 | "No bank connection" is a lead marketing message. ✅ done in B/C |
+| D7 | Verified email stays at the end of onboarding; push is the drop-off recovery channel. ✅ done in D |
+| D8 | Ship as separate issues/branches, not one PR. |
+| D9 | **NEW.** No Apple Developer Program access. Nothing may depend on it — no App Store, no TestFlight, no iOS device builds, no Apple IAP. **Temporary**, so keep seams open rather than designing Apple out permanently. |
+| D10 | **NEW.** Android / Google Play is the near-term release target. Mobile only — no web build. |
+| D11 | **NEW.** Payment collection is deferred. The trial ships with **no payment rail at all**; the rail is chosen and built before the first cohort reaches day 15. |
 
-## Open decisions — needed before the issue that depends on them
+## Why the trial can ship before the payment rail
 
-- [ ] **Mid-trial upgrade behaviour** (blocks F): carry the remaining trial over to the new tier, or charge immediately? Apple grants only one intro offer per subscription group per Apple ID, so there is no second trial either way.
-- [ ] **Escape hatch on paywall failure** (blocks G): hard wall with no skip means an RC/store outage blocks 100% of new signups. Accept, or add a bounded grace path?
-- [ ] **Account-deletion copy** (blocks E): store subscriptions can't be cancelled server-side — the user must do it. Needs wording + a manage-subscriptions deep link.
+This is the whole reason E–G are unblocked, so it's worth stating plainly.
+
+A no-card trial involves **no transaction**. No store products, no checkout, no card entry, no receipt validation. It is an entitlement this app grants itself and expires on a timer. Nothing in E, F, or G touches the Apple Developer Program, Google Play Billing, Stripe, or RevenueCat.
+
+Two useful consequences:
+
+- **Google Play's billing policy does not apply yet.** It governs how digital goods are *paid for* in a Play-distributed app. With nothing sold in-app, there is nothing to govern. It becomes live the moment H lands, which is exactly when the rail decision has to be settled.
+- **The deadline is real but not immediate.** Day 15 of the first real user is when H must exist. That is a schedule, not a blocker.
+
+The risk to name: if H slips past that date, the first cohort hits a lockout screen with no way to pay. See the open decision on day-15 fallback.
 
 ## Target flow
 
 ```
-Carousel (3 slides)
+Carousel (3 slides)                          ✅ B
   → Name
-  → Age gate (DOB wheel + confirm)        ← moved up from step 7
+  → Age gate (DOB wheel + confirm)           ✅ A
   → Localization
   → Goal
   → Target amount
   → Income (skippable)
   → Contribution
-  → Blueprint Review  (+ optional "email me this plan")
-  → Push pre-permission                    ← new; the recovery channel
+  → Blueprint Review
+  → Push pre-permission                      ✅ D
   → Email + OTP  → account created
-  → Paywall: pick plan, start 14-day trial ← new, mandatory
+  → Start 14-day trial — one tap, no card    ← G (was: paywall)
   → PIN creation
   → Success + confetti
   → App
 ```
 
-Draft state persists across app kills at every step up to account creation.
+Draft state persists across app kills at every step up to account creation. ✅ A
+
+## Open decisions
+
+- [ ] **Which payment rail** (blocks H). Three viable options, see H.
+- [ ] **Day-15 fallback if H isn't ready.** Hard lockout with no way to pay is the worst outcome. Options: extend the trial server-side for existing users (cheap — `trial_ends_at` is a column), or soft-lock to read-only. Needs deciding *before* launch, not after.
+- [ ] **Play policy stance**, only if Stripe is chosen in H — selling digital subscriptions in a Play-distributed app outside Play Billing is the exact thing the policy targets.
+
+**Closed by the rewrite:** mid-trial upgrade behaviour (no payment, so nothing to prorate), paywall-failure escape hatch (no payment at the gate), account-deletion copy (Stripe rail retained, so `CLAUDE_account_delete` can still cancel server-side — the store-cancellation regression was a RevenueCat problem and is gone).
 
 ---
 
-# Issue A — Onboarding structure fixes
+# Issue A — Onboarding structure fixes ✅
 
-**Branch:** `feat/issue-55-onboarding-structure` ([#55](https://github.com/Koin-App-Official/pignify/issues/55)) · **Depends on:** nothing · **Files:** `app/onboarding.tsx`, new `src/lib/onboardingDraft.ts`
+**Branch:** `feat/issue-55-onboarding-structure` ([#55](https://github.com/Koin-App-Official/pignify/issues/55)) · **Merged:** [#56](https://github.com/Koin-App-Official/pignify/pull/56)
 
-Independent of the billing work; ships first and standalone.
-
-- [x] **Move the age gate to position 2.** Extract the DOB block (`DobWheelPicker` + `DobConfirmModal` + `ageBlocked` terminal screen, currently `onboarding.tsx:897-924`) into its own `OnboardingStep.AgeGate = 1`. `AccountFinalization` keeps only email/OTP. Renumber the enum; the enum exists precisely so this is reviewable.
-- [x] **Honest progress.** `TOTAL_STEPS` currently = 6 while 8 interactive screens exist; the bar disappears at `BlueprintReview` (`onboarding.tsx:389`), so users hit "Step 6 of 6" then face three more screens. Make the bar span every step through the paywall, and keep it visible.
-- [x] **Draft persistence.** New `src/lib/onboardingDraft.ts` — debounced write of the collected answers to AsyncStorage on each step advance; hydrate on mount; clear on `onboardingCompleted`.
+- [x] **Move the age gate to position 2.** Extract the DOB block into its own `OnboardingStep.AgeGate = 1`. `AccountFinalization` keeps only email/OTP.
+- [x] **Honest progress.** `TOTAL_STEPS` derives from the enum instead of a hardcoded 6 that told users "Step 6 of 6" with three screens to go.
+- [x] **Draft persistence.** `src/lib/onboardingDraft.ts` — debounced AsyncStorage writes, hydrate on mount, clear on completion.
 - [x] Never persist `code`, `pendingSession`, or `otpUserId`.
 - [x] On resume show a one-line "Picking up where you left off, {name}".
-- [x] **Webhook retry.** On provisioning failure after a *successful* OTP (`onboarding.tsx:375-384`), the copy currently tells the user to tap Resend — wrong remedy. Add an explicit **Retry** that re-fires the idempotent webhook with the session already held, keeping Resend for genuine OTP problems.
+- [x] **Webhook retry.** A provisioning failure after a *successful* OTP now offers a real Retry against the idempotent webhook, not a Resend of a spent code.
 
 **Done when:**
 - [ ] Cold-kill at any pre-account step resumes with all answers intact. *(draft module unit-tested; not yet exercised on a device)*
@@ -79,17 +98,13 @@ Independent of the billing work; ships first and standalone.
 
 ---
 
-# Issue B — Pre-signup carousel
+# Issue B — Pre-signup carousel ✅
 
-**Branch:** `feat/issue-57-welcome-carousel` ([#57](https://github.com/Koin-App-Official/pignify/issues/57)) · **Depends on:** nothing · **Files:** new `app/welcome.tsx`, `app/(tabs)/index.tsx:154`, `src/components/Mascot.tsx`
+**Branch:** `feat/issue-57-welcome-carousel` ([#57](https://github.com/Koin-App-Official/pignify/issues/57)) · **Merged:** [#58](https://github.com/Koin-App-Official/pignify/pull/58)
 
-Today a cold install lands directly on an autofocused name field.
-
-- [x] Build `app/welcome.tsx` — three swipeable slides, mascot-led per `MASKOT.md`.
-- [x] Persisted "seen" flag so it shows once; route cold installs here before `/onboarding`.
+- [x] Build `app/welcome.tsx` — three swipeable slides, mascot-led.
+- [x] Persisted `welcomeSeen` flag; route cold installs here before `/onboarding`.
 - [x] Review + finalise the draft copy below.
-
-**Draft copy — for review, not final:**
 
 | Slide | Headline | Sub |
 |---|---|---|
@@ -97,112 +112,113 @@ Today a cold install lands directly on an autofocused name field.
 | 2 | No bank login. Ever. | Piggy never connects to your accounts. There's nothing to link, and nothing for anyone to steal. |
 | 3 | A coach in your pocket | Streaks, missions, and an AI coach that knows your plan — so month three feels as good as day one. |
 
-Slide 2 is the differentiator and is structurally true, not a policy promise. Reused verbatim later at the email step.
-
 **Open risk to watch:** leading with "no bank connection" invites *"so it's a spreadsheet?"* — slide 3 is the counterweight and must not be dropped.
 
 ---
 
-# Issue C — Trust & consent copy pass
+# Issue C — Trust & consent copy pass ✅
 
-**Branch:** `feat/issue-59-onboarding-trust-copy` ([#59](https://github.com/Koin-App-Official/pignify/issues/59)) · **Depends on:** A (merged) · **Files:** `app/onboarding.tsx`
+**Branch:** `feat/issue-59-onboarding-trust-copy` ([#59](https://github.com/Koin-App-Official/pignify/issues/59)) · **Merged:** [#60](https://github.com/Koin-App-Official/pignify/pull/60)
 
-- [x] **Replace the legal wall.** `LegalLinksNote` (`onboarding.tsx:46-73`) drops five underlined legal links directly under the email field, at the single highest-anxiety moment. Replace with one trust line — *"We're asking for your email. Not your bank."* — plus a collapsed "Legal" expander holding all five links unchanged. No links removed, just not shouted.
-- [x] **Trust copy at the DOB step**, explaining why a savings app wants a birthdate (legal 18+ requirement, not profiling).
-- [ ] **"Email me this plan"** — optional secondary action on Blueprint Review. Consented capture one screen earlier than today, from a self-selected high-intent slice; prefills the OTP step. **DEFERRED — blocked:** the n8n backend has no email-sending workflow or provider credential at all today (no SMTP/SendGrid/Resend), and provisioning one needs account access. Also blocks the paid tiers' `emailReports` feature, which is likewise unimplemented.
-- [ ] Supporting n8n send-blueprint webhook. **DEFERRED** with the item above — needs an email provider configured in n8n first.
+- [x] **Replace the legal wall.** Five underlined links under the email field became one trust line — *"We're asking for your email. Not your bank."* — plus an expander holding all five, unchanged.
+- [x] **Trust copy at the DOB step** — legal 18+ requirement, not profiling.
+- [ ] **"Email me this plan"** — **DEFERRED, blocked:** the n8n backend has no email-sending workflow or provider credential (no SMTP/SendGrid/Resend). Also blocks the paid tiers' `emailReports` feature, which is likewise unimplemented.
+- [ ] Supporting n8n send-blueprint webhook. **DEFERRED** with the item above.
 
 ---
 
-# Issue D — Push pre-permission step
+# Issue D — Push pre-permission step ✅
 
-**Branch:** `feat/issue-61-push-preprompt` ([#61](https://github.com/Koin-App-Official/pignify/issues/61)) · **Depends on:** A (merged) · **Files:** `app/onboarding.tsx`, `src/lib/notifications.ts`
+**Branch:** `feat/issue-61-push-preprompt` ([#61](https://github.com/Koin-App-Official/pignify/issues/61)) · **Merged:** [#62](https://github.com/Koin-App-Official/pignify/pull/62)
 
-- [x] New step between Blueprint Review and the email step: custom priming screen ("we'll nudge you when your streak is on the line").
-- [x] Fire the native prompt via the existing `requestNotificationPermission()`; declining is non-blocking.
+- [x] New step between Blueprint Review and the email step: custom priming screen.
+- [x] Fire the native prompt via `requestNotificationPermission()`; declining is non-blocking.
 - [x] Wire the result into `profile.notificationPrefs` so Settings reflects reality.
-- [x] Bump `DRAFT_VERSION` — inserting a step shifts the indices `onboardingDraft` stores, so pre-existing drafts must be discarded rather than restored onto the wrong screen.
+- [x] Bump `DRAFT_VERSION` — inserting a step shifts the persisted indices.
 
-Rationale: post-value (the plan is already on screen), pre-friction (immediately before the email/OTP step, where abandonment concentrates), and it's the *only* channel that can reach a user who abandons before giving an email. iOS grants one shot at the native dialog, so the priming screen matters.
-
-**Note:** `plugins/withoutPushEntitlement` strips `aps-environment` on purpose — this is local-notifications-only, which is all the retention engine in `notifications.ts` needs. No remote-push infrastructure is introduced here.
+**Note:** `plugins/withoutPushEntitlement` strips `aps-environment` on purpose — local notifications only.
 
 ---
 
-# Issue E — RevenueCat backend & product configuration
+# Issue E — Trial entitlement machinery (no payment rail)
 
-**Branch:** `feat/issue-E-revenuecat-backend` · **Depends on:** nothing (but blocks F, G) · **Files:** n8n workflows, Appwrite schema, `scripts/appwrite/setup.mjs`
+**Branch:** `feat/issue-E-trial-entitlements` · **Depends on:** nothing · **Blocks:** F, G · **Files:** n8n workflows, Appwrite schema
 
-### Blocking manual work — I cannot do these; they need your accounts
+> **Rewritten.** Was "RevenueCat backend & product configuration". No store, no RC, no Stripe changes. Nothing here needs the Apple Developer Program.
 
-- [ ] Apple Developer paid-apps agreement + banking/tax complete.
-- [ ] App Store Connect: one subscription group, three auto-renewable subscriptions (Beginner $5.99 / Medium $7.99 / Family $9.99), each with a **14-day free trial introductory offer**.
-- [ ] Play Console: three subscriptions with matching base plans + 14-day free-trial offers.
-- [ ] RevenueCat: project, both apps, entitlements/offerings configured, API keys issued.
-- [ ] Hand over the RC public SDK keys and product identifiers.
-
-### Work
-
-- [ ] **New `CLAUDE_revenuecat_webhook`** — consume RC webhooks (`INITIAL_PURCHASE`, `RENEWAL`, `CANCELLATION`, `EXPIRATION`, `BILLING_ISSUE`, `PRODUCT_CHANGE`), map to the existing state machine in `src/lib/subscription.ts` (already models `trialing`/`active`/`past_due`/`canceled` + full lockout), write the `subscriptions`/`entitlements` Appwrite rows.
-- [ ] **Retire the Stripe rail** — archive `CLAUDE_billing_checkout`, `CLAUDE_billing_addon`, `CLAUDE_stripe_webhook`, `CLAUDE_billing_sync`.
-- [ ] Keep `CLAUDE_entitlements_get` unchanged — it stays the app's single read path, so Appwrite remains the authority the app trusts.
-- [ ] **Extra AI messages** ($2.99/msg, `extraMessagePriceUSD`) becomes a **consumable IAP** rather than a Stripe one-off; the webhook credits `addonMessageBalance` on purchase.
-- [ ] **`CLAUDE_account_delete` change** — it currently cancels the Stripe subscription server-side. **Store subscriptions cannot be cancelled by us**; only the user can. Delete the account *and* tell the user plainly they must cancel themselves, with a deep link to the store's manage-subscriptions page. Real behavioural regression versus Stripe; needs its own copy.
-- [ ] **Localized pricing** — stores handle pricing/tax natively (the Stripe rail did USD/PLN/HUF via Stripe Tax). Displayed prices must come from RC's fetched offerings, never the hardcoded `priceUSD` in `entitlements.ts`.
+- [ ] **Add `trial_ends_at`** to the `entitlements` table (and `trial_started_at` for analytics).
+- [ ] **`CLAUDE_onboarding` grants the trial.** It already seeds beginner entitlements on signup — extend it to stamp a 14-day trial with `status: trialing` and the chosen plan. One workflow, one node.
+- [ ] **Expire lazily on read, not on a cron.** `CLAUDE_entitlements_get` compares `trial_ends_at` to now and returns `expired` past the date. This mirrors the lazy period-key pattern already used for quotas in `src/lib/quota.ts` and needs no scheduler.
+- [ ] **Return `trialEndsAt` and `status`** from `CLAUDE_entitlements_get` so the client can render the countdown and the day-12 reminder without a second call.
+- [ ] **Which plan does the trial grant?** Recommend Family (best first impression, and the drop at day 15 is the conversion argument). Alternative: the plan the user picks at the gate. Decide during implementation.
+- [ ] **Leave the Stripe workflows alone.** `CLAUDE_billing_checkout`, `billing_addon`, `stripe_webhook`, `billing_sync` stay live and untouched — they are the fastest path to H if Stripe wins.
+- [ ] **Do NOT touch `CLAUDE_account_delete`.** Its Stripe cancellation still works. The store-cancellation regression flagged in the old plan was a RevenueCat consequence and no longer applies.
 
 ---
 
-# Issue F — App-side billing swap
+# Issue F — App-side trial state
 
-**Branch:** `feat/issue-F-revenuecat-client` · **Depends on:** E · **Files:** `src/lib/billing.ts`, `src/lib/entitlements.ts`, `src/lib/store.ts`, `app/plans.tsx`, `src/components/UpgradeModal.tsx`
+**Branch:** `feat/issue-F-trial-client` · **Depends on:** E · **Files:** `src/lib/store.ts`, `src/lib/entitlements.ts`, `src/lib/entitlementsSync.ts`, `app/plans.tsx`
 
-- [ ] **Add `react-native-purchases`**; init in `app/_layout.tsx`, `Purchases.logIn(appwriteUserId)` so the RC app-user-id is the Appwrite `$id` — the key everything else is already on. Requires a dev build; not Expo Go (already the case here).
-- [ ] **Rewrite `billing.ts`** — replace the Stripe-URL + `Linking` handoff in `startCheckout`/`startAddonCheckout` with `Purchases.purchasePackage` / `restorePurchases`. Keep the typed-result convention (`{status}`, never throw) so call sites in `plans.tsx`, `goals.tsx:518`, `coach.tsx:146`, `index.tsx:84` change minimally.
-- [ ] **Rename `plan: 'free'` → `'beginner'`.** A plan id named `free` that costs $5.99 will cause a mistake next to an RC product identifier — and the backend *already* uses `beginner` (`effective_plan_id`), so this closes an existing client/server mismatch.
-- [ ] Zustand `persist` merge migration for installed apps, following the pattern already used for `accountState`.
-- [ ] **Fix `trialDays`** — currently client config with only Family = 7 (`entitlements.ts:80/99/125`). Stores own trial config now, so the field becomes descriptive (14 across the board).
-- [ ] Add `trialEndsAt` to the profile; extend `PlanStatus` to cover the `past_due`/grace case `subscription.ts` already models.
-- [ ] **`plans.tsx` reads live RC offerings** for prices/localization instead of `priceUSD`.
-- [ ] **Add "Restore Purchases"** — required by App Store review, and needed by any reinstalling user.
-- [ ] `npm run typecheck` + `npm test` clean; verify on a real dev build (RC does not work in Expo Go).
+> **Rewritten.** Was "App-side billing swap" (RevenueCat SDK). No SDK, no new dependency, no dev-build requirement.
 
-### Constraint to design copy around
-
-Apple grants **one introductory offer per subscription group per Apple ID** (Play is equivalent). "14 days free on every plan" is only true for the *first* plan a user trials. Copy must say **"your 14-day free trial"**; see the open decision on mid-trial upgrades.
+- [ ] **Rename `plan: 'free'` → `'beginner'`.** A plan id named `free` that costs $5.99 is a bug waiting to happen, and the backend *already* uses `beginner` for `effective_plan_id` — this closes a live client/server mismatch.
+- [ ] Zustand `persist` migration for installed apps (the store now has `PIGGY_STORE_VERSION` / `migratePiggyState`, so this has a home).
+- [ ] **Add `trialEndsAt`** to the profile; extend `PlanStatus` with `expired`. `src/lib/subscription.ts` already models `trialing`/`past_due`/`canceled` + lockout — reuse it rather than inventing a parallel state machine.
+- [ ] **`trialDays` → 14 across all three plans** in `entitlements.ts` (currently 0/0/7).
+- [ ] **`entitlementsSync.ts` reads `trialEndsAt` + `status`** from the extended webhook response.
+- [ ] **`plans.tsx` becomes a trial-aware view** — "12 days left of your trial" rather than a checkout screen, with the upgrade CTA disabled or pointing at a "coming soon" state until H lands.
+- [ ] `npm run typecheck` + `npm test` clean.
 
 ---
 
-# Issue G — Onboarding paywall + trial lifecycle
+# Issue G — Trial gate + day-15 lockout
 
-**Branch:** `feat/issue-G-onboarding-paywall` · **Depends on:** F · **Files:** `src/lib/authLock.ts`, `src/components/auth/AuthGate.tsx`, new `src/components/auth/PlanGate.tsx`, `app/onboarding.tsx`, `src/lib/notifications.ts`
+**Branch:** `feat/issue-G-trial-gate` · **Depends on:** F · **Files:** `src/lib/authLock.ts`, `src/components/auth/AuthGate.tsx`, new `src/components/auth/PlanGate.tsx`, `app/onboarding.tsx`, `src/lib/notifications.ts`
 
-- [ ] **New lock status `needs_plan`** in the `authLock` machine, ordered **after login, before `needs_pin_setup`** (satisfies D5). `AuthGate` renders `PlanGate` for it. Putting it in the state machine rather than in onboarding means the *same* gate serves the day-15 lockout — one screen, both jobs.
-- [ ] **Build `PlanGate`** — three plan cards + transparent trial-timeline block (report §7.1):
-      *Today — full access, free · Day 12 — we'll remind you · Day 15 — $X/mo begins*
-- [ ] Restore Purchases + store-managed-cancellation note on the paywall (App Store review requirement).
-- [ ] Confirm **day-15 auto-charge needs no custom logic** — it's default IAP behaviour; we simply must not offer an in-app cancel.
-- [ ] **Lockout state.** With no free tier, `canceled`/`expired` has nowhere to fall back to, so `PlanGate` doubles as the lockout screen with different copy. `subscription.ts` already zeroes entitlements and sets `locked`; this gives it a UI. Data is never deleted (constraint C4 holds).
-- [ ] **Trial-ending notification** — `_layout.tsx:42` already routes a `trial-ending` notification to `/plans`; schedule it at day 12 off `trialEndsAt` and repoint it at `PlanGate`.
-- [ ] **Onboarding hand-off** — `onboarding.tsx:1016-1034` currently calls `onLoggedIn()` straight into PIN setup. Transition into `needs_plan` first; move the Success screen and confetti to *after* PIN creation so the celebration lands on a genuinely finished account.
-- [ ] Verify bootstrap routes a user who abandoned at the paywall (real account, no PIN) back to `needs_plan` cleanly rather than stranding them.
+> **Rewritten.** Was "Onboarding paywall + trial lifecycle". The paywall becomes a one-tap trial start; the payment moment moves to H.
 
-### Risks on the record
+- [ ] **New lock status `needs_plan`** in the `authLock` machine, after login and before `needs_pin_setup` (satisfies D5). Building it into the state machine rather than into onboarding means the *same* gate serves the day-15 lockout — one screen, two jobs.
+- [ ] **`PlanGate`, trial-start mode** — what the trial includes, "no card needed, nothing to cancel", one button. This is not a paywall and should not look like one.
+- [ ] **`PlanGate`, lockout mode** — same component, expired copy, and whatever H provides as the way to pay.
+- [ ] **Day-12 trial-ending notification.** `_layout.tsx:42` already routes a `trial-ending` type to `/plans`; schedule it off `trialEndsAt`. With no card on file this is the *only* conversion signal, so it matters far more than it did under auto-renewing IAP.
+- [ ] **Onboarding hand-off** — `onboarding.tsx` currently calls `onLoggedIn()` straight into PIN setup. Transition into `needs_plan` first; move the Success screen and confetti to after PIN creation so the celebration lands on a finished account.
+- [ ] Verify bootstrap routes a user who quit at the gate (real account, no PIN) back to `needs_plan` rather than stranding them.
 
-- **A hard wall with no skip means any store/RC outage blocks 100% of new signups.** Mitigation is robust retry + restore + honest error states; there is no free-tier fallback by design. See the open decision above.
-- **A user who abandons at the paywall has a real Appwrite account and no PIN** — covered by the bootstrap check above.
-- **App Store review** requires visible trial terms, price, and Restore on the paywall — all included, but a common rejection cause.
+### Risk
+
+- **Data is never deleted at lockout** (constraint C4). `subscription.ts` zeroes entitlements and sets `locked`; the rows stay.
+- **A no-card trial converts worse than a card-on-file trial.** Expected and accepted — the alternative was sending a brand-new user to a browser to type card details before using the app once.
+
+---
+
+# Issue H — Payment rail ⛔ DEFERRED
+
+**Depends on:** the rail decision below · **Deadline:** before the first cohort reaches day 15
+
+Nothing here can start until the rail is chosen. All three options remain open; the entitlement read path (`CLAUDE_entitlements_get` → Appwrite) stays the single authority the app trusts, so any of them plugs in underneath without touching E–G.
+
+**Option 1 — Google Play Billing.** Works today, no Apple account needed. Native purchase UX, best conversion, Play-policy compliant by construction. Cost: Google's cut, and Apple IAP still has to be built separately when D9 lifts.
+
+**Option 2 — Stripe web checkout.** The rail is *already built and live* — `billing.ts`, `CLAUDE_billing_checkout`, `stripe_webhook`, `billing_sync`. Cheapest to finish by a wide margin, ~2.9% instead of 15–30%, full control of trials, proration, and discounts. Cost: leaving the app to a browser hurts conversion (mitigate with Apple Pay / Google Pay in Stripe Checkout), and it is squarely what Play's billing policy targets.
+
+**Option 3 — Wait for the Apple Developer Program**, then do both stores at once. Cleanest end state, unknown timeline.
+
+**Correction on record:** RevenueCat was dropped because of the Apple block, but RC supports **Play-only projects** — the Apple constraint never actually ruled it out for Android. If Option 1 is chosen, RC is still worth considering as the wrapper, since it makes adding Apple IAP later nearly free.
 
 ---
 
 ## Sequencing
 
 ```
-A ──► C ──► D          (ship independently, no billing dependency)
-B                      (independent)
-E ──► F ──► G          (billing chain; E gated on your store/RC setup)
+A ──► C ──► D                    ✅ all merged
+B                                ✅ merged
+
+E ──► F ──► G                    ready now; nothing store-dependent
+              └──► H             blocked on the rail decision
 ```
 
-A/B/C/D can ship and be validated while the store products are still in review.
+E, F and G can be built and shipped to Play without any store, Apple, or payment dependency. H is the only piece that needs a decision, and its deadline is day 15 of the first real user.
 
 ## Not in scope
 
