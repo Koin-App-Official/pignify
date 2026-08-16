@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { X, Check } from 'lucide-react-native';
 import { useStore, type UserPlan } from '@/lib/store';
 import { getPlanConfig } from '@/lib/entitlements';
@@ -21,6 +22,7 @@ import { evaluateDowngradeRetention, validateRetentionSelection } from '@/lib/re
 import { Button } from '@/components/ui/button';
 
 export default function DowngradeSelection() {
+  const { t } = useTranslation('plans');
   const router = useRouter();
   const { target } = useLocalSearchParams<{ target: UserPlan }>();
 
@@ -51,17 +53,21 @@ export default function DowngradeSelection() {
 
   const confirm = () => {
     if (!target) return;
-    const validation = validateRetentionSelection(target, {
-      keepGoalIds: keepIds,
-      // Neither is user-selectable today (see file header) — an empty
-      // selection always validates, since every real plan's income/device
-      // quota is at least 1 and nothing over-limit can reach this screen for
-      // them yet.
-      keepIncomeIds: [],
-      keepDeviceIds: [],
-    });
+    const validation = validateRetentionSelection(
+      target,
+      {
+        keepGoalIds: keepIds,
+        // Neither is user-selectable today (see file header) — an empty
+        // selection always validates, since every real plan's income/device
+        // quota is at least 1 and nothing over-limit can reach this screen for
+        // them yet.
+        keepIncomeIds: [],
+        keepDeviceIds: [],
+      },
+      t
+    );
     if (!validation.valid) {
-      Alert.alert('Something went wrong', validation.errors.join(' '));
+      Alert.alert(t('downgradeSelection.genericErrorTitle'), validation.errors.join(' '));
       return;
     }
     setBusy(true);
@@ -73,7 +79,7 @@ export default function DowngradeSelection() {
     return (
       <SafeAreaView className="flex-1 bg-surface items-center justify-center px-8">
         <Text className="text-sm font-medium text-on-surface-variant text-center">
-          Nothing to choose here — go back and try again.
+          {t('downgradeSelection.nothingToChoose')}
         </Text>
       </SafeAreaView>
     );
@@ -85,7 +91,7 @@ export default function DowngradeSelection() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
-        <Text className="text-2xl font-black text-on-surface">Choose what to keep</Text>
+        <Text className="text-2xl font-black text-on-surface">{t('downgradeSelection.chooseWhatToKeep')}</Text>
         <Pressable onPress={() => router.back()} hitSlop={12} className="p-2 -mr-2">
           <X size={22} color="#6b7280" />
         </Pressable>
@@ -93,14 +99,19 @@ export default function DowngradeSelection() {
 
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 24 }}>
         <Text className="mb-6 text-sm font-medium text-on-surface-variant leading-5">
-          {planName} keeps {goalLimit} active goal{goalLimit === 1 ? '' : 's'}. You have{' '}
-          {activeGoals.length}. Pick {goalLimit === 1 ? 'the one' : `up to ${goalLimit}`} to keep
-          active — the rest come off your list, but nothing is ever deleted. They come straight
-          back if you upgrade again.
+          {t('downgradeSelection.keepBody', {
+            count: goalLimit,
+            plan: planName,
+            total: activeGoals.length,
+            pickText:
+              goalLimit === 1
+                ? t('downgradeSelection.pickOne')
+                : t('downgradeSelection.pickUpTo', { count: goalLimit }),
+          })}
         </Text>
 
         <Text className="mb-3 text-sm font-bold text-on-surface">
-          Keeping {keepIds.length} of {goalLimit}
+          {t('downgradeSelection.keepingCountOfLimit', { count: keepIds.length, limit: goalLimit })}
         </Text>
 
         <View className="gap-3">
@@ -137,7 +148,7 @@ export default function DowngradeSelection() {
       </ScrollView>
 
       <View className="px-5 pb-6 pt-2">
-        <Button onPress={confirm} disabled={!canConfirm || busy} label="Confirm" className="w-full h-14" />
+        <Button onPress={confirm} disabled={!canConfirm || busy} label={t('downgradeSelection.confirm')} className="w-full h-14" />
       </View>
     </SafeAreaView>
   );

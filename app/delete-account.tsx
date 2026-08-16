@@ -13,6 +13,8 @@ import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuthLock } from '@/lib/authLock';
@@ -22,15 +24,16 @@ import { requestAccountDeletion } from '@/lib/billing';
 import { PinPad, PinDots } from '@/components/auth/PinPad';
 import { Button } from '@/components/ui/button';
 
-function formatRemaining(ms: number): string {
+function formatRemaining(ms: number, t: TFunction<'auth'>): string {
   const s = Math.ceil(ms / 1000);
-  if (s < 60) return `${s}s`;
+  if (s < 60) return t('duration.seconds', { s });
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  return `${m}m ${rem.toString().padStart(2, '0')}s`;
+  return t('duration.minutes', { m, s: rem.toString().padStart(2, '0') });
 }
 
 export default function DeleteAccount() {
+  const { t } = useTranslation(['settings', 'auth']);
   const router = useRouter();
   const tryUnlockPin = useAuthLock((s) => s.tryUnlockPin);
   const userId = useAuthLock((s) => s.userId);
@@ -68,15 +71,15 @@ export default function DeleteAccount() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     if (res.reason === 'locked') {
       setLockedMs(res.remainingMs ?? 0);
-      setError('Too many attempts. Try again later.');
+      setError(t('auth:errors.tooManyAttempts'));
     } else if (res.reason === 'wrong_pin') {
       const left = res.attemptsRemaining ?? 0;
-      setError(left > 0 ? `Incorrect PIN. ${left} attempt${left === 1 ? '' : 's'} left.` : 'Incorrect PIN.');
+      setError(left > 0 ? t('auth:errors.incorrectPinWithAttempts', { count: left }) : t('auth:errors.incorrectPin'));
     } else if (res.reason === 'invalid_session') {
-      setError('Session expired. Please sign in again.');
+      setError(t('auth:errors.sessionExpired'));
       router.back();
     } else if (res.reason === 'network_error') {
-      setError("Couldn't reach the server. Check your connection and try again.");
+      setError(t('auth:errors.networkError'));
     }
   };
 
@@ -90,11 +93,11 @@ export default function DeleteAccount() {
 
   const confirmDelete = () => {
     Alert.alert(
-      'Delete account',
-      'This permanently deletes your account and all data from our servers. This cannot be undone.',
+      t('deleteAccount'),
+      t('deleteAccountFlow.confirmAlertBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: performDelete },
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('deleteAccountFlow.delete'), style: 'destructive', onPress: performDelete },
       ]
     );
   };
@@ -105,7 +108,7 @@ export default function DeleteAccount() {
     const ok = await requestAccountDeletion(userId);
     if (!ok) {
       setDeleting(false);
-      Alert.alert('Something went wrong', 'We could not delete your account. Please try again.');
+      Alert.alert(t('deleteAccountFlow.errorTitle'), t('deleteAccountFlow.errorBody'));
       return;
     }
     resetForDemo();
@@ -122,18 +125,18 @@ export default function DeleteAccount() {
           </Pressable>
           <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
             <Text className="text-5xl mb-4">⚠️</Text>
-            <Text className="text-2xl font-black text-on-surface mb-2 text-center">Delete your account</Text>
+            <Text className="text-2xl font-black text-on-surface mb-2 text-center">{t('deleteAccountFlow.warningTitle')}</Text>
             <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
-              This permanently erases your profile, goals, and subscription from our servers. This cannot be undone.
+              {t('deleteAccountFlow.warningBody')}
             </Text>
             {deleting ? (
               <View className="items-center gap-3 py-8">
                 <ActivityIndicator color="#DC2626" />
-                <Text className="text-sm font-medium text-on-surface-variant">Deleting your account…</Text>
+                <Text className="text-sm font-medium text-on-surface-variant">{t('deleteAccountFlow.deleting')}</Text>
               </View>
             ) : (
               <Button variant="destructive" size="lg" onPress={confirmDelete} className="w-full">
-                <Text className="text-base font-bold text-destructive-foreground">Delete account</Text>
+                <Text className="text-base font-bold text-destructive-foreground">{t('deleteAccount')}</Text>
               </Button>
             )}
           </Animated.View>
@@ -150,9 +153,9 @@ export default function DeleteAccount() {
         </Pressable>
         <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <Text className="text-5xl mb-4">🔐</Text>
-          <Text className="text-2xl font-black text-on-surface mb-1">Confirm your PIN</Text>
+          <Text className="text-2xl font-black text-on-surface mb-1">{t('auth:changePin.confirmTitle')}</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
-            Enter your PIN to continue deleting your account
+            {t('deleteAccountFlow.confirmPinSubtitle')}
           </Text>
 
           <PinDots length={PIN_LENGTH} filled={pin.length} shakeKey={shakeKey} />
@@ -160,7 +163,7 @@ export default function DeleteAccount() {
           <View className="h-6 mt-4">
             {locked ? (
               <Text className="text-sm font-semibold text-destructive">
-                Locked — {formatRemaining(lockedMs)}
+                {t('auth:lockedFor', { duration: formatRemaining(lockedMs, t) })}
               </Text>
             ) : error ? (
               <Text className="text-sm font-semibold text-destructive">{error}</Text>

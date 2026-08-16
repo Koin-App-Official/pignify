@@ -314,7 +314,3 @@ export function formatUSD(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-/** Human-readable quota value for plan cards, e.g. 'unlimited' -> "Unlimited". */
-export function quotaLabel(q: QuotaValue): string {
-  return isUnlimited(q) ? 'Unlimited' : String(q);
-}

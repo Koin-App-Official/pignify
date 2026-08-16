@@ -1,1 +1,95 @@
-{}
+{
+  "quota": {
+    "incomeSourcesUnlimited": "Nielimitowana liczba źródeł dochodu",
+    "incomeSources_one": "{{count}} źródło dochodu",
+    "incomeSources_few": "{{count}} źródła dochodu",
+    "incomeSources_many": "{{count}} źródeł dochodu",
+    "goalsUnlimited": "Nielimitowana liczba celów",
+    "goals_one": "{{count}} cel",
+    "goals_few": "{{count}} cele",
+    "goals_many": "{{count}} celów",
+    "devicesUnlimited": "Nielimitowana liczba urządzeń",
+    "devices_one": "{{count}} urządzenie",
+    "devices_few": "{{count}} urządzenia",
+    "devices_many": "{{count}} urządzeń",
+    "aiMessagesUnlimited": "Nielimitowane wiadomości AI/mies.",
+    "aiMessages_one": "{{count}} wiadomość AI/mies.",
+    "aiMessages_few": "{{count}} wiadomości AI/mies.",
+    "aiMessages_many": "{{count}} wiadomości AI/mies.",
+    "aiMessagesExtra": " (potem {{price}}/wiad.)",
+    "emailReportsUnlimited": "Nielimitowane raporty e-mail/mies.",
+    "emailReports_one": "{{count}} raport e-mail/mies.",
+    "emailReports_few": "{{count}} raporty e-mail/mies.",
+    "emailReports_many": "{{count}} raportów e-mail/mies."
+  },
+  "feature": {
+    "exclusiveProtection": "Ekskluzywna ochrona",
+    "deepAnalysis": "Szczegółowa analiza wydatków",
+    "referral": "Bonus za polecenie",
+    "goalBonus": "Bonus za osiągnięcie celu",
+    "loyaltyDiscount": "Zniżka lojalnościowa po 6 miesiącach",
+    "trialDays_one": "{{count}}-dniowy okres próbny",
+    "trialDays_few": "{{count}}-dniowy okres próbny",
+    "trialDays_many": "{{count}}-dniowy okres próbny"
+  },
+  "endOfBillingPeriod": "końca bieżącego okresu rozliczeniowego",
+  "trial": {
+    "endedTitle": "Twój bezpłatny okres próbny się zakończył",
+    "endedBody": "Funkcje planu {{plan}} są wstrzymane. Nic nie zostało usunięte — Twoje cele i historia są nadal dostępne.",
+    "endsToday": "Twój bezpłatny okres próbny kończy się dziś",
+    "daysLeft_one": "Pozostał {{count}} dzień bezpłatnego okresu próbnego",
+    "daysLeft_few": "Pozostały {{count}} dni bezpłatnego okresu próbnego",
+    "daysLeft_many": "Pozostało {{count}} dni bezpłatnego okresu próbnego",
+    "activeBody": "Korzystasz z planu {{plan}} z pełnym dostępem, a my nigdy nie prosiliśmy o kartę."
+  },
+  "planUpdatedTitle": "Plan zaktualizowany",
+  "planUpdatedBody": "Jesteś teraz na planie {{plan}}. Ciesz się nowymi funkcjami! 🎉",
+  "downgradeCanceledTitle": "Anulowano obniżenie planu",
+  "downgradeCanceledBody": "Pozostajesz na planie {{plan}}.",
+  "checkoutNotConfiguredTitle": "Płatność nieskonfigurowana",
+  "checkoutNotConfiguredBody": "Stripe Checkout nie jest skonfigurowany w tej wersji aplikacji. Zasymulować udaną płatność za {{plan}}?",
+  "cancel": "Anuluj",
+  "simulatePayment": "Zasymuluj płatność",
+  "switchToTitle": "Przełączyć na {{plan}}?",
+  "switchToBody": "To wejdzie w życie {{date}}. Nic nigdy nie jest usuwane — jeśli ten plan obsługuje mniej celów niż masz obecnie, wybierzesz, które mają pozostać aktywne.",
+  "keepCurrentPlan": "Zachowaj obecny plan",
+  "continue": "Kontynuuj",
+  "header": "Wybierz swój plan",
+  "confirmingPurchase": "Potwierdzanie zakupu…",
+  "pendingBanner": "Zaplanowana zmiana: Twój plan przełączy się na {{plan}} dnia {{date}}. Wybierz ponownie obecny plan poniżej, aby to anulować.",
+  "perMonth": "/mies.",
+  "status": {
+    "activeUntilCanceled": "Aktywny do {{date}} (anulowano)",
+    "trialEndedPaused": "Okres próbny zakończony — funkcje wstrzymane",
+    "currentTrialing": "Obecny plan (bezpłatny okres próbny)",
+    "pastDue": "Płatność nieudana — zaktualizuj kartę, aby nie stracić dostępu",
+    "current": "Obecny plan",
+    "scheduledNextCycle": "Zaplanowano na następny cykl"
+  },
+  "buttons": {
+    "yourCurrentPlan": "Twój obecny plan",
+    "keepThisPlan": "Zachowaj ten plan",
+    "openingCheckout": "Otwieranie płatności…",
+    "upgradeTo": "Ulepsz do {{plan}}",
+    "switchTo": "Przełącz na {{plan}}"
+  },
+  "disclaimer": "Ulepszenia obowiązują natychmiast. Obniżenia planu wchodzą w życie na koniec bieżącego okresu rozliczeniowego, a Twoje dane są zawsze bezpieczne.",
+  "downgradeSelection": {
+    "nothingToChoose": "Nie ma tu nic do wyboru — wróć i spróbuj ponownie.",
+    "chooseWhatToKeep": "Wybierz, co zachować",
+    "keepBody_one": "Plan {{plan}} pozwala zachować {{count}} aktywny cel. Masz {{total}}. Wybierz {{pickText}}, aby zachować aktywne — reszta zniknie z listy, ale nic nigdy nie jest usuwane. Wrócą od razu, jeśli znów przejdziesz na wyższy plan.",
+    "keepBody_few": "Plan {{plan}} pozwala zachować {{count}} aktywne cele. Masz {{total}}. Wybierz {{pickText}}, aby zachować aktywne — reszta zniknie z listy, ale nic nigdy nie jest usuwane. Wrócą od razu, jeśli znów przejdziesz na wyższy plan.",
+    "keepBody_many": "Plan {{plan}} pozwala zachować {{count}} aktywnych celów. Masz {{total}}. Wybierz {{pickText}}, aby zachować aktywne — reszta zniknie z listy, ale nic nigdy nie jest usuwane. Wrócą od razu, jeśli znów przejdziesz na wyższy plan.",
+    "pickOne": "jeden",
+    "pickUpTo": "do {{count}}",
+    "keepingCountOfLimit": "Zachowujesz {{count}} z {{limit}}",
+    "confirm": "Potwierdź",
+    "genericErrorTitle": "Coś poszło nie tak",
+    "retentionTooMany": "Wybrano zbyt wiele do zachowania — {{resource}} ({{count}}); plan {{plan}} pozwala na {{limit}}.",
+    "retentionResource": {
+      "goals": "cele",
+      "incomes": "źródła dochodu",
+      "devices": "urządzenia"
+    }
+  }
+}

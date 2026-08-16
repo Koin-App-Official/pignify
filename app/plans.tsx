@@ -11,8 +11,8 @@ import {
   getPlanConfig,
   isUpgrade,
   isDowngrade,
+  isUnlimited,
   formatUSD,
-  quotaLabel,
   type PlanConfig,
 } from '@/lib/entitlements';
 import { startCheckout, requestSubscriptionSync } from '@/lib/billing';
@@ -21,6 +21,8 @@ import { evaluateDowngradeRetention } from '@/lib/retention';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
 import { formatDate } from '@/lib/i18n/format';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 const log = createLogger('plans');
 
@@ -32,29 +34,41 @@ const CARD_SHADOW = {
   elevation: 4,
 };
 
+/** Renders a quota bullet: the `xUnlimited` key when unlimited, else the
+ * plural-aware `x_one`/`x_other` (en) or `x_one`/`x_few`/`x_many` (pl) key. */
+function quotaLine(
+  quota: PlanConfig['quotas']['incomes'],
+  unlimitedKey: string,
+  countKey: string,
+  t: TFunction<'plans'>
+): string {
+  return isUnlimited(quota) ? t(unlimitedKey) : t(countKey, { count: quota });
+}
+
 /** Short feature bullets shown on each plan card. */
-function planHighlights(c: PlanConfig): string[] {
+function planHighlights(c: PlanConfig, t: TFunction<'plans'>): string[] {
   const lines: string[] = [];
-  lines.push(`${quotaLabel(c.quotas.incomes)} income source${c.quotas.incomes === 1 ? '' : 's'}`);
-  lines.push(`${quotaLabel(c.quotas.goals)} goal${c.quotas.goals === 1 ? '' : 's'}`);
-  lines.push(`${quotaLabel(c.quotas.devices)} device${c.quotas.devices === 1 ? '' : 's'}`);
+  lines.push(quotaLine(c.quotas.incomes, 'quota.incomeSourcesUnlimited', 'quota.incomeSources', t));
+  lines.push(quotaLine(c.quotas.goals, 'quota.goalsUnlimited', 'quota.goals', t));
+  lines.push(quotaLine(c.quotas.devices, 'quota.devicesUnlimited', 'quota.devices', t));
   if (c.features.aiCoach) {
-    const extra = c.extraMessagePriceUSD != null ? ` (then ${formatUSD(c.extraMessagePriceUSD)}/msg)` : '';
-    lines.push(`${quotaLabel(c.quotas.aiMessages)} AI messages/mo${extra}`);
+    const extra = c.extraMessagePriceUSD != null ? t('quota.aiMessagesExtra', { price: formatUSD(c.extraMessagePriceUSD) }) : '';
+    lines.push(quotaLine(c.quotas.aiMessages, 'quota.aiMessagesUnlimited', 'quota.aiMessages', t) + extra);
   }
   if (c.features.emailReports) {
-    lines.push(`${quotaLabel(c.quotas.emailReports)} email reports/mo`);
+    lines.push(quotaLine(c.quotas.emailReports, 'quota.emailReportsUnlimited', 'quota.emailReports', t));
   }
-  if (c.features.exclusiveProtection) lines.push('Exclusive protection');
-  if (c.features.deepAnalysis) lines.push('Deep spending analysis');
-  if (c.features.referral) lines.push('Referral bonus');
-  if (c.features.goalBonus) lines.push('Goal-achievement bonus');
-  if (c.features.loyaltyDiscount) lines.push('Loyalty discount after 6 months');
-  if (c.trialDays > 0) lines.push(`${c.trialDays}-day free trial`);
+  if (c.features.exclusiveProtection) lines.push(t('feature.exclusiveProtection'));
+  if (c.features.deepAnalysis) lines.push(t('feature.deepAnalysis'));
+  if (c.features.referral) lines.push(t('feature.referral'));
+  if (c.features.goalBonus) lines.push(t('feature.goalBonus'));
+  if (c.features.loyaltyDiscount) lines.push(t('feature.loyaltyDiscount'));
+  if (c.trialDays > 0) lines.push(t('feature.trialDays', { count: c.trialDays }));
   return lines;
 }
 
 export default function Plans() {
+  const { t } = useTranslation('plans');
   const router = useRouter();
   const { highlight, checkout } = useLocalSearchParams<{ highlight?: string; checkout?: string }>();
 
@@ -71,7 +85,7 @@ export default function Plans() {
   const formatPeriodEnd = () =>
     profile.currentPeriodEnd
       ? formatDate(profile.currentPeriodEnd, profile.language, { month: 'long', day: 'numeric', year: 'numeric' })
-      : 'the end of your billing period';
+      : t('endOfBillingPeriod');
 
   /**
    * Trial state, derived rather than stored — `planStatus` and `trialEndsAt` are
@@ -86,8 +100,8 @@ export default function Plans() {
     if (profile.planStatus === 'expired') {
       return {
         expired: true,
-        title: 'Your free trial has ended',
-        body: `Your ${getPlanConfig(currentPlan).displayName} features are paused. Nothing has been deleted — your goals and history are all still here.`,
+        title: t('trial.endedTitle'),
+        body: t('trial.endedBody', { plan: getPlanConfig(currentPlan).displayName }),
       };
     }
     if (profile.planStatus !== 'trialing' || !profile.trialEndsAt) return null;
@@ -96,18 +110,15 @@ export default function Plans() {
     const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
     return {
       expired: false,
-      title:
-        daysLeft === 0
-          ? 'Your free trial ends today'
-          : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left of your free trial`,
-      body: `You're on ${getPlanConfig(currentPlan).displayName} with everything unlocked, and we never asked for a card.`,
+      title: daysLeft === 0 ? t('trial.endsToday') : t('trial.daysLeft', { count: daysLeft }),
+      body: t('trial.activeBody', { plan: getPlanConfig(currentPlan).displayName }),
     };
   })();
 
   const applyChange = (target: UserPlan) => {
     changePlan(target);
     const name = getPlanConfig(target).displayName;
-    Alert.alert('Plan updated', `You're now on the ${name} plan. Enjoy your new features! 🎉`);
+    Alert.alert(t('planUpdatedTitle'), t('planUpdatedBody', { plan: name }));
   };
 
   // Returning from hosted Stripe Checkout. `checkout=success` does NOT by
@@ -134,7 +145,7 @@ export default function Plans() {
             pendingPlan: null,
             currentPeriodEnd: (row as any).current_period_end ?? null,
           });
-          Alert.alert('Plan updated', `You're now on the ${getPlanConfig(plan).displayName} plan. Enjoy your new features! 🎉`);
+          Alert.alert(t('planUpdatedTitle'), t('planUpdatedBody', { plan: getPlanConfig(plan).displayName }));
         }
       } catch (err) {
         log.warn('Failed to sync subscription after checkout return:', err);
@@ -151,7 +162,7 @@ export default function Plans() {
     // Re-selecting current plan while a downgrade is pending = cancel the downgrade.
     if (target === currentPlan && pendingPlan) {
       changePlan(target);
-      Alert.alert('Downgrade canceled', `You'll stay on the ${getPlanConfig(target).displayName} plan.`);
+      Alert.alert(t('downgradeCanceledTitle'), t('downgradeCanceledBody', { plan: getPlanConfig(target).displayName }));
       return;
     }
 
@@ -168,11 +179,11 @@ export default function Plans() {
         const result = await startCheckout(target, profile.userID);
         if (result.status === 'unavailable') {
           Alert.alert(
-            'Checkout not configured',
-            `Stripe Checkout isn't set up in this build. Simulate a successful payment for ${getPlanConfig(target).displayName}?`,
+            t('checkoutNotConfiguredTitle'),
+            t('checkoutNotConfiguredBody', { plan: getPlanConfig(target).displayName }),
             [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Simulate payment', onPress: () => applyChange(target) },
+              { text: t('cancel'), style: 'cancel' },
+              { text: t('simulatePayment'), onPress: () => applyChange(target) },
             ]
           );
         }
@@ -189,12 +200,12 @@ export default function Plans() {
       // If the target holds fewer goals than are currently active, the user
       // picks what to keep before anything is scheduled (retention.ts, issue I).
       Alert.alert(
-        `Switch to ${getPlanConfig(target).displayName}?`,
-        `This takes effect on ${formatPeriodEnd()}. Nothing is ever deleted — if this plan holds fewer goals than you have, you'll choose which stay active first.`,
+        t('switchToTitle', { plan: getPlanConfig(target).displayName }),
+        t('switchToBody', { date: formatPeriodEnd() }),
         [
-          { text: 'Keep current plan', style: 'cancel' },
+          { text: t('keepCurrentPlan'), style: 'cancel' },
           {
-            text: 'Continue',
+            text: t('continue'),
             onPress: () => {
               const requirement = evaluateDowngradeRetention(target, {
                 goals: goals.filter((g) => !g.archived).length,
@@ -224,14 +235,14 @@ export default function Plans() {
           >
             <ArrowLeft size={18} color="#64748B" />
           </TouchableOpacity>
-          <Text className="text-2xl font-black text-on-surface">Choose your plan</Text>
+          <Text className="text-2xl font-black text-on-surface">{t('header')}</Text>
         </View>
 
         <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 16, paddingBottom: 40 }}>
           {syncing && (
             <View className="mb-4 rounded-2xl bg-surface-container-low p-4">
               <Text className="text-sm font-semibold text-on-surface-variant">
-                Confirming your purchase…
+                {t('confirmingPurchase')}
               </Text>
             </View>
           )}
@@ -261,8 +272,7 @@ export default function Plans() {
           {pendingPlan && (
             <View className="mb-4 rounded-2xl bg-warning-container p-4">
               <Text className="text-sm font-semibold text-warning">
-                Scheduled change: your plan switches to {getPlanConfig(pendingPlan).displayName} on{' '}
-                {formatPeriodEnd()}. Re-select your current plan below to cancel this.
+                {t('pendingBanner', { plan: getPlanConfig(pendingPlan).displayName, date: formatPeriodEnd() })}
               </Text>
             </View>
           )}
@@ -293,29 +303,29 @@ export default function Plans() {
                     </View>
                     <Text className="text-lg font-black text-primary">
                       {formatUSD(c.priceUSD)}
-                      <Text className="text-xs font-semibold text-on-surface-variant">/mo</Text>
+                      <Text className="text-xs font-semibold text-on-surface-variant">{t('perMonth')}</Text>
                     </Text>
                   </View>
 
                   {isCurrent && (
                     <Text className="text-xs font-bold text-on-primary-container mb-2">
                       {profile.planStatus === 'canceled'
-                        ? `Active until ${formatPeriodEnd()} (canceled)`
+                        ? t('status.activeUntilCanceled', { date: formatPeriodEnd() })
                         : profile.planStatus === 'expired'
-                          ? 'Trial ended — features paused'
+                          ? t('status.trialEndedPaused')
                           : profile.planStatus === 'trialing'
-                            ? 'Current plan (free trial)'
+                            ? t('status.currentTrialing')
                             : profile.planStatus === 'past_due'
-                              ? 'Payment failed — update your card to avoid losing access'
-                              : 'Current plan'}
+                              ? t('status.pastDue')
+                              : t('status.current')}
                     </Text>
                   )}
                   {isPending && (
-                    <Text className="text-xs font-bold text-warning mb-2">Scheduled for next cycle</Text>
+                    <Text className="text-xs font-bold text-warning mb-2">{t('status.scheduledNextCycle')}</Text>
                   )}
 
                   <View className="gap-2 mt-2 mb-4">
-                    {planHighlights(c).map((line) => (
+                    {planHighlights(c, t).map((line) => (
                       <View key={line} className="flex-row items-center gap-2">
                         <Check size={14} color="#16A34A" />
                         <Text className="text-sm font-medium text-on-surface flex-1">{line}</Text>
@@ -324,19 +334,19 @@ export default function Plans() {
                   </View>
 
                   {isCurrent && !pendingPlan ? (
-                    <Button variant="outline" disabled label="Your current plan" className="w-full" />
+                    <Button variant="outline" disabled label={t('buttons.yourCurrentPlan')} className="w-full" />
                   ) : isCurrent && pendingPlan ? (
-                    <Button onPress={() => onSelectPlan(id)} label="Keep this plan" className="w-full" />
+                    <Button onPress={() => onSelectPlan(id)} label={t('buttons.keepThisPlan')} className="w-full" />
                   ) : (
                     <Button
                       onPress={() => onSelectPlan(id)}
                       disabled={busy === id}
                       label={
                         busy === id
-                          ? 'Opening checkout…'
+                          ? t('buttons.openingCheckout')
                           : isUpgrade(currentPlan, id)
-                            ? `Upgrade to ${c.displayName}`
-                            : `Switch to ${c.displayName}`
+                            ? t('buttons.upgradeTo', { plan: c.displayName })
+                            : t('buttons.switchTo', { plan: c.displayName })
                       }
                       variant={isUpgrade(currentPlan, id) ? 'default' : 'outline'}
                       className="w-full"
@@ -348,8 +358,7 @@ export default function Plans() {
           </View>
 
           <Text className="text-[11px] text-on-surface-variant/50 text-center mt-6 px-4">
-            Upgrades apply immediately. Downgrades take effect at the end of your current billing
-            period, and your data is always kept safe.
+            {t('disclaimer')}
           </Text>
         </ScrollView>
       </SafeAreaView>

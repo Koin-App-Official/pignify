@@ -3,5 +3,65 @@
     "sectionLabel": "Język",
     "en": "Angielski",
     "pl": "Polski"
-  }
+  },
+  "title": "Ustawienia",
+  "sections": {
+    "subscription": "Subskrypcja",
+    "security": "Bezpieczeństwo",
+    "account": "Konto",
+    "supportAndAbout": "Pomoc i informacje"
+  },
+  "planLabel": "Plan {{plan}}",
+  "planStatus": {
+    "canceled": "Anulowano — aktywny do końca okresu",
+    "expired": "Bezpłatny okres próbny zakończony",
+    "trialing": "Bezpłatny okres próbny",
+    "pastDue": "Płatność nieudana — zaktualizuj kartę",
+    "switchingTo": "Zmiana na {{plan}} w następnym cyklu",
+    "priceMonthly": "{{price}}/mies."
+  },
+  "manage": "Zarządzaj",
+  "changePin": "Zmień PIN",
+  "cancel": "Anuluj",
+  "biometric": {
+    "faceId": "Face ID",
+    "irisUnlock": "Odblokowanie tęczówką",
+    "fingerprintUnlock": "Odblokowanie odciskiem palca",
+    "turnOffTitle": "Wyłączyć {{label}}?",
+    "turnOffBody": "Będziesz odblokowywać PIN-em.",
+    "turnOff": "Wyłącz"
+  },
+  "autoLock": {
+    "label": "Automatyczna blokada",
+    "immediately": "Natychmiast",
+    "oneMin": "1 min",
+    "fiveMin": "5 min",
+    "never": "Nigdy"
+  },
+  "logOut": "Wyloguj się",
+  "logOutConfirmBody": "Możesz zalogować się ponownie w każdej chwili, używając swojego e-maila.",
+  "deleteAccount": "Usuń konto",
+  "enableBiometricFlow": {
+    "confirmPinSubtitle": "Wprowadź PIN, aby włączyć odblokowywanie biometryczne",
+    "enrollFailed": "Nie udało się włączyć odblokowywania biometrycznego. Spróbuj ponownie."
+  },
+  "deleteAccountFlow": {
+    "confirmPinSubtitle": "Wprowadź PIN, aby kontynuować usuwanie konta",
+    "warningTitle": "Usuń swoje konto",
+    "warningBody": "To trwale usunie Twój profil, cele i subskrypcję z naszych serwerów. Tej operacji nie można cofnąć.",
+    "deleting": "Usuwanie konta…",
+    "confirmAlertBody": "To trwale usunie Twoje konto i wszystkie dane z naszych serwerów. Tej operacji nie można cofnąć.",
+    "delete": "Usuń",
+    "errorTitle": "Coś poszło nie tak",
+    "errorBody": "Nie udało się usunąć konta. Spróbuj ponownie."
+  },
+  "support": {
+    "privacyPolicy": "Polityka prywatności",
+    "privacyPolicyError": "Nie udało się otworzyć linku do Polityki prywatności.",
+    "termsOfService": "Regulamin",
+    "termsOfServiceError": "Nie udało się otworzyć linku do Regulaminu.",
+    "contactSupport": "Skontaktuj się z pomocą",
+    "notConfigured": "Linki pomocy nie są jeszcze skonfigurowane."
+  },
+  "versionLabel": "Piggy v{{version}}"
 }
