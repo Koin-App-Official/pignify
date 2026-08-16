@@ -253,20 +253,47 @@ a live bug. Doing it after extraction means touching the same call sites twice.
 
 The flow the feature is actually about. Ships as a coherent unit.
 
-- [ ] Extract [app/welcome.tsx](app/welcome.tsx) — 3 carousel slides (headline + sub) + CTAs
-- [ ] Extract [app/onboarding.tsx](app/onboarding.tsx) — all 73 `<Text>` sites, 10 steps, validation
-      error messages, `GOAL_CHIPS` labels, `LEGAL_LINKS` labels, `LegalLinksNote` trust copy
-- [ ] Extract [src/components/ContributionStep.tsx](src/components/ContributionStep.tsx) — 20 `<Text>` sites
-- [ ] Add the language row to the `Localization` step ([onboarding.tsx:1009](app/onboarding.tsx:1009)),
-      pre-selected from detection, changeable via `PickerModal`
-- [ ] Extend `detectLocaleCountry()` → also return the detected language; keep country/currency
-      detection independent of it (a Polish speaker in the UK wants `pl` + `GBP`)
-- [ ] Extract the auth gates: `LoginGate`, `LockGate`, `ConfirmPinGate`, `SetPinGate`,
-      `PinCreationFlow`, `PinPad` (~33 `<Text>` sites)
-- [ ] Translate all of the above to `pl`
+- [x] Extract [app/welcome.tsx](app/welcome.tsx) — 3 carousel slides (headline + sub) + CTAs.
+      `SLIDES` restructured to a stable `id` + `expression` (was `headline`/`sub` used directly as
+      both content and React key) so the translated string is no longer doing double duty as an
+      identifier
+- [x] Extract [app/onboarding.tsx](app/onboarding.tsx) — all 73 `<Text>` sites, 10 steps, validation
+      error messages, `GOAL_CHIPS` labels, `LEGAL_LINKS` labels, `LegalLinksNote` trust copy.
+      **Decision:** `GOAL_CHIPS`/`LEGAL_LINKS` gained a stable `id` field; `GOAL_CHIPS.label` stays
+      the untranslated English canonical value written to `goalName` (and from there the persisted
+      Goal and the onboarding webhook payload) — only the on-screen chip text is translated via
+      `id`. Same precedent as plan names staying untranslated (see Decisions above)
+- [x] Extract [src/components/ContributionStep.tsx](src/components/ContributionStep.tsx) — 20 `<Text>` sites
+- [x] Add the language row to the `Localization` step (`onboarding.tsx`), pre-selected from
+      `profile.language` (already device-detected via Phase 1 — see next item), changeable via
+      `PickerModal`, matching the existing country/currency pickers on the same screen
+- [x] **`detectLocaleCountry()` extension turned out unnecessary.** Phase 1 already seeds
+      `profile.language` from the device independently of country/currency detection (that was the
+      whole point of keeping language detection separate — a Polish speaker in the UK gets `pl` +
+      whatever currency their region detection picks). The Localization step's new language row
+      just reads `profile.language` directly; `detectLocaleCountry()` is untouched
+- [x] Extract the auth gates: `LoginGate`, `LockGate`, `ConfirmPinGate`, `PinCreationFlow`
+      (`SetPinGate` has no copy of its own; `PinPad` is digits/icons only, nothing to translate) —
+      ~33 `<Text>` sites, plus the 2 `Alert.alert` forgot-PIN dialogs in LockGate/ConfirmPinGate
+      (ahead of Phase 4's schedule — leaving them English would have broken an otherwise fully
+      translated screen)
+- [x] **Plan gap found and fixed:** `src/lib/pin.ts`'s `validatePinStrength` returns hardcoded
+      English strings and wasn't in any phase's file list (it's a `src/lib/` file, not a component).
+      Extended it to take `t` and return translated messages — the only call site
+      (`PinCreationFlow.tsx`) already had `t` in scope
+- [x] Translate all of the above to `pl`, including real Polish plural forms (one/few/many) for
+      auth's "N attempts left" and onboarding's "N months away" — the first real exercise of the
+      Phase 0 `@formatjs/intl-pluralrules` polyfill
 - [ ] Verify the full cold-install flow end to end on a Polish-locale device: welcome → onboarding →
-      OTP → PIN, with no English leaking through
-- [ ] Verify the same flow on an English device, and with a mid-flow language switch
+      OTP → PIN, with no English leaking through. **Not done** — no simulator/device verification
+      was attempted this phase either (same reasoning as Phase 1: the only built simulator app is
+      stale and unrelated, and the user prefers to self-verify UI). Confirmed instead via typecheck,
+      the full test suite, a real production bundle export, and a key-parity check between the en/pl
+      JSON files (`goal.chips.*`, `legal.*`, `welcome.slides.*` dynamic-key lookups all verified to
+      resolve; the only en/pl key-count divergence is the expected one — English's 2 plural
+      categories vs Polish's 3)
+- [ ] Verify the same flow on an English device, and with a mid-flow language switch — same caveat,
+      left for the user's own pass
 
 ---
 
