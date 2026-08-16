@@ -32,6 +32,7 @@ import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { triggerDeepAnalysis } from '@/lib/deepAnalysis';
 import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
+import { Mascot } from '@/components/Mascot';
 
 function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
   return (n: number): string => {
@@ -292,8 +293,8 @@ export default function Dashboard() {
             </View>
           ) : (
             <View className="mb-6 rounded-3xl bg-primary-container p-8 items-center">
-              <Text className="text-5xl mb-4">🐷</Text>
-              <Text className="mb-2 text-xl font-black text-on-primary-container">Create your first goal</Text>
+              <Mascot size={48} />
+              <Text className="mb-2 mt-4 text-xl font-black text-on-primary-container">Create your first goal</Text>
               <Button
                 onPress={() => router.push('/goals')}
                 className="flex-row items-center gap-2 mt-2"
@@ -307,7 +308,7 @@ export default function Dashboard() {
         {activeGoal && progress > 0 && (
           <FadeInStagger index={2} delayStep={60} replay={replay}>
             <View className="mb-5 rounded-3xl bg-tertiary-container p-4 items-center flex-row justify-center gap-2">
-              <Text className="text-lg">🐷</Text>
+              <Mascot size={20} />
               <Text className="text-sm font-semibold text-on-tertiary-container text-center flex-1">
                 {progress < 25
                   ? 'Great start! Every dollar counts 🌱'

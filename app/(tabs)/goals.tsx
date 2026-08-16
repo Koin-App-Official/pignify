@@ -25,6 +25,7 @@ import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar'
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { springPresets } from '@/lib/springPresets';
+import { Mascot } from '@/components/Mascot';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -481,8 +482,8 @@ export default function Goals() {
 
         {goals.length === 0 ? (
           <View className="rounded-3xl bg-primary-container p-10 items-center" style={CARD_SHADOW}>
-            <Text className="text-5xl mb-4">🐷</Text>
-            <Text className="mb-2 text-xl font-black text-on-primary-container">No goals yet</Text>
+            <Mascot size={48} />
+            <Text className="mb-2 mt-4 text-xl font-black text-on-primary-container">No goals yet</Text>
             <Text className="mb-6 text-sm font-medium text-center text-on-primary-container/70">
               Create your first savings goal to get started!
             </Text>

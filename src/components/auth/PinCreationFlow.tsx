@@ -23,6 +23,7 @@ import {
   type BiometricKind,
 } from '@/lib/biometrics';
 import { PinPad, PinDots } from './PinPad';
+import { Mascot } from '@/components/Mascot';
 
 type Stage = 'enter' | 'confirm' | 'biometric';
 
@@ -181,7 +182,7 @@ export function PinCreationFlow({
         </Pressable>
       )}
       <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
-        <Text className="text-5xl mb-4">🐷</Text>
+        <View className="mb-4"><Mascot size={48} /></View>
         <Text className="text-2xl font-black text-on-surface mb-1">{stageTitle}</Text>
         <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">{stageSubtitle}</Text>
 

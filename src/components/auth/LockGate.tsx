@@ -18,6 +18,7 @@ import {
 } from '@/lib/biometrics';
 import { hasInternetConnection } from '@/lib/network';
 import { PinPad, PinDots } from './PinPad';
+import { Mascot } from '@/components/Mascot';
 
 function formatRemaining(ms: number): string {
   const s = Math.ceil(ms / 1000);
@@ -149,7 +150,7 @@ export function LockGate() {
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-1 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
-          <Text className="text-5xl mb-4">🐷</Text>
+          <View className="mb-4"><Mascot size={48} /></View>
           <Text className="text-2xl font-black text-on-surface mb-1">Enter your PIN</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
             Unlock Piggy to continue
