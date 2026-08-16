@@ -10,8 +10,7 @@ import { createLogger } from './logger';
 
 const log = createLogger('deepAnalysis');
 
-// TODO: replace with the real n8n Deep Analysis webhook URL.
-const DEEP_ANALYSIS_URL = 'https://n8n1.neuralops.pl/webhook-test/PLACEHOLDER-deep-analysis';
+const DEEP_ANALYSIS_URL = 'https://n8n.piggnify.com/webhook/cfbc46c0-bc70-4b9b-bdea-a6c881ee9019';
 
 export type DeepAnalysisResult = { status: 'success' | 'error' };
 
