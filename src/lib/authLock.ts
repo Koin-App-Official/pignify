@@ -14,6 +14,12 @@
  *   loading → locked → (PIN/biometric) unlocked
  *   any → unauthenticated  (forgot PIN / lockout exhausted / dead session)
  *
+ * `needs_plan` is spliced in ahead of the PIN steps when the plan gate has
+ * something to say (planGate.ts): the one-time trial intro after onboarding, or
+ * a lapsed trial. The lapsed check also runs on every transition to unlocked, so
+ * a trial that ends mid-week is caught on the next unlock rather than only at
+ * login.
+ *
  * Logging out (as opposed to forgot-PIN) deliberately does NOT wipe the local
  * PIN blob — the device already proved it knows the PIN, so the next login
  * only needs to re-confirm it (needs_pin_confirm), not invent a new one. The
@@ -28,6 +34,7 @@ import { hasPin, verifyPin, setPin, clearPin, demoteToStale, getLockoutState } f
 import { unlockWithBiometric, disableBiometric, isBiometricEnabled, enableBiometric } from './biometrics';
 import { registerDevice } from './device';
 import { useStore } from './store';
+import { planGateReason, planGateReasonOnUnlock } from './planGate';
 import { isUsableSecret } from './sessionSecret';
 import { createLogger } from './logger';
 
@@ -36,6 +43,7 @@ const log = createLogger('authLock');
 export type LockStatus =
   | 'loading'
   | 'unauthenticated'
+  | 'needs_plan'
   | 'needs_pin_setup'
   | 'needs_pin_confirm'
   | 'locked'
@@ -75,6 +83,15 @@ interface AuthLockState {
    * return to foreground to decide whether the grace period has elapsed.
    */
   backgroundedAt: number | null;
+  /**
+   * Memory-only. Where to go once the plan gate is dismissed.
+   *
+   * The gate is entered from two very different places: ahead of the PIN step
+   * after a login, and *after* a successful unlock when a trial has lapsed
+   * mid-week. Without recording which, dismissing the lapsed-trial gate would
+   * bounce a user who just entered their PIN back to the PIN screen.
+   */
+  planGateReturnTo: LockStatus | null;
 
   /** Cold-start: decide whether to show login or the lock screen. */
   bootstrap: () => Promise<void>;
@@ -84,6 +101,11 @@ interface AuthLockState {
    * needs_pin_confirm (a PIN already exists — e.g. after a normal logout).
    */
   onLoggedIn: (userId: string, secret: string) => Promise<void>;
+  /**
+   * Dismisses the plan gate and continues to the PIN step the login was headed
+   * for. Only reachable from `needs_plan`.
+   */
+  onPlanAcknowledged: () => Promise<void>;
   /** Called after setPin() succeeds in the set-PIN screen. */
   onPinConfigured: () => Promise<void>;
   /** Attempt to unlock with a typed PIN. */
@@ -106,6 +128,24 @@ interface AuthLockState {
    * local PIN blob intact so the next login only needs needs_pin_confirm.
    */
   logout: () => Promise<void>;
+}
+
+/** Snapshot of the profile fields the plan gate decides on. */
+function readPlanGateInput() {
+  const { planStatus, trialIntroSeen, onboardingCompleted } = useStore.getState().profile;
+  return { planStatus, trialIntroSeen: !!trialIntroSeen, onboardingCompleted };
+}
+
+/**
+ * Every route to `unlocked` goes through here, so a trial that lapses between
+ * sessions is caught on the next unlock rather than only at login. Diverting to
+ * the gate records `unlocked` as the return target — the PIN has already been
+ * dealt with by the time this runs.
+ */
+function unlockPatch(): Pick<AuthLockState, 'status' | 'planGateReturnTo'> {
+  return planGateReasonOnUnlock(readPlanGateInput())
+    ? { status: 'needs_plan', planGateReturnTo: 'unlocked' }
+    : { status: 'unlocked', planGateReturnTo: null };
 }
 
 /**
@@ -149,7 +189,7 @@ async function activateSession(
     set({ status: 'unauthenticated', userId: null, sessionSecret: null });
     return 'invalid_session';
   }
-  set({ status: 'unlocked', userId: accountId, sessionSecret: secret });
+  set({ ...unlockPatch(), userId: accountId, sessionSecret: secret });
   registerDevice(accountId); // fire-and-forget last_seen refresh
   return 'ok';
 }
@@ -160,6 +200,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
   sessionSecret: null,
   pendingSecret: null,
   backgroundedAt: null,
+  planGateReturnTo: null,
 
   bootstrap: async () => {
     set({ status: 'loading' });
@@ -185,18 +226,38 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
 
   onLoggedIn: async (userId, secret) => {
     // verifyEmailOtp already applied the session to the client.
-    if (await hasPin()) {
-      // A PIN already lives on this device (normal logout, not forgot-PIN) —
-      // just re-confirm it rather than forcing a brand-new one.
-      set({ userId, pendingSecret: secret, status: 'needs_pin_confirm' });
+    // A PIN already on this device (normal logout, not forgot-PIN) only needs
+    // re-confirming rather than a brand-new one. Which slot the secret goes in
+    // follows from that: `pendingSecret` is held until the existing PIN is
+    // re-entered, `sessionSecret` is live immediately.
+    const hasExistingPin = await hasPin();
+    // The gate goes ahead of the PIN step, so the user learns about the trial
+    // before being asked to secure the account.
+    const gated = planGateReason(readPlanGateInput()) !== null;
+
+    const pinStep: LockStatus = hasExistingPin ? 'needs_pin_confirm' : 'needs_pin_setup';
+    const status = gated ? 'needs_plan' : pinStep;
+    const planGateReturnTo = gated ? pinStep : null;
+
+    if (hasExistingPin) {
+      set({ userId, pendingSecret: secret, status, planGateReturnTo });
     } else {
-      set({ userId, sessionSecret: secret, status: 'needs_pin_setup' });
+      set({ userId, sessionSecret: secret, status, planGateReturnTo });
     }
+  },
+
+  onPlanAcknowledged: async () => {
+    // Fall back to the PIN step only if nothing was recorded — that can only
+    // happen if the gate were somehow entered without going through either
+    // entry point, and sending an un-PIN'd user to setup is the safe guess.
+    const target =
+      get().planGateReturnTo ?? ((await hasPin()) ? 'needs_pin_confirm' : 'needs_pin_setup');
+    set({ status: target, planGateReturnTo: null });
   },
 
   onPinConfigured: async () => {
     const { userId } = get();
-    set({ status: 'unlocked' });
+    set(unlockPatch());
     if (userId) registerDevice(userId);
   },
 
@@ -291,7 +352,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
 
   lock: () => {
     clearClientSession();
-    set({ status: 'locked', sessionSecret: null, userId: null, backgroundedAt: null });
+    set({ status: 'locked', sessionSecret: null, userId: null, backgroundedAt: null, planGateReturnTo: null });
   },
 
   setBackgroundedAt: (ts) => set({ backgroundedAt: ts }),
@@ -303,7 +364,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     await demoteToStale();
     await disableBiometric();
     clearClientSession();
-    set({ status: 'unauthenticated', userId: null, sessionSecret: null, pendingSecret: null });
+    set({ status: 'unauthenticated', userId: null, sessionSecret: null, pendingSecret: null, planGateReturnTo: null });
   },
 
   logout: async () => {
@@ -311,6 +372,6 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     clearClientSession();
     // Deliberately does NOT touch the local PIN blob/biometric key — the next
     // login only needs needs_pin_confirm, not a brand-new PIN (see file header).
-    set({ status: 'unauthenticated', userId: null, sessionSecret: null, backgroundedAt: null });
+    set({ status: 'unauthenticated', userId: null, sessionSecret: null, backgroundedAt: null, planGateReturnTo: null });
   },
 }));

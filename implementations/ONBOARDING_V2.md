@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A–F done and verified. G is next. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
+Status: **in progress** — A–G done. Only the payment rail (H) remains, and it is blocked on a decision. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
 
 ## Progress
 
@@ -13,7 +13,7 @@ Status: **in progress** — A–F done and verified. G is next. E–H rewritten 
 | D | Push pre-permission step | ✅ merged ([#62](https://github.com/Koin-App-Official/pignify/pull/62)) — device check pending |
 | E | Trial entitlement machinery (no payment) | ✅ merged ([#81](https://github.com/Koin-App-Official/pignify/pull/81)) — verified live 2026-08-16 |
 | F | App-side trial state | ✅ merged ([#84](https://github.com/Koin-App-Official/pignify/pull/84)) — device check pending |
-| G | Trial gate + day-15 lockout | ☐ ready to start |
+| G | Trial gate + day-15 lockout | ☑ implemented ([#86](https://github.com/Koin-App-Official/pignify/issues/86)) — device check pending |
 | H | Payment rail | ⛔ deferred — rail undecided, see open decisions |
 
 ## Decisions
@@ -195,16 +195,30 @@ Once this ships, the `beginner` → `free` mapping in `CLAUDE_entitlements_get`'
 
 # Issue G — Trial gate + day-15 lockout
 
-**Branch:** `feat/issue-G-trial-gate` · **Depends on:** F · **Files:** `src/lib/authLock.ts`, `src/components/auth/AuthGate.tsx`, new `src/components/auth/PlanGate.tsx`, `app/onboarding.tsx`, `src/lib/notifications.ts`
+**Branch:** `feat/issue-86-trial-gate` ([#86](https://github.com/Koin-App-Official/pignify/issues/86)) · **Depends on:** F (merged) · **Files:** new `src/lib/planGate.ts`, `src/lib/authLock.ts`, `src/components/auth/AuthGate.tsx`, new `src/components/auth/PlanGate.tsx`, `app/onboarding.tsx`, `app/(tabs)/index.tsx`, `src/lib/notifications.ts`, `src/lib/store.ts`
 
 > **Rewritten.** Was "Onboarding paywall + trial lifecycle". The paywall becomes a one-tap trial start; the payment moment moves to H.
 
-- [ ] **New lock status `needs_plan`** in the `authLock` machine, after login and before `needs_pin_setup` (satisfies D5). Building it into the state machine rather than into onboarding means the *same* gate serves the day-15 lockout — one screen, two jobs.
-- [ ] **`PlanGate`, trial-start mode** — what the trial includes, "no card needed, nothing to cancel", one button. This is not a paywall and should not look like one.
-- [ ] **`PlanGate`, lockout mode** — same component, expired copy, and whatever H provides as the way to pay.
-- [ ] **Day-12 trial-ending notification.** `_layout.tsx:42` already routes a `trial-ending` type to `/plans`; schedule it off `trialEndsAt`. With no card on file this is the *only* conversion signal, so it matters far more than it did under auto-renewing IAP.
-- [ ] **Onboarding hand-off** — `onboarding.tsx` currently calls `onLoggedIn()` straight into PIN setup. Transition into `needs_plan` first; move the Success screen and confetti to after PIN creation so the celebration lands on a finished account.
-- [ ] Verify bootstrap routes a user who quit at the gate (real account, no PIN) back to `needs_plan` rather than stranding them.
+- [x] **New lock status `needs_plan`** in the `authLock` machine, ahead of the PIN steps. The *lapsed* check additionally runs on every transition to `unlocked`, so a trial ending mid-week is caught on the next unlock rather than only at login.
+- [x] **`PlanGate`, trial-intro mode** — what the trial includes, "we didn't ask for a card, so there's nothing to cancel", one button. Not a paywall and doesn't look like one.
+- [x] **`PlanGate`, lapsed mode** — same component, leading with "nothing has been deleted" (constraint C4), which is the thing a user in that state actually worries about.
+- [x] **Decision extracted to `src/lib/planGate.ts`** — pure and unit-tested (16 tests), since `store.ts` can't be imported under vitest. Same pattern as goalMath/deposits/storeMigrations.
+- [x] `trialIntroSeen` on the profile, so the intro shows exactly once.
+- [x] **Onboarding hands off directly**, and pulls entitlements once after provisioning so the gate shows the real tier and day count rather than a hardcoded guess.
+- [x] **Celebration moved to the dashboard** (`justOnboarded`), firing once the gate and PIN setup are both behind the user — on a finished account, with their goal on screen.
+- [x] **Trial reminder at 2 days out** (day 12), and its "no action needed if you've already added a payment method" copy dropped: there is no card, so that was never true.
+- [x] `npm run typecheck` + `npm test` clean (200 passed).
+- [ ] Device check: trial intro, lapsed screen, and the dashboard confetti.
+
+### `LOCKOUT_ENFORCED` — the one thing left deliberately off
+
+`planGate.ts` exports `LOCKOUT_ENFORCED = false`. With no payment rail, enforcing the lockout would produce a screen telling the user to subscribe and giving them no way to do it. The gate still *shows* on a lapse, so it is never silent — it just isn't a dead end.
+
+Flip it to `true` in the same change that ships checkout (issue H); a test asserts the current value so the change is deliberate rather than accidental. Nobody can reach that state until 14 days after the first signup.
+
+### On decision D5
+
+D5 ("plan selection before PIN creation") was written when this gate was a paywall and the point was capturing day-0 payment intent. There is no payment here, so the *intro* still runs before PIN as D5 asks, but the *lapsed* check deliberately runs after unlock too — an expiry mid-week would otherwise never be noticed. `planGateReturnTo` records which entry point was used so dismissing the gate returns to the right place.
 
 ### Risk
 

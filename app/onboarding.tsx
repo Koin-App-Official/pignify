@@ -9,10 +9,8 @@ import {
   ActivityIndicator,
   TextInput,
   Linking,
-  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { springPresets } from '@/lib/springPresets';
 import { Button } from '@/components/ui/button';
@@ -27,12 +25,11 @@ import { DobWheelPicker } from '@/components/ui/dob-picker';
 import { DobConfirmModal } from '@/components/ui/dob-confirm-modal';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
-import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
-import { useCelebrate } from '@/components/animation/useCelebrate';
 import { PLACEHOLDER_COLOR } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath';
 import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
+import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { requestNotificationPermission } from '@/lib/notifications';
 
 const GOAL_CHIPS = [
@@ -148,15 +145,18 @@ enum OnboardingStep {
   BlueprintReview = 7,
   PushPermission = 8,
   AccountFinalization = 9,
-  Success = 10,
 }
 
 /**
- * Every step that shows the progress bar, i.e. all of them except Success.
- * Derived rather than hardcoded: the previous literal 6 drifted out of sync with
- * the real screen count and told users "Step 6 of 6" with three screens to go.
+ * Every step, all of which show the progress bar. Derived rather than
+ * hardcoded: the previous literal 6 drifted out of sync with the real screen
+ * count and told users "Step 6 of 6" with three screens to go.
+ *
+ * Onboarding has no success screen of its own any more — it hands straight off
+ * to the plan gate and PIN setup, and the celebration fires on the dashboard
+ * once all of that is genuinely finished (profile.justOnboarded).
  */
-const TOTAL_STEPS = OnboardingStep.Success;
+const TOTAL_STEPS = OnboardingStep.AccountFinalization + 1;
 
 const ONBOARDING_WEBHOOK_TIMEOUT_MS = 15_000;
 
@@ -191,10 +191,7 @@ function detectLocaleCountry(): { country: string; currency: string } {
 }
 
 export default function Onboarding() {
-  const router = useRouter();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.Name);
-  const { confettiProgress, celebrate } = useCelebrate();
   const emailInputRef = useRef<TextInput>(null);
 
   const [firstName, setFirstName] = useState('');
@@ -238,8 +235,6 @@ export default function Onboarding() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpUserId, setOtpUserId] = useState('');
   const [code, setCode] = useState('');
-  // Session captured at verification, handed to the lock state machine on finish.
-  const [pendingSession, setPendingSession] = useState<{ userId: string; secret: string } | null>(null);
   /**
    * Set once the OTP has been accepted but provisioning hasn't finished. An OTP
    * is single-use, so after this point re-verifying the same code is guaranteed
@@ -313,7 +308,7 @@ export default function Onboarding() {
 
   // Persist after every change (debounced inside saveDraft).
   useEffect(() => {
-    if (!hydrated || step === OnboardingStep.Success) return;
+    if (!hydrated) return;
     saveDraft({
       step,
       firstName,
@@ -356,10 +351,6 @@ export default function Onboarding() {
     const t = setTimeout(() => setResumed(false), 6000);
     return () => clearTimeout(t);
   }, [resumed]);
-
-  useEffect(() => {
-    if (step === OnboardingStep.Success) celebrate();
-  }, [step]);
 
   const currencySymbol = getCurrencySymbol(currency);
   const countryName = COUNTRIES.find((c) => c.code === country)?.name ?? country;
@@ -546,20 +537,33 @@ export default function Onboarding() {
         monthlyContribution,
         estimatedMonthlySavings: monthlyContribution,
         // NOT onboardingCompleted yet — AuthGate treats "onboardingCompleted +
-        // status unauthenticated" as a returning user and shows LoginGate. Session
-        // handoff (onLoggedIn) is deferred to the success screen's button so the
-        // user sees the summary first; flipping this flag early would open a
-        // window where AuthGate hijacks the still-unauthenticated success screen
-        // into a second login round-trip. Set together with onLoggedIn below.
+        // status unauthenticated" as a returning user and shows LoginGate, so it
+        // is flipped below in the same tick as the onLoggedIn handoff.
       });
       unlockAchievement('a1');
       // Provisioning is done; the draft has nothing left to protect.
       await clearDraft();
-      // Hold the session; hand it to the lock machine after the success screen so
-      // the user is routed into PIN setup.
       setVerifiedSession(null);
-      setPendingSession({ userId, secret });
-      setStep(OnboardingStep.Success);
+
+      // Pull the entitlements the webhook just wrote, so the plan gate can show
+      // the real trial (tier, days left) instead of a hardcoded guess. Purely
+      // best-effort: fetchEntitlementsSync never throws, and if it returns
+      // nothing the gate simply doesn't fire — the hourly sync corrects it later.
+      const entitlements = await fetchEntitlementsSync(userId);
+
+      // One update, so AuthGate never observes a half-applied profile.
+      updateProfile({
+        onboardingCompleted: true,
+        justOnboarded: true,
+        ...(entitlements?.plan ? { plan: entitlements.plan } : {}),
+        ...(entitlements?.status ? { planStatus: entitlements.status } : {}),
+        ...(entitlements?.trialEndsAt !== undefined
+          ? { trialEndsAt: entitlements.trialEndsAt }
+          : {}),
+      });
+      // → needs_plan (trial intro) then the PIN step. The celebration now waits
+      // for the far side of that, so it lands on a finished account.
+      onLoggedIn(userId, secret);
     } catch {
       // The code was already accepted — this is a backend/network failure
       // setting up the account, not a bad code. Keep the verified session so
@@ -618,8 +622,6 @@ export default function Onboarding() {
   };
 
   const goBack = () => setStep((s) => (s - 1) as OnboardingStep);
-
-  const showProgress = step < OnboardingStep.Success;
 
   // Fixed footer for the paginated steps — pulled out of the scrolling
   // content so it docks right above the keyboard (via the KeyboardAvoidingView
@@ -902,18 +904,16 @@ export default function Onboarding() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        {showProgress && (
-          <View className="px-5 pt-6 pb-2">
-            <Text className="mb-2 text-xs font-semibold text-on-surface-variant text-center">
-              Step {step + 1} of {TOTAL_STEPS}
-            </Text>
-            <View className="flex-row gap-1">
-              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                <ProgressSegment key={i} active={i <= step} />
-              ))}
-            </View>
+        <View className="px-5 pt-6 pb-2">
+          <Text className="mb-2 text-xs font-semibold text-on-surface-variant text-center">
+            Step {step + 1} of {TOTAL_STEPS}
+          </Text>
+          <View className="flex-row gap-1">
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+              <ProgressSegment key={i} active={i <= step} />
+            ))}
           </View>
-        )}
+        </View>
 
         {resumed && (
           <Animated.View entering={FadeInDown.springify()} className="px-5 pb-1">
@@ -1342,54 +1342,12 @@ export default function Onboarding() {
             </Animated.View>
           )}
 
-          {/* Screen 10: Success */}
-          {step === OnboardingStep.Success && (
-            <Animated.View
-              entering={FadeInDown.springify()}
-              className="flex-1 items-center justify-center min-h-[70vh]"
-            >
-              <Text className="text-7xl text-center mb-6">🐷</Text>
-              <Text className="mb-3 text-3xl font-black text-on-surface text-center">
-                You're all set, {firstName}! 🎉
-              </Text>
-              <Text className="mb-2 text-base font-medium text-on-surface-variant text-center px-4">
-                Your Piggy Plan is live. Time to start saving for your {goalName}.
-              </Text>
-              <Text className="mb-10 text-sm text-on-surface-variant text-center px-6">
-                {formatTargetDate(targetDate)} is closer than you think.
-              </Text>
-
-              <Button
-                onPress={() => {
-                  if (pendingSession) {
-                    // Flip onboardingCompleted in the same tick as the status
-                    // transition below, so AuthGate never observes "completed +
-                    // unauthenticated" (which it reads as a returning user needing
-                    // LoginGate).
-                    updateProfile({ onboardingCompleted: true });
-                    // → needs_pin_setup; AuthGate swaps to the set-PIN screen.
-                    onLoggedIn(pendingSession.userId, pendingSession.secret);
-                  } else {
-                    router.replace('/(tabs)');
-                  }
-                }}
-                className="w-full flex-row items-center justify-center gap-2 h-14"
-              >
-                <Text className="text-base font-bold text-primary-foreground">Secure my account</Text>
-                <ArrowRight size={18} color="#ffffff" />
-              </Button>
-            </Animated.View>
-          )}
         </ScrollView>
 
         {showFixedFooter && (
           <View className="px-5 pt-4 pb-6">
             {renderFooter()}
           </View>
-        )}
-
-        {step === OnboardingStep.Success && (
-          <SkiaConfetti progress={confettiProgress} width={windowWidth} height={windowHeight} />
         )}
 
         <PickerModal
