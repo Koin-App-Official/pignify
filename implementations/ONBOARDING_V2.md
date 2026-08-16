@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A–G done. Only the payment rail (H) remains, and it is blocked on a decision. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
+Status: **in progress** — A–G done. H and I (payment + lockout) are specced and unblocked; the rail is decided. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
 
 ## Progress
 
@@ -14,7 +14,8 @@ Status: **in progress** — A–G done. Only the payment rail (H) remains, and i
 | E | Trial entitlement machinery (no payment) | ✅ merged ([#81](https://github.com/Koin-App-Official/pignify/pull/81)) — verified live 2026-08-16 |
 | F | App-side trial state | ✅ merged ([#84](https://github.com/Koin-App-Official/pignify/pull/84)) — device check pending |
 | G | Trial gate + day-15 lockout | ☑ implemented ([#86](https://github.com/Koin-App-Official/pignify/issues/86)) — device check pending |
-| H | Payment rail | ⛔ deferred — rail undecided, see open decisions |
+| H | Stripe checkout + full lockout | ☐ ready to start |
+| I | Downgrade selection (what to keep) | ☐ blocked on H |
 
 ## Decisions
 
@@ -23,8 +24,12 @@ Locked 2026-08-14, **revised 2026-08-16** where marked.
 | # | Decision |
 |---|---|
 | D1 | **REVISED.** 14-day free trial on every plan, **no card required**. Was: card-up-front via store IAP. |
-| D2 | **REVISED — RevenueCat is dropped.** Was: "RevenueCat replaces Stripe entirely." The existing Stripe rail is *retained, not archived*. |
+| D2 | **REVISED twice.** RevenueCat is dropped; **Stripe is the rail on every platform** (decided 2026-08-16). The existing Stripe workflows are the implementation, not a fallback. |
 | D3 | **REVISED.** The trial always runs its full 14 days, whenever the user cancels. After expiry without a subscription: full lockout. Was: immediate cutoff on cancel. |
+| D12 | **NEW.** Full lockout means **no app access** — `PlanGate` is the only reachable screen. Not read-only, not degraded. |
+| D13 | **NEW.** At lockout the user picks a plan **first**, then chooses which records to keep if the chosen plan holds fewer than they have. |
+| D14 | **NEW.** Over-limit records are **archived, never deleted** (constraint C4) — but the UI tells the user they are *removed*. See the copy caveat under issue I. |
+| D15 | **NEW.** Every tier including Beginner is offered at lockout, so a user with five goals may choose Beginner and archive four. |
 | D4 | Age gate (DOB) moves early. ✅ done in A |
 | D5 | Plan selection before PIN creation, after account creation. |
 | D6 | "No bank connection" is a lead marketing message. ✅ done in B/C |
@@ -71,9 +76,10 @@ Draft state persists across app kills at every step up to account creation. ✅ 
 
 ## Open decisions
 
-- [ ] **Which payment rail** (blocks H). Three viable options, see H.
-- [ ] **Day-15 fallback if H isn't ready.** Hard lockout with no way to pay is the worst outcome. Options: extend the trial server-side for existing users (cheap — `trial_ends_at` is a column), or soft-lock to read-only. Needs deciding *before* launch, not after.
-- [ ] **Play policy stance**, only if Stripe is chosen in H — selling digital subscriptions in a Play-distributed app outside Play Billing is the exact thing the policy targets.
+- [ ] **Day-15 safety, now mandatory.** D12 removes the escape hatch, so a lapsed user with no working checkout is genuinely stuck. Either ship H before anyone's day 15, or push `trial_ends_at` out (one column update) until it is ready. **As of 2026-08-16 no user is on a trial** — zero `entitlements` rows have a `trial_ends_at` — so the clock starts with the first new signup, not today.
+- [ ] **Play policy posture** (accepted risk, but pick the shape). Selling subscriptions in a Play-distributed app outside Play Billing is the specific case the policy targets, and the consequence is removal rather than a warning. Two shapes: a Subscribe button that links out from inside the app, or purchase handled entirely on the website with the app never containing a purchase flow (the day-12 reminder already being a notification makes this viable). Same Stripe rail either way; the second is a materially smaller target.
+
+**Closed 2026-08-16:** the payment rail is Stripe everywhere (D2).
 
 **Closed by the rewrite:** mid-trial upgrade behaviour (no payment, so nothing to prorate), paywall-failure escape hatch (no payment at the gate), account-deletion copy (Stripe rail retained, so `CLAUDE_account_delete` can still cancel server-side — the store-cancellation regression was a RevenueCat problem and is gone).
 
@@ -227,33 +233,53 @@ D5 ("plan selection before PIN creation") was written when this gate was a paywa
 
 ---
 
-# Issue H — Payment rail ⛔ DEFERRED
+# Issue H — Stripe checkout + full lockout
 
-**Depends on:** the rail decision below · **Deadline:** before the first cohort reaches day 15
+**Depends on:** G · **Blocks:** I · **Deadline:** before the first cohort reaches day 15 · **Files:** `src/lib/planGate.ts`, `src/components/auth/PlanGate.tsx`, `src/lib/billing.ts`, `app/plans.tsx`, `CLAUDE_billing_checkout`
 
-Nothing here can start until the rail is chosen. All three options remain open; the entitlement read path (`CLAUDE_entitlements_get` → Appwrite) stays the single authority the app trusts, so any of them plugs in underneath without touching E–G.
+The rail already exists and is live — `billing.ts`, `CLAUDE_billing_checkout`, `CLAUDE_stripe_webhook`, `CLAUDE_billing_sync`. This is mostly wiring, not building.
 
-**Option 1 — Google Play Billing.** Works today, no Apple account needed. Native purchase UX, best conversion, Play-policy compliant by construction. Cost: Google's cut, and Apple IAP still has to be built separately when D9 lifts.
+- [ ] **Subscribe action in `PlanGate`'s lapsed mode** — plan cards (all three tiers, D15) into `startCheckout`, returning via the existing `requestSubscriptionSync` reconcile.
+- [ ] **`LOCKOUT_ENFORCED` → true**, removing the "Continue" escape. `needs_plan` already replaces the whole tree in `AuthGate`, so no-app-access (D12) needs no new gating — only the escape hatch goes.
+- [ ] Update the `LOCKOUT_ENFORCED` assertion in `planGate.test.ts` in the same change, so the flip stays deliberate.
+- [ ] **Remove the leftover 7-day Stripe trial** for Family in `CLAUDE_billing_checkout` ("Pick Price + Trial"). The 14 free days are granted by the app; a Stripe trial on top would double-count them.
+- [ ] **Enable Apple Pay / Google Pay in Stripe Checkout** — the browser round-trip is the main conversion cost of this rail, and one-tap wallets recover most of it.
+- [ ] Confirm `plans.tsx`'s checkout-return path still reconciles correctly now that `planStatus` can be `expired`.
 
-**Option 2 — Stripe web checkout.** The rail is *already built and live* — `billing.ts`, `CLAUDE_billing_checkout`, `stripe_webhook`, `billing_sync`. Cheapest to finish by a wide margin, ~2.9% instead of 15–30%, full control of trials, proration, and discounts. Cost: leaving the app to a browser hurts conversion (mitigate with Apple Pay / Google Pay in Stripe Checkout), and it is squarely what Play's billing policy targets.
-
-**Option 3 — Wait for the Apple Developer Program**, then do both stores at once. Cleanest end state, unknown timeline.
-
-**Correction on record:** RevenueCat was dropped because of the Apple block, but RC supports **Play-only projects** — the Apple constraint never actually ruled it out for Android. If Option 1 is chosen, RC is still worth considering as the wrapper, since it makes adding Apple IAP later nearly free.
+**Largely mooted by D12, but worth knowing:** `useEntitlements` reads every quota except AI messages from `PLAN_CONFIG[plan]` rather than the server's zeroed values, so a locked user *would* keep e.g. Family goal limits. With no app access there is nowhere for that to leak, but it should still be corrected rather than left as a latent trap.
 
 ---
+
+# Issue I — Downgrade selection (what to keep)
+
+**Depends on:** H · **Files:** `src/lib/retention.ts`, new selection screen
+
+**This is already half-built.** `src/lib/retention.ts` implements the rule: a downgrade that exceeds the target plan's limits is **blocked** (`awaiting_selection`) until the user chooses what to keep, and over-limit records are archived rather than deleted. What is missing is the UI and the wiring into the lockout flow.
+
+Flow, per D13: **pick a plan → see what doesn't fit → choose what to keep → subscription applies.**
+
+- [ ] Selection screen driven by `computeRetentionRequirement` — per resource (goals, incomes, devices), how many must be archived and which the user keeps.
+- [ ] Wire it between checkout success and unlock, so the plan cannot apply while over-limit.
+- [ ] Offer "upgrade to Family instead" as an inline escape from the selection screen — a user confronting the loss of four goals is exactly who might pay more instead.
+- [ ] Archived records stay visible and recoverable, and return automatically on a later upgrade (C4/C7).
+
+### Copy caveat (D14)
+
+The decision is to archive but tell the user the records are *removed*. Two things follow, and the copy has to thread them:
+
+- Do **not** say "deleted permanently" or "this cannot be undone" — it would be untrue, and it collides with the archived goals reappearing if they later upgrade.
+- Wording like **"removed from your plan"** or **"no longer active"** keeps the simplicity you want without asserting something false. Recommended, but it's your call.
 
 ## Sequencing
 
 ```
-A ──► C ──► D                    ✅ all merged
+A ──► C ──► D                    ✅ merged
 B                                ✅ merged
-
-E ──► F ──► G                    ready now; nothing store-dependent
-              └──► H             blocked on the rail decision
+E ──► F ──► G                    ✅ merged (G in review)
+              └──► H ──► I       ready; H gates the lockout, I gates the downgrade
 ```
 
-E, F and G can be built and shipped to Play without any store, Apple, or payment dependency. H is the only piece that needs a decision, and its deadline is day 15 of the first real user.
+H must land before any user's day 15, because D12 leaves no escape hatch. No one is on a trial yet, so the clock starts with the first new signup.
 
 ## Not in scope
 
