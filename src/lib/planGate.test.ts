@@ -60,10 +60,16 @@ describe('planGateReasonOnUnlock', () => {
     expect(planGateReasonOnUnlock({ ...base, planStatus: 'expired' })).toBe('locked');
   });
 
-  it('does not resurface the intro on an ordinary unlock', () => {
-    // The intro belongs to the onboarding hand-off; showing it days later on a
-    // routine PIN unlock would be baffling.
-    expect(planGateReasonOnUnlock(base)).toBeNull();
+  it('surfaces the intro on unlock when it was never shown', () => {
+    // A best-effort entitlements fetch that fails during onboarding can leave
+    // trialIntroSeen false with no other chance to flip it (ONBOARDING_FIXES.md
+    // #6) — the next unlock is the last remaining opportunity to show it, so it
+    // must not be suppressed here.
+    expect(planGateReasonOnUnlock(base)).toBe('trial_intro');
+  });
+
+  it('does not resurface the intro once it has already been seen', () => {
+    expect(planGateReasonOnUnlock({ ...base, trialIntroSeen: true })).toBeNull();
   });
 });
 
