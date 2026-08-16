@@ -32,6 +32,7 @@ const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 export function LoginGate() {
   const profileEmail = useStore((s) => s.profile.email);
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
+  const updateProfile = useStore((s) => s.updateProfile);
   const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
   const cancelLoginRequest = useAuthLock((s) => s.cancelLoginRequest);
   // Reached two ways: a real post-logout/forgot-PIN login (onboardingCompleted
@@ -75,6 +76,16 @@ export function LoginGate() {
       clearClientSession();
       await NitroCookies.clearAll();
       const { userId, secret } = await verifyEmailOtp(otpUserId, code.trim());
+      // A successful OTP verification is by definition an existing account —
+      // reached ahead of onboarding completing (the "I already have an
+      // account" entry point), this device's onboardingCompleted is still
+      // false. Two things depend on it being true before onLoggedIn runs:
+      // the dashboard's own redirect (index.tsx) would otherwise bounce a
+      // freshly-unlocked user straight back into onboarding, and onLoggedIn's
+      // internal plan-gate check skips entirely while onboardingCompleted is
+      // false (planGateReason returns null), which would silently skip the
+      // trial-intro/lockout gate for a returning trialing/locked user.
+      if (!onboardingCompleted) updateProfile({ onboardingCompleted: true });
       onLoggedIn(userId, secret); // → needs_pin_setup or needs_pin_confirm
     } catch (err) {
       log.error('verify failed:', err);
