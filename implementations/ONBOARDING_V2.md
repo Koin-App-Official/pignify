@@ -14,8 +14,8 @@ Status: **in progress** — A–G done. H and I (payment + lockout) are specced 
 | E | Trial entitlement machinery (no payment) | ✅ merged ([#81](https://github.com/Koin-App-Official/pignify/pull/81)) — verified live 2026-08-16 |
 | F | App-side trial state | ✅ merged ([#84](https://github.com/Koin-App-Official/pignify/pull/84)) — device check pending |
 | G | Trial gate + day-15 lockout | ☑ implemented ([#86](https://github.com/Koin-App-Official/pignify/issues/86)) — device check pending |
-| H | Stripe checkout + full lockout | ☐ ready to start |
-| I | Downgrade selection (what to keep) | ☐ blocked on H |
+| H | Stripe checkout + full lockout | ☑ implemented ([#89](https://github.com/Koin-App-Official/pignify/issues/89)) — needs `EXPO_PUBLIC_N8N_BILLING_URL` set |
+| I | Downgrade selection (what to keep) | ☐ ready to start |
 
 ## Decisions
 
@@ -239,14 +239,25 @@ D5 ("plan selection before PIN creation") was written when this gate was a paywa
 
 The rail already exists and is live — `billing.ts`, `CLAUDE_billing_checkout`, `CLAUDE_stripe_webhook`, `CLAUDE_billing_sync`. This is mostly wiring, not building.
 
-- [ ] **Subscribe action in `PlanGate`'s lapsed mode** — plan cards (all three tiers, D15) into `startCheckout`, returning via the existing `requestSubscriptionSync` reconcile.
-- [ ] **`LOCKOUT_ENFORCED` → true**, removing the "Continue" escape. `needs_plan` already replaces the whole tree in `AuthGate`, so no-app-access (D12) needs no new gating — only the escape hatch goes.
-- [ ] Update the `LOCKOUT_ENFORCED` assertion in `planGate.test.ts` in the same change, so the flip stays deliberate.
-- [ ] **Remove the leftover 7-day Stripe trial** for Family in `CLAUDE_billing_checkout` ("Pick Price + Trial"). The 14 free days are granted by the app; a Stripe trial on top would double-count them.
-- [ ] **Enable Apple Pay / Google Pay in Stripe Checkout** — the browser round-trip is the main conversion cost of this rail, and one-tap wallets recover most of it.
-- [ ] Confirm `plans.tsx`'s checkout-return path still reconciles correctly now that `planStatus` can be `expired`.
+- [x] **Subscribe action in `PlanGate`'s lapsed mode** — all three tiers into `startCheckout`, returning via `requestSubscriptionSync` + an entitlements re-read. The gate clears because the status changed, never on the user's say-so.
+- [x] **Enforcement**, but conditional — see the warning below.
+- [x] **Removed the 7-day Family trial** from `CLAUDE_billing_checkout` (live workflow, repo template and README). The app grants the 14 days, so Stripe adding its own meant Family got 21 free days and no charge until day 21.
+- [x] **Closed the quota leak** noted in G: every quota except AI messages was read from `PLAN_CONFIG[plan]`, and a locked user keeps their tier name, so an expired Family user still held Family's limits.
+- [x] `npm run typecheck` + `npm test` clean (202 passed).
+- [ ] Device check: subscribe flow, return path, and the unconfigured-build warning.
 
-**Largely mooted by D12, but worth knowing:** `useEntitlements` reads every quota except AI messages from `PLAN_CONFIG[plan]` rather than the server's zeroed values, so a locked user *would* keep e.g. Family goal limits. With no app access there is nowhere for that to leak, but it should still be corrected rather than left as a latent trap.
+### ⚠️ `EXPO_PUBLIC_N8N_BILLING_URL` is not set
+
+Neither `.env` nor `eas.json` defines it, so `isBillingConfigured()` is false and **every Subscribe tap returns `unavailable`**. Until it is set, checkout cannot work in any build.
+
+That is also why enforcement is `lockoutEnforced(billingConfigured)` rather than a second boolean someone has to remember to flip. A total lockout has no escape hatch, so enforcing it while checkout is broken would strand a lapsed user on a screen whose only action does nothing — locked out of an app they were using minutes earlier. Tying the two together makes that trap unshippable by omission.
+
+The failure direction is deliberate: a misconfigured build lets lapsed users through, costing revenue, rather than bricking them, costing the user.
+
+### Manual, needs your accounts
+
+- [ ] Set `EXPO_PUBLIC_N8N_BILLING_URL` in `.env` and the EAS build profiles.
+- [ ] Enable Apple Pay / Google Pay in Stripe Checkout — the browser round-trip is this rail's main conversion cost, and one-tap wallets recover most of it.
 
 ---
 
