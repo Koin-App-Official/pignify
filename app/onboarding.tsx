@@ -31,6 +31,7 @@ import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath'
 import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
 import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { requestNotificationPermission } from '@/lib/notifications';
+import { Mascot } from '@/components/Mascot';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -932,7 +933,7 @@ export default function Onboarding() {
           {/* Screen 0: Name */}
           {step === OnboardingStep.Name && (
             <Animated.View entering={FadeInDown.springify()}>
-              <Text className="text-6xl text-center mb-4">🐷</Text>
+              <View className="items-center mb-4"><Mascot size={64} /></View>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Welcome to Piggy!{'\n'}What should we call you?
               </Text>
@@ -1277,7 +1278,7 @@ export default function Onboarding() {
           {/* Screen 9: Account Finalization (email / OTP) */}
           {step === OnboardingStep.AccountFinalization && (
             <Animated.View entering={FadeInDown.springify()}>
-              <Text className="text-6xl text-center mb-4">🐷</Text>
+              <View className="items-center mb-4"><Mascot expression="celebrating" size={64} /></View>
               <Text className="mb-2 text-3xl font-black text-on-surface">
                 Your Piggy Plan is ready!
               </Text>

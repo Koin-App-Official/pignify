@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { requestNotificationPermission, getNotificationPermissionStatus } from '@/lib/notifications';
 import { TEXT_INPUT_CENTERING } from '@/lib/utils';
+import { Mascot } from '@/components/Mascot';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -112,7 +113,7 @@ export default function Profile() {
         <FadeInStagger index={0} delayStep={60}>
         <View className="mb-6 rounded-3xl bg-primary-container p-6 items-center" style={CARD_SHADOW}>
           <View className="mb-4 h-18 w-18 items-center justify-center rounded-full bg-primary/20" style={{ width: 72, height: 72 }}>
-            <Text className="text-4xl">🐷</Text>
+            <Mascot size={44} />
           </View>
 
           {editingName ? (

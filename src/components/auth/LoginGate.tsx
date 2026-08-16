@@ -24,6 +24,7 @@ import NitroCookies from 'react-native-nitro-cookies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
+import { Mascot } from '@/components/Mascot';
 
 const log = createLogger('LoginGate');
 
@@ -118,7 +119,7 @@ export function LoginGate() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <View className="flex-1 justify-center px-8">
           <Animated.View entering={FadeInDown.springify()}>
-            <Text className="text-5xl mb-4 text-center">🐷</Text>
+            <View className="items-center mb-4"><Mascot size={48} /></View>
 
             {stage === 'email' ? (
               <>
