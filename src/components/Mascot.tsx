@@ -15,15 +15,24 @@ interface MascotProps {
   size?: number;
 }
 
-const MASCOT_IMAGE = require('../../assets/mascot.png');
+const DEFAULT_MASCOT_IMAGE = require('../../assets/mascot.png');
 
 /**
- * The Piggy mascot. Currently a single static illustration reused across all
- * expressions — swap MASCOT_IMAGE for per-expression assets (or a Rive/Skia
- * animation) once they exist; the `expression` prop is the seam, so call
- * sites won't need to change.
+ * Per-expression illustrations. Expressions without an entry here fall back
+ * to DEFAULT_MASCOT_IMAGE (the waving pose) — this is the seam the file
+ * header used to describe as aspirational; fill in the rest here as they're
+ * drawn, no call site needs to change either way.
+ */
+const EXPRESSION_IMAGES: Partial<Record<MascotExpression, ReturnType<typeof require>>> = {
+  celebrating: require('../../assets/mascot-celebrating.png'),
+};
+
+/**
+ * The Piggy mascot. `expression` picks a per-expression illustration when one
+ * exists (see EXPRESSION_IMAGES), falling back to the default waving pose.
  */
 export function Mascot({ expression = 'idle', size = 48 }: MascotProps) {
+  const mascotImage = EXPRESSION_IMAGES[expression] ?? DEFAULT_MASCOT_IMAGE;
   const celebrateScale = useSharedValue(1);
 
   useEffect(() => {
@@ -42,7 +51,7 @@ export function Mascot({ expression = 'idle', size = 48 }: MascotProps) {
   return (
     <Animated.View style={[{ width: size, height: size }, animatedStyle]}>
       <Image
-        source={MASCOT_IMAGE}
+        source={mascotImage}
         contentFit="contain"
         cachePolicy="memory-disk"
         style={{ width: size, height: size }}
