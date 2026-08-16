@@ -15,6 +15,22 @@ import {
 } from '@/lib/entitlements';
 import { evaluatePeriodicQuota } from '@/lib/quota';
 
+/**
+ * Everything zeroed — the client-side mirror of the locked entitlements row the
+ * server writes when a trial lapses or a subscription is cancelled.
+ */
+const LOCKED_PLAN_CONFIG = {
+  ...getPlanConfig('beginner'),
+  quotas: {
+    incomes: 0,
+    goals: 0,
+    devices: 0,
+    aiMessages: 0,
+    emailReports: 0,
+    deepAnalysis: 0,
+  },
+} as const;
+
 export function useEntitlements() {
   const plan = useStore((s) => s.profile.plan ?? 'beginner');
   const goals = useStore((s) => s.goals);
@@ -31,8 +47,17 @@ export function useEntitlements() {
     return s.deepAnalysisMonth === thisMonth ? s.deepAnalysisUsed : 0;
   });
 
+  const locked = useStore(
+    (s) => s.profile.planStatus === 'expired' || s.profile.planStatus === 'canceled'
+  );
+
   return useMemo(() => {
-    const config = getPlanConfig(plan);
+    // A locked plan keeps its tier name (the lockout screen says which plan
+    // lapsed), so quotas must not be read from that tier or an expired Family
+    // user would still hold Family's limits. The server already zeroes the row;
+    // this mirrors it client-side. Largely belt-and-braces since D12 means a
+    // locked user can't reach the app at all — but it stops the leak existing.
+    const config = locked ? LOCKED_PLAN_CONFIG : getPlanConfig(plan);
 
     // Active (non-archived) goals are the only ones that count toward limits (C7).
     const activeGoals = goals.filter((g) => !g.archived).length;
@@ -62,5 +87,5 @@ export function useEntitlements() {
       addonMessageBalance,
       deepAnalysisUsed,
     };
-  }, [plan, goals, monthlyIncome, localCoachMessagesUsed, serverAiMessagesQuota, serverAiMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
+  }, [plan, locked, goals, monthlyIncome, localCoachMessagesUsed, serverAiMessagesQuota, serverAiMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
 }

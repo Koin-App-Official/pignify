@@ -14,17 +14,28 @@ export type PlanGateReason =
   | 'locked';
 
 /**
- * Whether a lapsed trial actually blocks the app.
- *
- * FALSE until there is a payment rail (plan issue H). Enforcing a lockout with
- * nothing to convert to would be a screen with no way out — the user would be
- * told to subscribe and given no means of doing so. The gate still *shows*, so
- * the lapse is never silent; it just isn't a dead end.
- *
- * Flip to true in the same change that ships checkout. Nobody can reach this
- * state before 14 days after the first signup, so there is time.
+ * Whether the product *intends* a lapsed trial to block the app (decision D12).
+ * Read `lockoutEnforced()` rather than this — the intent alone isn't sufficient.
  */
-export const LOCKOUT_ENFORCED = false;
+export const LOCKOUT_INTENDED = true;
+
+/**
+ * Whether a lapsed trial actually blocks the app, right now, on this build.
+ *
+ * Enforcement is deliberately conditional on checkout being reachable. A total
+ * lockout (D12) leaves no escape hatch, so if `EXPO_PUBLIC_N8N_BILLING_URL` is
+ * missing — as it is in any build that forgot it — every Subscribe tap returns
+ * `unavailable` and the user is stuck on a screen whose only action is broken,
+ * with no way back into an app they were happily using minutes earlier.
+ *
+ * Making this structural rather than a second flag someone has to remember to
+ * flip means the trap cannot be shipped by omission. The failure direction is
+ * chosen on purpose: a misconfigured build lets lapsed users through, which
+ * costs revenue, rather than bricking them, which costs the user.
+ */
+export function lockoutEnforced(billingConfigured: boolean): boolean {
+  return LOCKOUT_INTENDED && billingConfigured;
+}
 
 export interface PlanGateInput {
   planStatus: PlanStatus;
