@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/animation/BottomSheet';
 import { Button } from './button';
 import { formatDate } from '@/lib/i18n/format';
@@ -19,12 +20,13 @@ function formatDob(isoDate: string, language: SupportedLanguage): string {
 }
 
 export const DobConfirmModal = ({ isVisible, dateOfBirth, language, onEdit, onConfirm }: DobConfirmModalProps) => {
+  const { t } = useTranslation('common');
   return (
     <BottomSheet visible={isVisible} onClose={onEdit}>
       <View className="p-6 gap-2">
-        <Text className="text-xl font-bold text-on-surface text-center">Is this correct?</Text>
+        <Text className="text-xl font-bold text-on-surface text-center">{t('dobConfirmModal.title')}</Text>
         <Text className="text-sm text-on-surface-variant text-center">
-          Once confirmed, this can't be changed.
+          {t('dobConfirmModal.body')}
         </Text>
         <Text className="mt-4 text-2xl font-black text-primary text-center">
           {dateOfBirth ? formatDob(dateOfBirth, language) : ''}
@@ -32,8 +34,8 @@ export const DobConfirmModal = ({ isVisible, dateOfBirth, language, onEdit, onCo
       </View>
 
       <View className="flex-row gap-3 p-5 pt-2">
-        <Button variant="outline" className="flex-1 h-14" label="Edit" onPress={onEdit} />
-        <Button variant="default" className="flex-1 h-14" label="Confirm" onPress={onConfirm} />
+        <Button variant="outline" className="flex-1 h-14" label={t('dobConfirmModal.edit')} onPress={onEdit} />
+        <Button variant="default" className="flex-1 h-14" label={t('confirm')} onPress={onConfirm} />
       </View>
     </BottomSheet>
   );

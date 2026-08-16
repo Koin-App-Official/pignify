@@ -52,6 +52,7 @@ function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
 
 export default function Dashboard() {
   const { t } = useTranslation(['dashboard', 'common']);
+  const { t: tPlans } = useTranslation('plans');
   const router = useRouter();
   const { openExpense } = useLocalSearchParams<{ openExpense?: string }>();
   // Fine-grained selectors instead of subscribing to the whole `profile`
@@ -103,7 +104,7 @@ export default function Dashboard() {
   const [gate, setGate] = useState<GateInfo | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const openGate = (key: GateKey) => setGate(gateInfo(key, plan));
+  const openGate = (key: GateKey) => setGate(gateInfo(key, plan, tPlans));
   const closeGate = () => setGate(null);
   const goUpgrade = (target: UserPlan) => {
     setGate(null);
@@ -225,7 +226,8 @@ export default function Dashboard() {
               onPress={() =>
                 safeOpenURL(
                   `mailto:${SUPPORT_EMAIL}`,
-                  t('common:noEmailApp', { email: SUPPORT_EMAIL })
+                  t('common:noEmailApp', { email: SUPPORT_EMAIL }),
+                  t('common:notAvailable')
                 )
               }
               activeOpacity={0.85}

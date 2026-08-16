@@ -321,7 +321,7 @@ export default function Settings() {
                   <Row
                     icon={<ShieldCheck size={18} color="#64748B" />}
                     label={t('support.privacyPolicy')}
-                    onPress={() => safeOpenURL(PRIVACY_URL, t('support.privacyPolicyError'))}
+                    onPress={() => safeOpenURL(PRIVACY_URL, t('support.privacyPolicyError'), t('common:notAvailable'))}
                   />
                   <View className="h-px bg-outline/10" />
                 </>
@@ -331,7 +331,7 @@ export default function Settings() {
                   <Row
                     icon={<FileText size={18} color="#64748B" />}
                     label={t('support.termsOfService')}
-                    onPress={() => safeOpenURL(TERMS_URL, t('support.termsOfServiceError'))}
+                    onPress={() => safeOpenURL(TERMS_URL, t('support.termsOfServiceError'), t('common:notAvailable'))}
                   />
                   <View className="h-px bg-outline/10" />
                 </>
@@ -343,7 +343,8 @@ export default function Settings() {
                   onPress={() =>
                     safeOpenURL(
                       `mailto:${SUPPORT_EMAIL}`,
-                      t('common:noEmailApp', { email: SUPPORT_EMAIL })
+                      t('common:noEmailApp', { email: SUPPORT_EMAIL }),
+                      t('common:notAvailable')
                     )
                   }
                 />

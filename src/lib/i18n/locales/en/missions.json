@@ -12,5 +12,10 @@
   "onYourHonour": "On your honour",
   "progressCurrency": "{{current}} of {{target}} saved",
   "progressCount": "{{current}} of {{target}}",
-  "rewardXp": "+{{reward}} XP"
+  "rewardXp": "+{{reward}} XP",
+  "quiz": {
+    "claim": "Claim +{{reward}} XP",
+    "tryAgainLater": "Got it — try again later",
+    "notNow": "Not now"
+  }
 }

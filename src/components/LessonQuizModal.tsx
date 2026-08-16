@@ -7,6 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react-native';
 import { BottomSheet } from './animation/BottomSheet';
 import { PressableScale } from './animation/PressableScale';
@@ -23,6 +24,7 @@ interface LessonQuizModalProps {
 }
 
 export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: LessonQuizModalProps) {
+  const { t } = useTranslation('missions');
   const [selected, setSelected] = useState<number | null>(null);
 
   // Reset per-lesson selection state whenever a new lesson is shown, not just
@@ -84,12 +86,12 @@ export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: L
 
         {revealed ? (
           isCorrect ? (
-            <Button onPress={handleClaim} label={`Claim +${reward} XP`} className="w-full" />
+            <Button onPress={handleClaim} label={t('quiz.claim', { reward })} className="w-full" />
           ) : (
-            <Button onPress={handleClose} label="Got it — try again later" variant="outline" className="w-full" />
+            <Button onPress={handleClose} label={t('quiz.tryAgainLater')} variant="outline" className="w-full" />
           )
         ) : (
-          <Button onPress={handleClose} label="Not now" variant="ghost" className="w-full" />
+          <Button onPress={handleClose} label={t('quiz.notNow')} variant="ghost" className="w-full" />
         )}
       </View>
     </BottomSheet>

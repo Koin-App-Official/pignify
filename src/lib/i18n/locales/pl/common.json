@@ -1,10 +1,27 @@
 {
   "noEmailApp": "Na tym urządzeniu nie skonfigurowano aplikacji pocztowej. Napisz do nas na {{email}}.",
+  "notAvailable": "Niedostępne",
+  "cancel": "Anuluj",
+  "confirm": "Potwierdź",
+  "search": "Szukaj…",
   "tabs": {
     "home": "Start",
     "goals": "Cele",
     "missions": "Misje",
     "coach": "Trener",
     "profile": "Profil"
+  },
+  "calendarModal": {
+    "title": "Data docelowa",
+    "subtitle": "Kiedy chcesz osiągnąć swój cel?",
+    "quickJump6mo": "+6mies.",
+    "quickJump1yr": "+1rok",
+    "quickJump2yr": "+2lata",
+    "quickJump5yr": "+5lat"
+  },
+  "dobConfirmModal": {
+    "title": "Czy to się zgadza?",
+    "body": "Po potwierdzeniu nie będzie można tego zmienić.",
+    "edit": "Edytuj"
   }
 }

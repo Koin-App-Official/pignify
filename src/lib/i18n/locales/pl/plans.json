@@ -74,6 +74,54 @@
     "switchTo": "Przełącz na {{plan}}"
   },
   "disclaimer": "Ulepszenia obowiązują natychmiast. Obniżenia planu wchodzą w życie na koniec bieżącego okresu rozliczeniowego, a Twoje dane są zawsze bezpieczne.",
+  "gates": {
+    "aiCoach": {
+      "title": "Odblokuj trenera AI",
+      "description": "Rozmawiaj ze swoim osobistym trenerem oszczędzania, ulepszając plan."
+    },
+    "aiMessages": {
+      "title": "Wykorzystałeś limit wiadomości AI",
+      "description": "Wykorzystałeś wszystkie wiadomości AI na ten miesiąc. Ulepsz plan, aby zwiększyć miesięczny limit."
+    },
+    "goals": {
+      "title": "Osiągnięto limit celów",
+      "description": "Twój obecny plan obsługuje mniej celów. Ulepsz plan, aby śledzić więcej celów oszczędnościowych naraz."
+    },
+    "incomes": {
+      "title": "Osiągnięto limit źródeł dochodu",
+      "description": "Ulepsz plan, aby dodać więcej źródeł dochodu do swojego budżetu."
+    },
+    "devices": {
+      "title": "Osiągnięto limit urządzeń",
+      "description": "Ten plan pozwala na mniej połączonych urządzeń. Ulepsz plan, aby korzystać z Piggy na większej liczbie urządzeń."
+    },
+    "emailReports": {
+      "title": "Raporty e-mail to funkcja płatna",
+      "description": "Ulepsz plan, aby zamawiać raporty e-mail ze swoich postępów."
+    },
+    "deepAnalysis": {
+      "title": "Szczegółowa analiza wydatków",
+      "description": "Otrzymaj dogłębną analizę wydatków opartą na AI, prosto na swoją skrzynkę e-mail, ulepszając plan."
+    },
+    "deepAnalysisQuota": {
+      "title": "Wykorzystałeś limit szczegółowych analiz",
+      "description": "Wykorzystałeś wszystkie szczegółowe analizy na ten okres. Ulepsz plan, aby zwiększyć limit."
+    },
+    "referral": {
+      "title": "Nagrody za polecenie",
+      "description": "Zapraszaj znajomych i zdobywaj darmowe miesiące planu Family."
+    }
+  },
+  "upgradeModal": {
+    "defaultTitle": "Ulepsz swój plan",
+    "defaultDescription": "Ta funkcja jest dostępna w wyższym planie. Ulepsz, aby ją odblokować.",
+    "recommendedPlan": "Polecany plan",
+    "upgradeToPlan": "Ulepsz do {{plan}}",
+    "upgradeToHigherPlan": "Ulepsz do wyższego planu",
+    "onTopPlan": "Masz już najwyższy plan",
+    "maybeLater": "Może później",
+    "perMonth": "/mies."
+  },
   "downgradeSelection": {
     "nothingToChoose": "Nie ma tu nic do wyboru — wróć i spróbuj ponownie.",
     "chooseWhatToKeep": "Wybierz, co zachować",
@@ -90,6 +138,40 @@
       "goals": "cele",
       "incomes": "źródła dochodu",
       "devices": "urządzenia"
+    }
+  },
+  "planGate": {
+    "continue": "Kontynuuj",
+    "locked": {
+      "trialEndedTitle": "Twój bezpłatny okres próbny się zakończył",
+      "subscriptionEndedTitle": "Twoja subskrypcja się zakończyła",
+      "featuresPaused": "Funkcje planu {{plan}} są na razie wstrzymane.",
+      "nothingDeletedBold": "Nic nie zostało usunięte.",
+      "nothingDeletedRest": " Twoje cele, wpłaty, seria i historia są dokładnie tam, gdzie je zostawiłeś, i wrócą od razu po wykupieniu subskrypcji.",
+      "checkoutNotConfigured": "Płatność nie jest skonfigurowana w tej wersji aplikacji, więc subskrypcja tu nie zadziała. Możesz na razie dalej korzystać z Piggy.",
+      "pickPlan": "Wybierz plan, aby kontynuować",
+      "alreadySubscribed": "Już wykupiłem subskrypcję",
+      "continueWithoutSubscribing": "Kontynuuj bez subskrypcji",
+      "deletingAccount": "Usuwanie konta…",
+      "logOut": "Wyloguj się",
+      "contactSupport": "Skontaktuj się z pomocą",
+      "deleteAccount": "Usuń konto",
+      "checkoutFailed": "Nie udało się otworzyć płatności. Sprawdź połączenie i spróbuj ponownie albo napisz do nas na {{email}}.",
+      "noActiveSubscription": "Nie znaleźliśmy jeszcze aktywnej subskrypcji. Jeśli właśnie zapłaciłeś, daj temu chwilę i spróbuj ponownie.",
+      "logoutBody": "Możesz zalogować się ponownie w każdej chwili, używając swojego e-maila.",
+      "deleteAccountTitle": "Usuń konto",
+      "deleteAccountBody": "To trwale usunie Twoje konto i wszystkie dane z naszych serwerów. Tej operacji nie można cofnąć.",
+      "deleteAction": "Usuń",
+      "somethingWrongTitle": "Coś poszło nie tak",
+      "somethingWrongBody": "Nie udało się usunąć Twojego konta. Spróbuj ponownie."
+    },
+    "trialIntro": {
+      "title": "{{days}} dni planu {{plan}},\nna nasz koszt",
+      "body": "Wszystko jest odblokowane od dziś. Nie prosiliśmy o kartę, więc nie ma czego anulować.",
+      "perk1": "Każda funkcja Piggy, łącznie z trenerem AI",
+      "perk2": "Nielimitowana liczba celów, więc zaplanujesz więcej niż jedną rzecz",
+      "perk3": "Przypomnimy Ci przed końcem — żadnych niespodzianek",
+      "cta": "Zaczynamy"
     }
   }
 }

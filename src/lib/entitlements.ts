@@ -15,6 +15,7 @@
  * strong encryption of financial data. `exclusiveProtection` represents an
  * *additional* layer for Medium/Family, never the only protection for lower tiers.
  */
+import type { TFunction } from 'i18next';
 import type { UserPlan } from './store';
 
 /**
@@ -245,65 +246,82 @@ export interface GateInfo {
   requiredPlan: UserPlan | null;
 }
 
-export function gateInfo(key: GateKey, currentPlan: UserPlan): GateInfo {
+export function gateInfo(
+  key: GateKey,
+  currentPlan: UserPlan,
+  t?: TFunction<'plans'>
+): GateInfo {
   switch (key) {
     case 'aiCoach':
       return {
-        title: 'Unlock the AI Coach',
-        description: 'Chat with your personal savings coach by upgrading your plan.',
+        title: t ? t('gates.aiCoach.title') : 'Unlock the AI Coach',
+        description: t
+          ? t('gates.aiCoach.description')
+          : 'Chat with your personal savings coach by upgrading your plan.',
         requiredPlan: lowestPlanWithFeature('aiCoach'),
       };
     case 'aiMessages':
       return {
-        title: "You're out of AI messages",
-        description:
-          "You've used all of this month's AI messages. Upgrade for a bigger monthly allowance.",
+        title: t ? t('gates.aiMessages.title') : "You're out of AI messages",
+        description: t
+          ? t('gates.aiMessages.description')
+          : "You've used all of this month's AI messages. Upgrade for a bigger monthly allowance.",
         requiredPlan: lowestPlanWithMoreQuota('aiMessages', currentPlan),
       };
     case 'goals':
       return {
-        title: 'Goal limit reached',
-        description:
-          'Your current plan supports fewer goals. Upgrade to track more savings goals at once.',
+        title: t ? t('gates.goals.title') : 'Goal limit reached',
+        description: t
+          ? t('gates.goals.description')
+          : 'Your current plan supports fewer goals. Upgrade to track more savings goals at once.',
         requiredPlan: lowestPlanWithMoreQuota('goals', currentPlan),
       };
     case 'incomes':
       return {
-        title: 'Income limit reached',
-        description: 'Upgrade to add more income sources to your budget.',
+        title: t ? t('gates.incomes.title') : 'Income limit reached',
+        description: t
+          ? t('gates.incomes.description')
+          : 'Upgrade to add more income sources to your budget.',
         requiredPlan: lowestPlanWithMoreQuota('incomes', currentPlan),
       };
     case 'devices':
       return {
-        title: 'Device limit reached',
-        description:
-          'This plan allows fewer connected devices. Upgrade to use Piggy on more devices.',
+        title: t ? t('gates.devices.title') : 'Device limit reached',
+        description: t
+          ? t('gates.devices.description')
+          : 'This plan allows fewer connected devices. Upgrade to use Piggy on more devices.',
         requiredPlan: lowestPlanWithMoreQuota('devices', currentPlan),
       };
     case 'emailReports':
       return {
-        title: 'Email reports are a paid feature',
-        description: 'Upgrade your plan to request email reports of your progress.',
+        title: t ? t('gates.emailReports.title') : 'Email reports are a paid feature',
+        description: t
+          ? t('gates.emailReports.description')
+          : 'Upgrade your plan to request email reports of your progress.',
         requiredPlan: lowestPlanWithFeature('emailReports'),
       };
     case 'deepAnalysis':
       return {
-        title: 'Deep spending analysis',
-        description:
-          'Get an AI-powered deep dive into your spending, delivered straight to your inbox, by upgrading your plan.',
+        title: t ? t('gates.deepAnalysis.title') : 'Deep spending analysis',
+        description: t
+          ? t('gates.deepAnalysis.description')
+          : 'Get an AI-powered deep dive into your spending, delivered straight to your inbox, by upgrading your plan.',
         requiredPlan: lowestPlanWithFeature('deepAnalysis'),
       };
     case 'deepAnalysisQuota':
       return {
-        title: "You're out of Deep Analyses",
-        description:
-          "You've used all of this period's deep analyses. Upgrade for a bigger allowance.",
+        title: t ? t('gates.deepAnalysisQuota.title') : "You're out of Deep Analyses",
+        description: t
+          ? t('gates.deepAnalysisQuota.description')
+          : "You've used all of this period's deep analyses. Upgrade for a bigger allowance.",
         requiredPlan: lowestPlanWithMoreQuota('deepAnalysis', currentPlan),
       };
     case 'referral':
       return {
-        title: 'Referral rewards',
-        description: 'Invite friends and earn free months on the Family plan.',
+        title: t ? t('gates.referral.title') : 'Referral rewards',
+        description: t
+          ? t('gates.referral.description')
+          : 'Invite friends and earn free months on the Family plan.',
         requiredPlan: lowestPlanWithFeature('referral'),
       };
   }

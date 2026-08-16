@@ -299,23 +299,57 @@ The flow the feature is actually about. Ships as a coherent unit.
 
 ## Phase 4 — Remaining screens
 
-- [ ] `app/(tabs)/index.tsx` — dashboard, 27 `<Text>`
-- [ ] `app/(tabs)/goals.tsx` — 39 `<Text>`
-- [ ] `app/(tabs)/missions.tsx` — 17 `<Text>`
-- [ ] `app/(tabs)/profile.tsx` — 19 `<Text>`
-- [ ] `app/(tabs)/coach.tsx` — 6 `<Text>` + the `GREETINGS` array
-- [ ] `app/(tabs)/_layout.tsx` — 5 tab titles
-- [ ] `app/settings.tsx`, `app/plans.tsx`, `app/change-pin.tsx`, `app/delete-account.tsx`,
+- [x] `app/(tabs)/index.tsx` — dashboard, 27 `<Text>`
+- [x] `app/(tabs)/goals.tsx` — 39 `<Text>`. `GOAL_CHIPS` got the same `id`/canonical-`label` split as
+      onboarding.tsx's copy, and the create-goal flow (which duplicates onboarding's copy verbatim)
+      reuses `onboarding:` keys cross-namespace instead of re-typing them
+- [x] `app/(tabs)/missions.tsx` — 17 `<Text>`. `TIER_LABELS` replaced with a computed
+      `` t(`missions:tier${tier}`) `` key. Mission/achievement catalog content (`copy.title`,
+      `copy.description`, badge `a.title`/`a.description`) deliberately left in English — that's
+      Phase 5 territory (content catalogs), not this screen's chrome
+- [x] `app/(tabs)/profile.tsx` — 19 `<Text>`
+- [x] `app/(tabs)/coach.tsx` — 6 `<Text>` + the `GREETINGS` array (now read via
+      `t('greetings', { returnObjects: true })`). **Locale bug found and fixed:** `formatTimestamp`
+      was calling `toLocaleTimeString([], ...)` — same ambient-locale bug class Phase 2 fixed
+      elsewhere, missed in the original audit because this call site didn't exist yet when Phase 2
+      ran. Now uses `formatDate` from format.ts
+- [x] `app/(tabs)/_layout.tsx` — 5 tab titles
+- [x] `app/settings.tsx`, `app/plans.tsx`, `app/change-pin.tsx`, `app/delete-account.tsx`,
       `app/downgrade-selection.tsx`, `app/enable-biometric.tsx`
-- [ ] `src/components/`: `AddExpenseModal`, `UpgradeModal`, `LessonQuizModal`, `PlanGate` (21 `<Text>`),
-      `calendar-modal`, `dob-confirm-modal`, `picker-modal`, `button`, `input`
-- [ ] All 25 `Alert.alert` call sites
-- [ ] All 16 `placeholder=` props
-- [ ] Calendar month/day names in `react-native-calendars` — it has its own `LocaleConfig`, separate
-      from i18next, and defaults to English
-- [ ] Translate everything above to `pl`
+- [x] `src/components/`: `AddExpenseModal`, `UpgradeModal`, `LessonQuizModal`, `PlanGate` (21 `<Text>`),
+      `calendar-modal`, `dob-confirm-modal`, `picker-modal`, `button`, `input`. `button`/`input` turned
+      out to have no copy of their own (pure presentational, take `label`/`placeholder` from callers)
+- [x] **Plan gap found and fixed:** `src/lib/entitlements.ts`'s `gateInfo()` — the "Upgrade your
+      plan" popup's per-feature title/description — returns hardcoded English and wasn't in any
+      phase's file list (same class of miss as Phase 3's `validatePinStrength`: a `src/lib/` file, not
+      a component). Given an optional trailing `t?: TFunction<'plans'>` (no test coverage to preserve,
+      but kept optional for symmetry with the pattern established below); its 3 call sites
+      (`index.tsx`, `goals.tsx`, `coach.tsx`) now pass a dedicated `useTranslation('plans')` instance
+      rather than widening each screen's default-namespaced `t`, since `gateInfo`'s keys always live
+      in `plans.json` regardless of which screen opened the gate
+- [x] All `Alert.alert` call sites — turned out already translated across the board except
+      `src/lib/linking.ts`'s `safeOpenURL`, whose "Not available" title was hardcoded. Same
+      `src/lib/`-file-missed-the-file-list class of gap as `gateInfo`/`validatePinStrength`; no test
+      coverage, so `notAvailableTitle` was made a required third parameter and its 3 call sites
+      updated to pass `t('common:notAvailable')`
+- [x] All `placeholder=` props — clean; the only two remaining are onboarding.tsx's and
+      LoginGate.tsx's PIN-dot placeholders (`••••••`), which are symbols, not language content
+- [x] Calendar month/day names in `react-native-calendars`. New
+      [src/lib/i18n/calendarLocale.ts](src/lib/i18n/calendarLocale.ts) registers `en`/`pl` into
+      xdate's `LocaleConfig` (the library re-exports `LocaleConfig` from `xdate`, a locale registry
+      entirely separate from i18next) with month/day names derived from `Intl.DateTimeFormat` — same
+      approach as format.ts's `formatMonthYear`, so there's one source of truth for what Polish
+      months/days are called rather than a second hand-typed list. `calendar-modal.tsx` calls
+      `setCalendarLocale(language)` in an effect and also swapped its own hardcoded `MONTH_LABELS`
+      picker-grid array and `QUICK_JUMPS` chip labels (`+6mo`/`+1yr`/...) for translated equivalents,
+      both of which are custom UI in this component, not part of the `react-native-calendars` library
+      surface `LocaleConfig` covers
+- [x] Translate everything above to `pl`
 - [ ] Check every screen for layout breakage — Polish runs ~15–20% longer than English, and the
-      3xl black headings in onboarding and the dashboard are the likeliest to wrap badly
+      3xl black headings in onboarding and the dashboard are the likeliest to wrap badly. **Not
+      done** — no simulator/device verification was attempted this phase either, same reasoning as
+      Phases 1 and 3 (the user prefers to self-verify UI). Confirmed instead via typecheck, the full
+      test suite (233 tests), and JSON-syntax validation of every locale file touched
 
 ---
 

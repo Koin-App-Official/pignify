@@ -99,6 +99,7 @@ function stripCelebrateMarker(text: string): { display: string; celebrated: bool
 
 export default function AICoach() {
   const { t } = useTranslation('coach');
+  const { t: tPlans } = useTranslation('plans');
   const [messages, setMessages] = useState<Message[]>(() => {
     const greetings = t('greetings', { returnObjects: true }) as string[];
     const greeting = greetings[Math.floor(Math.random() * greetings.length)];
@@ -135,7 +136,7 @@ export default function AICoach() {
 
   const openGate = (key: GateKey) => {
     setGateKey(key);
-    setGate(gateInfo(key, plan));
+    setGate(gateInfo(key, plan, tPlans));
   };
   const closeGate = () => {
     setGate(null);

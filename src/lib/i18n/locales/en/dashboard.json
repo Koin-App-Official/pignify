@@ -42,5 +42,13 @@
   "seeAll": "See all",
   "daysLeft_one": "{{count}} day left",
   "daysLeft_other": "{{count}} days left",
-  "ofAmount": "of {{amount}}"
+  "ofAmount": "of {{amount}}",
+  "addExpense": {
+    "title": "Add Expense",
+    "amountLabel": "Amount ({{symbol}})",
+    "amountPlaceholder": "0",
+    "categoryLabel": "Category",
+    "notePlaceholder": "Note (optional)",
+    "save": "Save Expense"
+  }
 }

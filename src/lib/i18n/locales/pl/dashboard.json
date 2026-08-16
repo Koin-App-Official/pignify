@@ -44,5 +44,13 @@
   "daysLeft_one": "Pozostał {{count}} dzień",
   "daysLeft_few": "Pozostały {{count}} dni",
   "daysLeft_many": "Pozostało {{count}} dni",
-  "ofAmount": "z {{amount}}"
+  "ofAmount": "z {{amount}}",
+  "addExpense": {
+    "title": "Dodaj wydatek",
+    "amountLabel": "Kwota ({{symbol}})",
+    "amountPlaceholder": "0",
+    "categoryLabel": "Kategoria",
+    "notePlaceholder": "Notatka (opcjonalnie)",
+    "save": "Zapisz wydatek"
+  }
 }

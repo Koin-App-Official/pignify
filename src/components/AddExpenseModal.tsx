@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/animation/BottomSheet';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function AddExpenseModal({ open, onClose }: Props) {
+  const { t } = useTranslation('dashboard');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
@@ -42,7 +44,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
     <BottomSheet visible={open} onClose={onClose}>
       <View className="p-6 pt-2">
         <View className="flex-row justify-between items-center mb-6">
-          <Text className="text-2xl font-bold text-on-surface">Add Expense</Text>
+          <Text className="text-2xl font-bold text-on-surface">{t('addExpense.title')}</Text>
           <TouchableOpacity onPress={onClose} hitSlop={6} className="p-2 bg-surface-container-low rounded-full">
             <X size={20} color="#64748B" />
           </TouchableOpacity>
@@ -50,18 +52,18 @@ export function AddExpenseModal({ open, onClose }: Props) {
 
         <ScrollView className="space-y-4" keyboardShouldPersistTaps="handled">
           <View className="mb-4">
-            <Text className="mb-2 text-sm text-on-surface-variant font-medium">Amount ({currencySymbol ?? currency})</Text>
+            <Text className="mb-2 text-sm text-on-surface-variant font-medium">{t('addExpense.amountLabel', { symbol: currencySymbol ?? currency })}</Text>
             <Input
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
-              placeholder="0"
+              placeholder={t('addExpense.amountPlaceholder')}
               className="text-xl font-bold bg-surface-container-low"
               autoFocus
             />
           </View>
           <View className="mb-4">
-            <Text className="mb-2 text-sm text-on-surface-variant font-medium">Category</Text>
+            <Text className="mb-2 text-sm text-on-surface-variant font-medium">{t('addExpense.categoryLabel')}</Text>
             <View className="flex-row flex-wrap gap-2">
               {EXPENSE_CATEGORIES.map(c => (
                 <PressableScale
@@ -92,7 +94,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
             <Input
               value={note}
               onChangeText={setNote}
-              placeholder="Note (optional)"
+              placeholder={t('addExpense.notePlaceholder')}
               className="bg-surface-container-low"
             />
           </View>
@@ -100,7 +102,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
             onPress={handleSave}
             disabled={!amount || !category}
             className="w-full mb-8"
-            label="Save Expense"
+            label={t('addExpense.save')}
           />
         </ScrollView>
       </View>

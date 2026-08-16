@@ -73,6 +73,7 @@ const TOTAL_STEPS = 4;
 
 export default function Goals() {
   const { t } = useTranslation(['goals', 'onboarding']);
+  const { t: tPlans } = useTranslation('plans');
   const router = useRouter();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const goals = useStore((state) => state.goals);
@@ -150,7 +151,7 @@ export default function Goals() {
     // Goal quota gate (C6/C13): if the active-goal limit is reached, keep the
     // create button visible but open the upgrade popup instead of the flow.
     if (!goalQuota.allowed) {
-      setGate(gateInfo('goals', plan));
+      setGate(gateInfo('goals', plan, tPlans));
       return;
     }
     setCreating(true);

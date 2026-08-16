@@ -7,15 +7,15 @@ import { Alert, Linking } from 'react-native';
 
 export const SUPPORT_EMAIL = 'support@piggnify.com';
 
-export async function safeOpenURL(url: string, notAvailableMessage: string) {
+export async function safeOpenURL(url: string, notAvailableMessage: string, notAvailableTitle: string) {
   try {
     const canOpen = await Linking.canOpenURL(url);
     if (!canOpen) {
-      Alert.alert('Not available', notAvailableMessage);
+      Alert.alert(notAvailableTitle, notAvailableMessage);
       return;
     }
     await Linking.openURL(url);
   } catch {
-    Alert.alert('Not available', notAvailableMessage);
+    Alert.alert(notAvailableTitle, notAvailableMessage);
   }
 }
