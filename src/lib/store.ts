@@ -126,10 +126,13 @@ export const PLAN_MESSAGE_LIMITS: Record<UserPlan, number> = {
 /**
  * Subscription lifecycle. `expired` is a lapsed 14-day trial that never
  * converted — distinct from `canceled` (a paid subscription the user ended), so
- * the lockout screen can tell the two apart. Mirrors the Appwrite
+ * the lockout screen can tell the two apart. `past_due` is a renewal payment
+ * that failed with Stripe retries still pending — access continues through
+ * the grace period (`resolve-entitlements.js` still treats it as entitled),
+ * it's deliberately not a lockout reason here. Mirrors the Appwrite
  * `entitlements.status` enum.
  */
-export type PlanStatus = 'active' | 'trialing' | 'canceled' | 'expired';
+export type PlanStatus = 'active' | 'trialing' | 'canceled' | 'expired' | 'past_due';
 
 export interface UserProfile {
   userID?: string;

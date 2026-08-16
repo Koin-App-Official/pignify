@@ -131,9 +131,11 @@ export default function Settings() {
                           ? 'Free trial ended'
                           : profile.planStatus === 'trialing'
                             ? 'Free trial'
-                            : pendingConfig
-                              ? `Switching to ${pendingConfig.displayName} next cycle`
-                              : `${formatUSD(planConfig.priceUSD)}/mo`}
+                            : profile.planStatus === 'past_due'
+                              ? 'Payment failed — update your card'
+                              : pendingConfig
+                                ? `Switching to ${pendingConfig.displayName} next cycle`
+                                : `${formatUSD(planConfig.priceUSD)}/mo`}
                     </Text>
                   </View>
                 </View>
