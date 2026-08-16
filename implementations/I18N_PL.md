@@ -171,24 +171,42 @@ The one phase that can invalidate the plan.
 No user-visible strings change yet. The runtime exists and the language is persisted, switchable,
 and observable.
 
-- [ ] Create `src/lib/i18n/index.ts` — i18next init, resource loading, fallback chain, `compatibilityJSON` config
-- [ ] Create `src/lib/i18n/locales/en/` and `src/lib/i18n/locales/pl/` with the namespace files:
+- [x] Create `src/lib/i18n/index.ts` — i18next init, resource loading, fallback chain. No
+      `compatibilityJSON` config: that option doesn't exist in i18next 26 (v4 JSON is the only
+      format now) — dropping it is a no-op, not a scope cut
+- [x] Create `src/lib/i18n/locales/en/` and `src/lib/i18n/locales/pl/` with the namespace files:
       `common`, `onboarding`, `dashboard`, `goals`, `missions`, `coach`, `profile`, `settings`,
-      `auth`, `plans`, `notifications`, `content`
-- [ ] Add `language: SupportedLanguage` to `UserProfile` in [store.ts:127](src/lib/store.ts:127),
-      with `SupportedLanguage = 'en' | 'pl'`
-- [ ] Add store migration v4 → v5 in [storeMigrations.ts](src/lib/storeMigrations.ts), backfilling
+      `auth`, `plans`, `notifications`, `content`. All are `{}` stubs for now except `settings`
+      (real content backing this phase's language row) — Phases 3-6 fill the rest in
+- [x] Add `language: SupportedLanguage` to `UserProfile` in [store.ts](src/lib/store.ts), with
+      `SupportedLanguage = 'en' | 'pl'` (lives in `i18n/detect.ts`, not store.ts itself)
+- [x] Add store migration v4 → v5 in [storeMigrations.ts](src/lib/storeMigrations.ts), backfilling
       existing profiles to `'en'`; bump `PIGGY_STORE_VERSION` to 5
-- [ ] Update the version assertion in [storeMigrations.test.ts:226](src/lib/storeMigrations.test.ts:226)
-      and add a migration test covering the backfill
-- [ ] Create `src/lib/i18n/detect.ts` — device language detection via `expo-localization`, mapping
-      any `pl*` tag to `pl` and everything else to `en`
-- [ ] Wire i18n init into [app/_layout.tsx](app/_layout.tsx) — resolve language **before** first paint,
-      alongside the existing font gate, so nothing renders in the wrong language then flips
-- [ ] Add `setLanguage(lang)` store action that updates the profile, calls `i18n.changeLanguage()`,
-      and triggers notification rescheduling (see Phase 6)
-- [ ] Add a language row to [app/settings.tsx](app/settings.tsx) using the existing `PickerModal`
-- [ ] Verify a language switch re-renders every mounted screen without a restart
+- [x] Update the version assertion in [storeMigrations.test.ts](src/lib/storeMigrations.test.ts)
+      and add a migration test covering the backfill (3 new tests)
+- [x] Create `src/lib/i18n/detect.ts` — device language detection via `expo-localization` (lazily
+      `require`d so the module stays vitest-safe), mapping `pl` to `pl` and everything else to `en`
+- [x] Wire i18n init into [app/_layout.tsx](app/_layout.tsx) — a new `i18nReady` gate joins the
+      existing `fontsLoaded` gate before first paint and before `SplashScreen.hideAsync()`; tree
+      wrapped in `I18nextProvider`
+- [x] **Deviation from plan: no dedicated `setLanguage` store action.** `i18n/index.ts` subscribes
+      to the store and calls `i18n.changeLanguage()` whenever `profile.language` changes, so
+      Settings only ever needs a plain `updateProfile({ language })` — same pattern the existing
+      `autoLockMinutes` row already uses. This also covers zustand's persist rehydration finishing
+      *after* `initI18n()` ran, which a one-shot action alone would have missed. Notification
+      rescheduling (Phase 6) will likely hang off this same subscription when it lands
+- [x] **Deviation from plan: no `PickerModal`.** Added an inline two-button toggle to
+      [app/settings.tsx](app/settings.tsx), matching the existing `AUTO_LOCK_OPTIONS` row in the
+      same file exactly, rather than pulling in the modal picker built for long lists (country/
+      currency). Only 2 languages exist; revisit if a 3rd language makes the row too cramped
+- [x] Verified via `npm run typecheck` (clean), the full vitest suite (219 passing, incl. 3 new
+      migration tests + 1 for `detect.ts`), and a real `expo export:embed` of the production entry
+      (6.07 MB / 7.63 MB budget — proves `_layout.tsx`/`settings.tsx`/`store.ts` all resolve and
+      minify cleanly through Metro). **Not verified in the simulator** — the only built simulator
+      app is a stale, unrelated pre-existing broken build (`Cannot find native module
+      'ExpoPushTokenManager'`, dated May 29, months before this work), and the user prefers to
+      self-verify UI/visual changes rather than have simulator checks pushed on them. The user
+      should confirm the language switch re-renders every mounted screen without a restart
 
 ---
 
