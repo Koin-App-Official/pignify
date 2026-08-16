@@ -76,13 +76,20 @@ export function canSubscribe(planStatus: PlanStatus, isUpgradeTarget: boolean): 
 
 /**
  * The lapsed check runs on every transition to unlocked, so a trial that ends
- * mid-week is caught on the next unlock rather than only at login. The intro is
- * deliberately excluded: it belongs to the onboarding hand-off, and surfacing it
- * on an ordinary unlock days later would be baffling.
+ * mid-week is caught on the next unlock rather than only at login.
+ *
+ * The intro is allowed here too, not just at login. It used to be excluded —
+ * "it belongs to the onboarding hand-off, surfacing it days later would be
+ * baffling" — but a best-effort entitlements fetch that fails during
+ * onboarding leaves `trialIntroSeen` false with no other chance to set it
+ * (see ONBOARDING_FIXES.md #6): the intro would then never show, at any
+ * point, ever. `planGateReason` already only returns `trial_intro` when it
+ * hasn't been seen, so this can only ever fire once — the tradeoff is that
+ * "once" might now be the second launch instead of the first, which is a much
+ * better outcome than never.
  */
 export function planGateReasonOnUnlock(input: PlanGateInput): PlanGateReason | null {
-  const reason = planGateReason(input);
-  return reason === 'locked' ? reason : null;
+  return planGateReason(input);
 }
 
 /**
