@@ -66,6 +66,7 @@ export default function RootLayout() {
           <Stack.Screen name="change-pin" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="settings" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="delete-account" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="downgrade-selection" options={{ headerShown: false, presentation: 'modal' }} />
         </Stack>
       </AuthGate>
     </GestureHandlerRootView>

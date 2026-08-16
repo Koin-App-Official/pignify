@@ -16,7 +16,21 @@
  * *additional* layer for Medium/Family, never the only protection for lower tiers.
  */
 import type { UserPlan } from './store';
-import { PLAN_RANK } from './store';
+
+/**
+ * Ascending tier rank. Used to decide upgrade (immediate) vs downgrade
+ * (next-cycle) transitions. Lives here (not store.ts) so this stays a true leaf
+ * module with zero runtime dependency on the store — `import type { UserPlan }`
+ * above is erased at compile time, so nothing here pulls in react-native, which
+ * is what lets entitlements.ts (and retention.ts/quota.ts/subscription.ts,
+ * which import it) load under vitest. store.ts imports this constant, not the
+ * other way around.
+ */
+export const PLAN_RANK: Record<UserPlan, number> = {
+  beginner: 0,
+  medium: 1,
+  family: 2,
+};
 
 export type QuotaValue = number | 'unlimited';
 

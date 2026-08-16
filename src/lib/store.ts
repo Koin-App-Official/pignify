@@ -24,6 +24,7 @@ import {
   type MissionContext,
 } from './missions';
 import { PIGGY_STORE_VERSION, migratePiggyState } from './storeMigrations';
+import { PLAN_RANK } from './entitlements';
 
 export interface Goal {
   id: string;
@@ -100,17 +101,6 @@ export interface Achievement {
  * `free` values are migrated in storeMigrations.ts v3 -> v4.
  */
 export type UserPlan = 'beginner' | 'medium' | 'family';
-
-/**
- * Ascending tier rank. Used to decide upgrade (immediate) vs downgrade
- * (next-cycle) transitions. Kept here (not in entitlements.ts) so the store can
- * use it without importing the entitlements module — entitlements imports this.
- */
-export const PLAN_RANK: Record<UserPlan, number> = {
-  beginner: 0,
-  medium: 1,
-  family: 2,
-};
 
 /**
  * @deprecated Per-plan AI message limits now live in `entitlements.ts`
@@ -409,6 +399,17 @@ export interface PiggyState {
    * local apply point for the vertical slice (see entitlements.ts header).
    */
   changePlan: (target: UserPlan) => void;
+  /**
+   * Archive goals not in `keepGoalIds` (never deleted — C4, see `Goal.archived`),
+   * then run the same scheduling `changePlan` does. Used when a downgrade would
+   * exceed the target plan's limits (retention.ts) and the user has chosen what
+   * to keep. Deliberately takes plain IDs rather than importing retention.ts's
+   * evaluation here — that logic (and re-validating it, since counts can change
+   * between the request and the confirm) lives in the UI layer (plans.tsx,
+   * downgrade-selection.tsx), consistent with retention.ts staying a pure,
+   * independently-tested module rather than folding its rules into the store.
+   */
+  applyDowngradeWithRetention: (target: UserPlan, keepGoalIds: string[]) => void;
   /** Cancel renewal; plan stays active until currentPeriodEnd (C3). */
   cancelPlan: () => void;
   /** Clear a scheduled downgrade before it takes effect. */
@@ -591,6 +592,15 @@ export const useStore = create<PiggyState>()(
         // Downgrade — scheduled for next cycle (C2); active plan and data untouched (C4).
         return { profile: { ...state.profile, pendingPlan: target } };
       }),
+
+      applyDowngradeWithRetention: (target, keepGoalIds) => {
+        set((state) => ({
+          goals: state.goals.map((g) =>
+            g.archived || keepGoalIds.includes(g.id) ? g : { ...g, archived: true }
+          ),
+        }));
+        get().changePlan(target);
+      },
 
       cancelPlan: () => set((state) => ({
         profile: { ...state.profile, planStatus: 'canceled' },

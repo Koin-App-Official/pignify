@@ -17,6 +17,7 @@ import {
 } from '@/lib/entitlements';
 import { startCheckout, requestSubscriptionSync } from '@/lib/billing';
 import { canSubscribe } from '@/lib/planGate';
+import { evaluateDowngradeRetention } from '@/lib/retention';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
 
@@ -57,6 +58,7 @@ export default function Plans() {
   const { highlight, checkout } = useLocalSearchParams<{ highlight?: string; checkout?: string }>();
 
   const profile = useStore((s) => s.profile);
+  const goals = useStore((s) => s.goals);
   const changePlan = useStore((s) => s.changePlan);
   const updateProfile = useStore((s) => s.updateProfile);
   const [busy, setBusy] = useState<UserPlan | null>(null);
@@ -187,12 +189,28 @@ export default function Plans() {
 
     if (isDowngrade(currentPlan, target)) {
       // Downgrade — scheduled for next cycle (C2); data never auto-deleted (C4).
+      // If the target holds fewer goals than are currently active, the user
+      // picks what to keep before anything is scheduled (retention.ts, issue I).
       Alert.alert(
         `Switch to ${getPlanConfig(target).displayName}?`,
-        `This takes effect on ${formatPeriodEnd()}. You'll keep all your data — when the change applies you'll choose which incomes and goals stay active. Nothing is deleted.`,
+        `This takes effect on ${formatPeriodEnd()}. Nothing is ever deleted — if this plan holds fewer goals than you have, you'll choose which stay active first.`,
         [
           { text: 'Keep current plan', style: 'cancel' },
-          { text: 'Schedule downgrade', onPress: () => changePlan(target) },
+          {
+            text: 'Continue',
+            onPress: () => {
+              const requirement = evaluateDowngradeRetention(target, {
+                goals: goals.filter((g) => !g.archived).length,
+                incomes: profile.monthlyIncome != null ? 1 : 0,
+                devices: 0,
+              });
+              if (requirement.selectionRequired) {
+                router.push({ pathname: '/downgrade-selection', params: { target } });
+              } else {
+                changePlan(target);
+              }
+            },
+          },
         ]
       );
     }
