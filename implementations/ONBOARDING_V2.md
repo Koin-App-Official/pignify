@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A–E done, F implemented. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
+Status: **in progress** — A–F done and verified. G is next. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
 
 ## Progress
 
@@ -11,8 +11,8 @@ Status: **in progress** — A–E done, F implemented. E–H rewritten 2026-08-1
 | B | Pre-signup carousel | ✅ merged ([#58](https://github.com/Koin-App-Official/pignify/pull/58)) — copy + visuals pending review |
 | C | Trust & consent copy pass | ✅ merged ([#60](https://github.com/Koin-App-Official/pignify/pull/60)) — "email me this plan" deferred |
 | D | Push pre-permission step | ✅ merged ([#62](https://github.com/Koin-App-Official/pignify/pull/62)) — device check pending |
-| E | Trial entitlement machinery (no payment) | ☑ deployed ([#80](https://github.com/Koin-App-Official/pignify/issues/80)) — live E2E blocked by a dead n8n Appwrite key |
-| F | App-side trial state | ☑ implemented ([#83](https://github.com/Koin-App-Official/pignify/issues/83)) — device check pending |
+| E | Trial entitlement machinery (no payment) | ✅ merged ([#81](https://github.com/Koin-App-Official/pignify/pull/81)) — verified live 2026-08-16 |
+| F | App-side trial state | ✅ merged ([#84](https://github.com/Koin-App-Official/pignify/pull/84)) — device check pending |
 | G | Trial gate + day-15 lockout | ☐ ready to start |
 | H | Payment rail | ⛔ deferred — rail undecided, see open decisions |
 
@@ -155,7 +155,17 @@ Draft state persists across app kills at every step up to account creation. ✅ 
 - [x] **Did not touch `CLAUDE_account_delete`.**
 - [x] Added an `expired` element to the `status` enum, so a lapsed trial is distinguishable from a cancelled paid subscription (issue G's win-back copy needs that).
 - [x] Logic verified with pinned-data tests on both branches: lapsed trial → `expired`/`locked`/quota 0 + write-back fired; live trial → `trialing`/quota intact + write-back correctly skipped.
-- [ ] **Live end-to-end verification — BLOCKED.** The shared n8n credential `Appwrite Header Auth` returns `401 user_unauthorized` on every call, so no workflow can reach Appwrite. Pre-existing and unrelated to this work: the same 401 hit a real signup at 07:27 on 2026-08-16, before any of these changes were published. Needs a fresh Appwrite API key in n8n. Re-run the E2E once fixed.
+- [x] **Live end-to-end verified** (2026-08-16, after the Appwrite API key was rotated — see #82):
+  - fresh signup → `status: trialing`, `effective_plan_id: family`, `trial_ends_at` exactly 14 days out, full Family quotas
+  - backdated `trial_ends_at` → next read returned `expired` / `locked` / quota 0 **and** rewrote the Appwrite row (every quota zeroed, every feature false)
+  - a second read returned the same result without writing again (`$updatedAt` unchanged) — the write-back is idempotent
+  - replaying the onboarding webhook did not resurrect the expired trial, and created no duplicate goal or income rows
+  - all test rows deleted afterwards
+
+### Operational notes from the 2026-08-16 outage
+
+- **`neverError` reads can misdiagnose an outage as "not found".** `Get User` and `Get Entitlements` in `CLAUDE_onboarding` both use `neverError: true`, so a 401 arrives as a response body with no `$id` and the `!!$json.$id` test reads false — the workflow concludes the record is missing and routes to the create branch. During the outage this is exactly what happened. It is contained rather than dangerous: `Create Entitlements Row` is a POST with an explicit `documentId`, which Appwrite rejects with 409 instead of overwriting, so a bad read produces a failed run rather than a silently re-granted trial — and issue A's Retry button covers the user-facing half. Worth distinguishing "missing" from "unreachable" if these are ever hardened.
+- **Pre-trial accounts never receive a trial.** Accounts that existed before this change have `status: active`, `effective_plan_id: beginner`, `trial_ends_at: null`, and onboarding only seeds entitlements when the row is absent — so they keep working (`locked: false`) but will never show trial UI. Deliberately left alone; to be handled separately.
 
 ---
 
