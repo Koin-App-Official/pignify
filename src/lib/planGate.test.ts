@@ -3,7 +3,8 @@ import {
   planGateReason,
   planGateReasonOnUnlock,
   trialDaysRemaining,
-  LOCKOUT_ENFORCED,
+  lockoutEnforced,
+  LOCKOUT_INTENDED,
 } from './planGate';
 import type { PlanGateInput } from './planGate';
 
@@ -95,11 +96,22 @@ describe('trialDaysRemaining', () => {
   });
 });
 
-describe('LOCKOUT_ENFORCED', () => {
-  it('is false until a payment rail exists', () => {
-    // Guard, not a preference: enforcing the lockout while issue H is unbuilt
-    // would trap the user on a screen with nothing to convert to. This test
-    // should be updated in the same change that ships checkout.
-    expect(LOCKOUT_ENFORCED).toBe(false);
+describe('lockoutEnforced', () => {
+  it('enforces when checkout is reachable', () => {
+    expect(lockoutEnforced(true)).toBe(true);
+  });
+
+  it('does NOT enforce when billing is unconfigured', () => {
+    // The important one. A total lockout has no escape hatch, so enforcing it
+    // while every Subscribe tap returns `unavailable` would strand the user on
+    // a screen whose only action is broken. Letting them through costs revenue;
+    // trapping them costs the user. This picks the first.
+    expect(lockoutEnforced(false)).toBe(false);
+  });
+
+  it('still records the product intent', () => {
+    // Guard: flipping the intent off would mean lapsed users silently keep
+    // access forever, which should be a deliberate edit, not a drive-by.
+    expect(LOCKOUT_INTENDED).toBe(true);
   });
 });

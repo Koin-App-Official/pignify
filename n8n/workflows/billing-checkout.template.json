@@ -16,10 +16,10 @@
     },
     {
       "parameters": {
-        "jsCode": "// Resolve Stripe price by plan + country currency, and trial for Family.\n// PLAN_PRICES is a JSON env you set in n8n, e.g.\n//   { \"family\": { \"USD\": \"price_...\", \"PLN\": \"price_...\", \"HUF\": \"price_...\" }, ... }\nconst body = $json.body || $json;\nconst plan = body.plan;\nconst userId = body.userId;\nconst country = (body.country || 'US').toUpperCase();\nconst currency = country === 'PL' ? 'PLN' : country === 'HU' ? 'HUF' : 'USD';\nconst prices = JSON.parse($env.PLAN_PRICES || '{}');\nconst priceId = ((prices[plan] || {})[currency]) || null;\nif (!userId || !plan || !priceId) {\n  throw new Error('Missing userId/plan or no price for ' + plan + '/' + currency);\n}\nreturn [{ json: { userId, plan, country, currency, priceId, trialDays: plan === 'family' ? 7 : 0 } }];"
+        "jsCode": "// Resolve Stripe price by plan + country currency. No Stripe-side trial:\n// the 14 free days are granted by the app at signup (CLAUDE_onboarding) and\n// tracked in entitlements.trial_ends_at, so adding one here double-counts it.\n// PLAN_PRICES is a JSON env you set in n8n, e.g.\n//   { \"family\": { \"USD\": \"price_...\", \"PLN\": \"price_...\", \"HUF\": \"price_...\" }, ... }\nconst body = $json.body || $json;\nconst plan = body.plan;\nconst userId = body.userId;\nconst country = (body.country || 'US').toUpperCase();\nconst currency = country === 'PL' ? 'PLN' : country === 'HU' ? 'HUF' : 'USD';\nconst prices = JSON.parse($env.PLAN_PRICES || '{}');\nconst priceId = ((prices[plan] || {})[currency]) || null;\nif (!userId || !plan || !priceId) {\n  throw new Error('Missing userId/plan or no price for ' + plan + '/' + currency);\n}\nreturn [{ json: { userId, plan, country, currency, priceId } }];"
       },
       "id": "pick-price",
-      "name": "Pick Price + Trial",
+      "name": "Pick Price",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [480, 300]
@@ -37,7 +37,6 @@
             { "name": "mode", "value": "subscription" },
             { "name": "line_items[0][price]", "value": "={{ $json.priceId }}" },
             { "name": "line_items[0][quantity]", "value": "1" },
-            { "name": "subscription_data[trial_period_days]", "value": "={{ $json.trialDays || '' }}" },
             { "name": "subscription_data[metadata][user_id]", "value": "={{ $json.userId }}" },
             { "name": "automatic_tax[enabled]", "value": "true" },
             { "name": "client_reference_id", "value": "={{ $json.userId }}" },
@@ -67,8 +66,8 @@
     }
   ],
   "connections": {
-    "Webhook (POST billing-checkout)": { "main": [[{ "node": "Pick Price + Trial", "type": "main", "index": 0 }]] },
-    "Pick Price + Trial": { "main": [[{ "node": "Stripe Create Checkout Session", "type": "main", "index": 0 }]] },
+    "Webhook (POST billing-checkout)": { "main": [[{ "node": "Pick Price", "type": "main", "index": 0 }]] },
+    "Pick Price": { "main": [[{ "node": "Stripe Create Checkout Session", "type": "main", "index": 0 }]] },
     "Stripe Create Checkout Session": { "main": [[{ "node": "Respond { url }", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" },

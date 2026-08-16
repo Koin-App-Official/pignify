@@ -9,7 +9,8 @@
       "env": {
         "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://appwrite.piggnify.com/v1",
         "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "6a15741300220ae26d13",
-        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "piggnify_mobile_db"
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "piggnify_mobile_db",
+        "EXPO_PUBLIC_N8N_BILLING_URL": "https://n8n.piggnify.com/webhook"
       }
     },
     "preview": {
@@ -17,14 +18,16 @@
       "env": {
         "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://appwrite.piggnify.com/v1",
         "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "6a15741300220ae26d13",
-        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "piggnify_mobile_db"
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "piggnify_mobile_db",
+        "EXPO_PUBLIC_N8N_BILLING_URL": "https://n8n.piggnify.com/webhook"
       }
     },
     "production": {
       "env": {
         "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://appwrite.piggnify.com/v1",
         "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "6a15741300220ae26d13",
-        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "piggnify_mobile_db"
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID": "piggnify_mobile_db",
+        "EXPO_PUBLIC_N8N_BILLING_URL": "https://n8n.piggnify.com/webhook"
       }
     }
   },

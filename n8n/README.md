@@ -16,7 +16,11 @@ HTTP webhook `POST /billing-checkout` `{ userId, plan, country }`
 1. **Appwrite GET** `subscriptions` by `user_id` → existing customer id (if any).
 2. **Stripe** create Customer if none (`metadata.appwrite_user_id=userId`).
 3. **Code**: pick `price_id` by `plan` + country currency (USD/PLN/HUF) from the
-   `plans` table / `PLAN_PRICES` env; set `trial_period_days=7` iff `plan=family`.
+   `plans` table / `PLAN_PRICES` env. **No `trial_period_days`** — the 14 free
+   days are granted by the app at signup and tracked in
+   `entitlements.trial_ends_at`, so a Stripe-side trial would double-count them
+   (Family used to add 7 more, i.e. 21 free days). Anyone reaching checkout has
+   already had their trial, so billing starts immediately.
 4. **Stripe** create Checkout Session (mode=subscription, `metadata.user_id`,
    `automatic_tax.enabled=true`, success/cancel URLs).
 5. **Respond** `{ url }`.
