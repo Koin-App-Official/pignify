@@ -23,7 +23,7 @@ import { createLogger } from '@/lib/logger';
 import NitroCookies from 'react-native-nitro-cookies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PLACEHOLDER_COLOR } from '@/lib/utils';
+import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 
 const log = createLogger('LoginGate');
 
@@ -160,6 +160,7 @@ export function LoginGate() {
                   keyboardType="number-pad"
                   placeholder="••••••"
                   placeholderTextColor={PLACEHOLDER_COLOR}
+                  {...TEXT_INPUT_CENTERING}
                   className="h-16 rounded-2xl border border-outline bg-surface-container-low text-center text-3xl font-bold tracking-[12px] text-on-surface"
                   maxLength={6}
                   autoFocus

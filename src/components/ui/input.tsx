@@ -1,7 +1,7 @@
 import * as React from "react";
 import { TextInput, type TextInputProps } from "react-native";
 import { cn } from "../../lib/utils";
-import { PLACEHOLDER_COLOR } from "../../lib/utils";
+import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from "../../lib/utils";
 
 const Input = React.forwardRef<React.ElementRef<typeof TextInput>, TextInputProps>(
   ({ className, placeholderTextColor, ...props }, ref) => {
@@ -13,6 +13,7 @@ const Input = React.forwardRef<React.ElementRef<typeof TextInput>, TextInputProp
           className
         )}
         placeholderTextColor={placeholderTextColor ?? PLACEHOLDER_COLOR}
+        {...TEXT_INPUT_CENTERING}
         {...props}
       />
     );

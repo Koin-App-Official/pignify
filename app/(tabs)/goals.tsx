@@ -14,7 +14,7 @@ import { useStore, CURRENCIES, Goal, UserPlan, formatCurrency } from '@/lib/stor
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
-import { PLACEHOLDER_COLOR } from '@/lib/utils';
+import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { resolveMonthlyContribution } from '@/lib/goalMath';
@@ -375,6 +375,7 @@ export default function Goals() {
                     keyboardType="numeric"
                     placeholder="0.00"
                     placeholderTextColor={PLACEHOLDER_COLOR}
+                    {...TEXT_INPUT_CENTERING}
                   />
                 </View>
                 {targetAmountError ? <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text> : null}
