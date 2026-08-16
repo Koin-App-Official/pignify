@@ -121,7 +121,7 @@ export default function Profile() {
                 value={nameInput}
                 onChangeText={setNameInput}
                 className="w-36 h-10 text-center bg-primary/10 rounded-xl text-on-primary-container font-bold"
-                {...TEXT_INPUT_CENTERING}
+                style={TEXT_INPUT_CENTERING}
                 autoFocus
                 onSubmitEditing={saveName}
               />

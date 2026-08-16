@@ -162,7 +162,7 @@ export function ContributionStep({
               keyboardType="numeric"
               placeholder="0.00"
               placeholderTextColor={PLACEHOLDER_COLOR}
-              {...TEXT_INPUT_CENTERING}
+              style={TEXT_INPUT_CENTERING}
               autoFocus
             />
           </View>

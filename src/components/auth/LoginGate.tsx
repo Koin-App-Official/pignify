@@ -160,7 +160,7 @@ export function LoginGate() {
                   keyboardType="number-pad"
                   placeholder="••••••"
                   placeholderTextColor={PLACEHOLDER_COLOR}
-                  {...TEXT_INPUT_CENTERING}
+                  style={TEXT_INPUT_CENTERING}
                   className="h-16 rounded-2xl border border-outline bg-surface-container-low text-center text-3xl font-bold tracking-[12px] text-on-surface"
                   maxLength={6}
                   autoFocus

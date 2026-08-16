@@ -13,7 +13,7 @@ const Input = React.forwardRef<React.ElementRef<typeof TextInput>, TextInputProp
           className
         )}
         placeholderTextColor={placeholderTextColor ?? PLACEHOLDER_COLOR}
-        {...TEXT_INPUT_CENTERING}
+        style={TEXT_INPUT_CENTERING}
         {...props}
       />
     );

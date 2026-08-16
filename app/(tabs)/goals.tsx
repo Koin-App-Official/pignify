@@ -375,7 +375,7 @@ export default function Goals() {
                     keyboardType="numeric"
                     placeholder="0.00"
                     placeholderTextColor={PLACEHOLDER_COLOR}
-                    {...TEXT_INPUT_CENTERING}
+                    style={TEXT_INPUT_CENTERING}
                   />
                 </View>
                 {targetAmountError ? <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text> : null}

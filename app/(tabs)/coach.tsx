@@ -472,7 +472,7 @@ export default function AICoach() {
               onChangeText={setInput}
               placeholder="Ask your coach..."
               placeholderTextColor={PLACEHOLDER_COLOR}
-              {...TEXT_INPUT_CENTERING}
+              style={TEXT_INPUT_CENTERING}
               className="flex-1 h-12 bg-surface rounded-2xl px-4 text-sm font-medium text-on-surface"
               onSubmitEditing={() => {
                 if (input.trim()) send(input.trim());
