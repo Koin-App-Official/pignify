@@ -87,6 +87,49 @@ client-supplied `userId` with no additional server-side session check —
 consistent with the rest of this backend, but worth re-examining before
 launch since deletion is higher-stakes than checkout.
 
+## Trial entitlements (Onboarding v2, issue E)
+
+> Live in `CLAUDE_onboarding` + `CLAUDE_entitlements_get`, not in the templates in
+> this folder.
+
+Every new signup gets a **14-day, no-card trial**. This is deliberately *not* a
+transaction: there is no store product, no checkout, no receipt and no payment
+provider involved. It is an entitlement the backend grants itself and lets lapse
+on a timer, which is why it can ship before the payment rail (issue H) exists.
+
+**Grant — `CLAUDE_onboarding` → `Build Trial Entitlements`**
+Seeds the `entitlements` row as `status: trialing`, `effective_plan_id: family`,
+`trial_started_at: now`, `trial_ends_at: now + 14d`, with Family's quotas and
+features. The trial grants the *top* tier so the first two weeks show the product
+at its best; the drop at day 15 is the conversion argument. `TRIAL_PLAN_ID` in
+that node is the single place to change it. Falls back to `beginner` then to the
+first plan row, so a missing plan degrades to a working account rather than
+throwing mid-onboarding.
+
+**Expiry — `CLAUDE_entitlements_get` → `Map Plan to App` → `Trial Just Expired?`**
+There is **no cron**. A `trialing` row whose `trial_ends_at` has passed is
+reported as `expired` + `locked` on the next read, mirroring the lazy period-key
+pattern in `src/lib/quota.ts`.
+
+The read also **writes the lapse back** to Appwrite (zeroing quotas and features
+exactly as `code-nodes/resolve-entitlements.js` does for its locked branch).
+Without that write-back, consumers that read the `entitlements` row directly —
+`CLAUDE_coach_reply` — would keep seeing a stale `trialing` row and keep spending
+against a Family AI allowance the user no longer has. The write-back node is set
+to `neverError`, so a failed reconcile degrades to a stale row rather than 500ing
+a plan read the app depends on.
+
+**Response shape** (`GET /webhook/claude-plan?user_id=`):
+`{ plan, quotaAiMessages, aiMessagesUsed, status, locked, trialEndsAt }`. The
+first three are unchanged; the last three are additive, so older clients keep
+working. `plan` still maps `beginner` → `free` for the app — that rename is
+Onboarding v2 issue F.
+
+**Schema added to `entitlements`** (2026-08-16): `trial_started_at` (datetime,
+optional), `trial_ends_at` (datetime, optional), and `expired` appended to the
+`status` enum so a lapsed trial is distinguishable from a cancelled paid
+subscription — the win-back copy in issue G depends on that distinction.
+
 ## n8n credentials to configure
 - **Stripe API** credential (secret key) — for Stripe nodes.
 - **Appwrite** via **HTTP Request** nodes (no native n8n Appwrite node): base
