@@ -215,22 +215,37 @@ and observable.
 Deliberately before string extraction: it touches shared helpers used by every screen, and it fixes
 a live bug. Doing it after extraction means touching the same call sites twice.
 
-- [ ] Change `formatCurrency` ([store.ts:904](src/lib/store.ts:904)) to take an explicit locale
-      instead of relying on the ambient device locale
-- [ ] Add `src/lib/i18n/format.ts` with `formatCurrency`, `formatDate`, `formatMonthYear`, `formatNumber` —
-      all taking the active app language, all pure and unit-testable
-- [ ] Replace the 4 `toLocaleDateString(undefined, …)` call sites:
-      [onboarding.tsx:166](app/onboarding.tsx:166), [ContributionStep.tsx:48](src/components/ContributionStep.tsx:48),
-      [goals.tsx:56](app/(tabs)/goals.tsx:56), [dob-confirm-modal.tsx:15](src/components/ui/dob-confirm-modal.tsx:15),
-      [plans.tsx:72](app/plans.tsx:72)
-- [ ] Move `remainingLabel` and `savedThisWeekLabel` out of store state
-      ([store.ts:531](src/lib/store.ts:531)) — return raw numbers, format at render
-- [ ] Unit-test `formatCurrency` for `PLN`+`pl` (`1 000 zł`, symbol after, NBSP separator) and
-      `USD`+`en` (`$1,000`) — assert on the actual separator codepoint, not a visually similar one
-- [ ] Unit-test `formatMonthYear` for `pl` (`sierpień 2026`) and `en` (`August 2026`)
-- [ ] Confirm Polish month names read correctly in every phrase that embeds them — Polish declines
-      months, and standalone nominative (`sierpień`) is only right in some sentence positions. Phrase
-      the Polish copy around the standalone form rather than fighting the formatter
+- [x] Change `formatCurrency` ([store.ts](src/lib/store.ts)) to take an explicit locale instead of
+      relying on the ambient device locale — kept as an *optional* 3rd param defaulting to the
+      current app language, so all 17 existing call sites needed zero changes
+- [x] Add `src/lib/i18n/format.ts` with `formatMoney`, `formatDate`, `formatMonthYear`, `formatNumber` —
+      all taking the active app language, all pure and unit-testable. (Named `formatMoney` rather than
+      `formatCurrency` to avoid a naming collision with the store.ts wrapper, which is the function
+      everything else in the app actually imports)
+- [x] Replace all 6 `toLocaleDateString(undefined, …)` call sites — turned out to be 6, not 4, across
+      5 files: [onboarding.tsx](app/onboarding.tsx), [ContributionStep.tsx](src/components/ContributionStep.tsx)
+      (2 sites), [goals.tsx](app/(tabs)/goals.tsx), [dob-confirm-modal.tsx](src/components/ui/dob-confirm-modal.tsx),
+      [plans.tsx](app/plans.tsx). `Intl.DateTimeFormat` itself needed no polyfill or workaround (Phase 0
+      confirmed it produces correct Polish month names) — the bug was always the `undefined` locale arg
+- [x] **Correction to this task's premise.** `remainingLabel`/`savedThisWeekLabel` aren't persisted
+      React-rendered store state that goes stale on a language switch — they're transient parameters
+      built fresh each time `buildAndRefreshSchedule` runs and passed straight into
+      `Notifications.scheduleNotificationAsync` (a point-in-time snapshot by the nature of OS-scheduled
+      notifications; there's no "render" to move formatting to). The actual fix: both call sites, plus
+      the `fireMilestoneNotification` call in `updateGoal`, now pass `profile.language` explicitly
+      rather than relying on `formatCurrency`'s ambient default, since the correct value is already in
+      scope. Rescheduling *pending* notifications when the language changes is still real work — that's
+      Phase 6, not this
+- [x] Unit-tested `formatMoney`/`formatNumber` for `PLN`+`pl` (`1 000 zł`, symbol after) and `USD`+`en`
+      (`$1,000`) — asserts on `charCodeAt` for the NBSP separator (0xa0), not a visually similar space
+- [x] Unit-tested `formatMonthYear` for `pl` (`sierpień 2026`) and `en` (`August 2026`), plus
+      `formatDate` for the full-date case, confirming Polish's genitive declension is correct when a
+      day number precedes the month (`16 sierpnia 2026`, not `16 sierpień 2026`) — Intl.DateTimeFormat
+      handles this correctly on its own, nothing to hand-roll
+- [x] Confirmed Polish month names read correctly — verified both the standalone nominative
+      (`formatMonthYear` → `sierpień`) and the genitive form Polish grammar requires after a day number
+      (`formatDate` with `day` → `sierpnia`), both produced correctly by `Intl.DateTimeFormat('pl-PL')`
+      without any special-casing
 
 ---
 
