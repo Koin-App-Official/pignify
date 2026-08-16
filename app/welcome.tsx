@@ -15,6 +15,7 @@ import { ArrowRight } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
 import { Mascot, type MascotExpression } from '@/components/Mascot';
 import { useStore } from '@/lib/store';
+import { useAuthLock } from '@/lib/authLock';
 import { springPresets } from '@/lib/springPresets';
 
 /**
@@ -58,6 +59,7 @@ export default function Welcome() {
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
   const updateProfile = useStore((s) => s.updateProfile);
+  const requestLogin = useAuthLock((s) => s.requestLogin);
 
   const isLast = index === SLIDES.length - 1;
 
@@ -130,6 +132,12 @@ export default function Welcome() {
           </Text>
           <ArrowRight size={18} color="#ffffff" />
         </Button>
+
+        <TouchableOpacity onPress={requestLogin} className="mt-4 items-center py-2">
+          <Text className="text-sm font-semibold text-on-surface-variant">
+            Already have an account? <Text className="text-primary underline">Sign in</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

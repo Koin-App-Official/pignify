@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ArrowLeft } from 'lucide-react-native';
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp, SessionSecretUnavailableError } from '@/lib/auth';
@@ -30,7 +31,14 @@ const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 export function LoginGate() {
   const profileEmail = useStore((s) => s.profile.email);
+  const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
   const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
+  const cancelLoginRequest = useAuthLock((s) => s.cancelLoginRequest);
+  // Reached two ways: a real post-logout/forgot-PIN login (onboardingCompleted
+  // is true — this is the only way back into the app, nothing to back out to),
+  // or "I already have an account" on a brand-new install (onboardingCompleted
+  // is false — that detour needs an exit back to onboarding).
+  const canGoBack = !onboardingCompleted;
 
   const [stage, setStage] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState(profileEmail ?? '');
@@ -87,6 +95,15 @@ export function LoginGate() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
+      {canGoBack && (
+        <Pressable
+          onPress={cancelLoginRequest}
+          hitSlop={12}
+          className="ml-4 mt-2 h-10 w-10 items-center justify-center rounded-full"
+        >
+          <ArrowLeft size={22} color="#6b7280" />
+        </Pressable>
+      )}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <View className="flex-1 justify-center px-8">
           <Animated.View entering={FadeInDown.springify()}>

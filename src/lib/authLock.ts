@@ -35,6 +35,7 @@ import { unlockWithBiometric, disableBiometric, isBiometricEnabled, enableBiomet
 import { registerDevice } from './device';
 import { useStore } from './store';
 import { planGateReason, planGateReasonOnUnlock } from './planGate';
+import { fetchServerGoals } from './goalsSync';
 import { isUsableSecret } from './sessionSecret';
 import { createLogger } from './logger';
 
@@ -92,6 +93,14 @@ interface AuthLockState {
    * bounce a user who just entered their PIN back to the PIN screen.
    */
   planGateReturnTo: LockStatus | null;
+  /**
+   * Memory-only. Set by the "I already have an account" entry point (welcome
+   * carousel / onboarding name step) so `LoginGate` is reachable before
+   * onboarding has ever completed — normally it only renders once a local
+   * profile already exists. Cleared on a successful login or when the user
+   * backs out of the login screen.
+   */
+  loginRequested: boolean;
 
   /** Cold-start: decide whether to show login or the lock screen. */
   bootstrap: () => Promise<void>;
@@ -128,12 +137,33 @@ interface AuthLockState {
    * local PIN blob intact so the next login only needs needs_pin_confirm.
    */
   logout: () => Promise<void>;
+  /** Force `LoginGate` to render even though onboarding hasn't completed. */
+  requestLogin: () => void;
+  /** Undo `requestLogin()` — back out of the forced login screen to onboarding. */
+  cancelLoginRequest: () => void;
 }
 
 /** Snapshot of the profile fields the plan gate decides on. */
 function readPlanGateInput() {
   const { planStatus, trialIntroSeen, onboardingCompleted } = useStore.getState().profile;
   return { planStatus, trialIntroSeen: !!trialIntroSeen, onboardingCompleted };
+}
+
+/**
+ * Best-effort, fire-and-forget: restore goal metadata from the server the
+ * moment a real login happens, but ONLY when local goals are already empty
+ * (a genuine reinstall/new device — see goalsSync.ts for why a non-empty
+ * local state is never touched). Never awaited by `onLoggedIn` — the PIN step
+ * shouldn't wait on a network call for something that only matters once the
+ * user reaches the dashboard.
+ */
+function hydrateGoalsIfEmpty(userId: string): void {
+  if (useStore.getState().goals.length > 0) return;
+  fetchServerGoals(userId).then((goals) => {
+    if (goals && goals.length > 0 && useStore.getState().goals.length === 0) {
+      useStore.getState().setGoals(goals);
+    }
+  });
 }
 
 /**
@@ -201,6 +231,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
   pendingSecret: null,
   backgroundedAt: null,
   planGateReturnTo: null,
+  loginRequested: false,
 
   bootstrap: async () => {
     set({ status: 'loading' });
@@ -240,10 +271,11 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     const planGateReturnTo = gated ? pinStep : null;
 
     if (hasExistingPin) {
-      set({ userId, pendingSecret: secret, status, planGateReturnTo });
+      set({ userId, pendingSecret: secret, status, planGateReturnTo, loginRequested: false });
     } else {
-      set({ userId, sessionSecret: secret, status, planGateReturnTo });
+      set({ userId, sessionSecret: secret, status, planGateReturnTo, loginRequested: false });
     }
+    hydrateGoalsIfEmpty(userId);
   },
 
   onPlanAcknowledged: async () => {
@@ -374,4 +406,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     // login only needs needs_pin_confirm, not a brand-new PIN (see file header).
     set({ status: 'unauthenticated', userId: null, sessionSecret: null, backgroundedAt: null, planGateReturnTo: null });
   },
+
+  requestLogin: () => set({ loginRequested: true }),
+  cancelLoginRequest: () => set({ loginRequested: false }),
 }));
