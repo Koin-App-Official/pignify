@@ -73,6 +73,37 @@ export default function Plans() {
         })
       : 'the end of your billing period';
 
+  /**
+   * Trial state, derived rather than stored — `planStatus` and `trialEndsAt` are
+   * both written by the entitlements sync, so this stays truthful without any
+   * local timer. Returns null when there's no trial to talk about.
+   *
+   * Note there is no way to pay yet: the payment rail is deliberately deferred
+   * (plan decision D11), so the expired copy points at what the user loses
+   * rather than promising a checkout that doesn't exist.
+   */
+  const trialBanner = (() => {
+    if (profile.planStatus === 'expired') {
+      return {
+        expired: true,
+        title: 'Your free trial has ended',
+        body: `Your ${getPlanConfig(currentPlan).displayName} features are paused. Nothing has been deleted — your goals and history are all still here.`,
+      };
+    }
+    if (profile.planStatus !== 'trialing' || !profile.trialEndsAt) return null;
+
+    const msLeft = new Date(profile.trialEndsAt).getTime() - Date.now();
+    const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+    return {
+      expired: false,
+      title:
+        daysLeft === 0
+          ? 'Your free trial ends today'
+          : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left of your free trial`,
+      body: `You're on ${getPlanConfig(currentPlan).displayName} with everything unlocked, and we never asked for a card.`,
+    };
+  })();
+
   const applyChange = (target: UserPlan) => {
     changePlan(target);
     const name = getPlanConfig(target).displayName;
@@ -184,6 +215,29 @@ export default function Plans() {
               </Text>
             </View>
           )}
+          {trialBanner && (
+            <View
+              className={`mb-4 rounded-2xl p-4 ${
+                trialBanner.expired ? 'bg-warning-container' : 'bg-primary-container'
+              }`}
+            >
+              <Text
+                className={`text-sm font-bold ${
+                  trialBanner.expired ? 'text-warning' : 'text-on-primary-container'
+                }`}
+              >
+                {trialBanner.title}
+              </Text>
+              <Text
+                className={`mt-1 text-xs leading-5 ${
+                  trialBanner.expired ? 'text-warning' : 'text-on-primary-container'
+                }`}
+              >
+                {trialBanner.body}
+              </Text>
+            </View>
+          )}
+
           {pendingPlan && (
             <View className="mb-4 rounded-2xl bg-warning-container p-4">
               <Text className="text-sm font-semibold text-warning">
@@ -227,7 +281,11 @@ export default function Plans() {
                     <Text className="text-xs font-bold text-on-primary-container mb-2">
                       {profile.planStatus === 'canceled'
                         ? `Active until ${formatPeriodEnd()} (canceled)`
-                        : 'Current plan'}
+                        : profile.planStatus === 'expired'
+                          ? 'Trial ended — features paused'
+                          : profile.planStatus === 'trialing'
+                            ? 'Current plan (free trial)'
+                            : 'Current plan'}
                     </Text>
                   )}
                   {isPending && (

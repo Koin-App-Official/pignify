@@ -56,7 +56,14 @@ export default function TabLayout() {
     if (lastProfileSync && Date.now() - new Date(lastProfileSync).getTime() < SYNC_INTERVAL_MS) return;
     const data = await fetchEntitlementsSync(profile.userID, signal);
     if (!data) return;
-    if (data.plan) updateProfile({ plan: data.plan });
+    // The server is authoritative for all of these; `trialEndsAt` may legitimately
+    // be null (no trial), so it's applied whenever the field was present rather
+    // than only when truthy.
+    const profilePatch: Parameters<typeof updateProfile>[0] = {};
+    if (data.plan) profilePatch.plan = data.plan;
+    if (data.status) profilePatch.planStatus = data.status;
+    if (data.trialEndsAt !== undefined) profilePatch.trialEndsAt = data.trialEndsAt;
+    if (Object.keys(profilePatch).length > 0) updateProfile(profilePatch);
     if (typeof data.quotaAiMessages === 'number' || typeof data.aiMessagesUsed === 'number') {
       setServerAiMessageUsage(
         typeof data.quotaAiMessages === 'number' ? data.quotaAiMessages : null,

@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A–D merged, E deployed. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
+Status: **in progress** — A–E done, F implemented. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
 
 ## Progress
 
@@ -12,8 +12,8 @@ Status: **in progress** — A–D merged, E deployed. E–H rewritten 2026-08-16
 | C | Trust & consent copy pass | ✅ merged ([#60](https://github.com/Koin-App-Official/pignify/pull/60)) — "email me this plan" deferred |
 | D | Push pre-permission step | ✅ merged ([#62](https://github.com/Koin-App-Official/pignify/pull/62)) — device check pending |
 | E | Trial entitlement machinery (no payment) | ☑ deployed ([#80](https://github.com/Koin-App-Official/pignify/issues/80)) — live E2E blocked by a dead n8n Appwrite key |
-| F | App-side trial state | ☐ ready to start |
-| G | Trial gate + day-15 lockout | ☐ blocked on F |
+| F | App-side trial state | ☑ implemented ([#83](https://github.com/Koin-App-Official/pignify/issues/83)) — device check pending |
+| G | Trial gate + day-15 lockout | ☐ ready to start |
 | H | Payment rail | ⛔ deferred — rail undecided, see open decisions |
 
 ## Decisions
@@ -161,17 +161,25 @@ Draft state persists across app kills at every step up to account creation. ✅ 
 
 # Issue F — App-side trial state
 
-**Branch:** `feat/issue-F-trial-client` · **Depends on:** E · **Files:** `src/lib/store.ts`, `src/lib/entitlements.ts`, `src/lib/entitlementsSync.ts`, `app/plans.tsx`
+**Branch:** `feat/issue-83-trial-client` ([#83](https://github.com/Koin-App-Official/pignify/issues/83)) · **Depends on:** E (merged) · **Files:** `src/lib/store.ts`, `src/lib/storeMigrations.ts`, `src/lib/entitlements.ts`, `src/lib/entitlementsSync.ts`, `app/plans.tsx`, `app/settings.tsx`, `app/(tabs)/_layout.tsx`
 
 > **Rewritten.** Was "App-side billing swap" (RevenueCat SDK). No SDK, no new dependency, no dev-build requirement.
 
-- [ ] **Rename `plan: 'free'` → `'beginner'`.** A plan id named `free` that costs $5.99 is a bug waiting to happen, and the backend *already* uses `beginner` for `effective_plan_id` — this closes a live client/server mismatch.
-- [ ] Zustand `persist` migration for installed apps (the store now has `PIGGY_STORE_VERSION` / `migratePiggyState`, so this has a home).
-- [ ] **Add `trialEndsAt`** to the profile; extend `PlanStatus` with `expired`. `src/lib/subscription.ts` already models `trialing`/`past_due`/`canceled` + lockout — reuse it rather than inventing a parallel state machine.
-- [ ] **`trialDays` → 14 across all three plans** in `entitlements.ts` (currently 0/0/7).
-- [ ] **`entitlementsSync.ts` reads `trialEndsAt` + `status`** from the extended webhook response.
-- [ ] **`plans.tsx` becomes a trial-aware view** — "12 days left of your trial" rather than a checkout screen, with the upgrade CTA disabled or pointing at a "coming soon" state until H lands.
-- [ ] `npm run typecheck` + `npm test` clean.
+- [x] **Rename `plan: 'free'` → `'beginner'`.** Closes a live client/server mismatch — the backend has always used `beginner`. Also fixes a latent bug: `billing.ts` sent `plan: 'free'` to `CLAUDE_billing_checkout`, which resolves prices from a `plans` table keyed on `beginner`, so it could never have matched.
+- [x] Zustand `persist` migration v3 → v4 for `plan` **and** `pendingPlan` (a stale `free` downgrade target would be applied verbatim at the next cycle). 5 new tests.
+- [x] **Add `trialEndsAt`** to the profile; extend `PlanStatus` with `expired`.
+- [x] **`trialDays` → 14 across all three plans** (was 0/0/7); now descriptive only, since the trial is granted server-side.
+- [x] **`entitlementsSync.ts` reads `trialEndsAt`, `status` and `locked`**, and normalises `free`/`beginner` on the way in so the client doesn't depend on the n8n mapping being removed in lockstep.
+- [x] `(tabs)/_layout.tsx` persists the synced `status` / `trialEndsAt` to the profile.
+- [x] **`plans.tsx` is trial-aware** — a days-remaining banner while trialing, an "ended, nothing deleted" banner once expired. No payment CTA, since the rail is deferred to H.
+- [x] `settings.tsx` and the plan cards distinguish `trialing` / `expired` from `canceled`.
+- [x] **Fixed a bug this surfaced:** `scheduleTrialEnding` read `profile.currentPeriodEnd`, which only the checkout-return path ever writes — so for a trial user it was null and the reminder would never have been scheduled. It now prefers `trialEndsAt`.
+- [x] `npm run typecheck` + `npm test` clean (184 passed).
+- [ ] Device check: trial banner and expired state render correctly.
+
+### Follow-up
+
+Once this ships, the `beginner` → `free` mapping in `CLAUDE_entitlements_get`'s `Map Plan to App` node is redundant and can be dropped. Deferred because the backend is returning 401 on every call (#82) and the change can't be verified; the client normalisation makes the removal a no-op whenever it happens.
 
 ---
 

@@ -9,7 +9,10 @@
 import { migrateGoalDepositDates } from './deposits';
 
 /** Bump alongside a new migration step below, and in store.ts's persist config. */
-export const PIGGY_STORE_VERSION = 3;
+export const PIGGY_STORE_VERSION = 4;
+
+/** Pre-#83 name of the entry tier, still present in every persisted blob. */
+const LEGACY_BEGINNER = 'free';
 
 /**
  * Runs every migration step the persisted blob hasn't seen yet, in order.
@@ -57,6 +60,30 @@ export function migratePiggyState(persisted: unknown, from: number): unknown {
     state = {
       ...state,
       profile: { ...state.profile, lessonsCompleted: state.profile?.lessonsCompleted ?? [] },
+    };
+  }
+
+  // v3 → v4: the entry tier is renamed `free` → `beginner` (#83), matching the
+  // name the backend has always used (`entitlements.effective_plan_id`, the
+  // `plans` table). Without this step an installed app rehydrates
+  // `plan: 'free'`, which no longer exists in PLAN_CONFIG, and every quota and
+  // feature lookup silently falls back to the default tier.
+  //
+  // `pendingPlan` gets the same treatment: it holds a scheduled downgrade
+  // target drawn from the same vocabulary, and a stale `free` there would be
+  // applied verbatim at the next billing cycle.
+  //
+  // `trialEndsAt` is left alone rather than backfilled. These accounts predate
+  // the trial entirely, and the next entitlements sync is authoritative anyway.
+  if (from < 4) {
+    const profile = state.profile ?? {};
+    state = {
+      ...state,
+      profile: {
+        ...profile,
+        plan: profile.plan === LEGACY_BEGINNER ? 'beginner' : profile.plan,
+        pendingPlan: profile.pendingPlan === LEGACY_BEGINNER ? 'beginner' : profile.pendingPlan,
+      },
     };
   }
 
