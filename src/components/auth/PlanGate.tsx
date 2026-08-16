@@ -74,7 +74,7 @@ export function PlanGate() {
         // 'completed' only means the browser opened. Anything else has to be
         // said out loud — with no escape hatch, a silent no-op is a dead button.
         setError(
-          "We couldn't open checkout. Check your connection and try again, or email us at hello@piggnify.com."
+          `We couldn't open checkout. Check your connection and try again, or email us at ${SUPPORT_EMAIL}.`
         );
       }
     } finally {

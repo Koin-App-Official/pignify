@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A–G done. H and I (payment + lockout) are specced and unblocked; the rail is decided. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
+Status: **A–I all merged.** E–H rewritten 2026-08-16 after the RevenueCat plan was dropped. Post-merge audit findings (issues #91-#97) are tracked separately in [ONBOARDING_FIXES.md](ONBOARDING_FIXES.md); the reinstall/new-device data-loss gap it surfaced is scoped in [REINSTALLATION.md](REINSTALLATION.md).
 
 ## Progress
 
@@ -15,7 +15,7 @@ Status: **in progress** — A–G done. H and I (payment + lockout) are specced 
 | F | App-side trial state | ✅ merged ([#84](https://github.com/Koin-App-Official/pignify/pull/84)) — device check pending |
 | G | Trial gate + day-15 lockout | ☑ implemented ([#86](https://github.com/Koin-App-Official/pignify/issues/86)) — device check pending |
 | H | Stripe checkout + full lockout | ☑ implemented ([#89](https://github.com/Koin-App-Official/pignify/issues/89)) — needs `EXPO_PUBLIC_N8N_BILLING_URL` set |
-| I | Downgrade selection (what to keep) | ☐ ready to start |
+| I | Downgrade selection (what to keep) | ✅ merged ([#102](https://github.com/Koin-App-Official/pignify/pull/102)) — scoped to goals only, see the PR for why |
 
 ## Decisions
 
