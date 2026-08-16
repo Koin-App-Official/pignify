@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import Animated, {
   Easing,
   ZoomIn,
@@ -43,8 +45,6 @@ const CARD_SHADOW = {
   elevation: 4,
 };
 
-const TIER_LABELS: Record<MissionTier, string> = { 1: 'Tier 1', 2: 'Tier 2', 3: 'Tier 3' };
-
 type CardState = 'claimed' | 'ready' | 'locked' | 'manual';
 
 function getCardState(am: ActiveMission, def: MissionDef, ctx: MissionContext): CardState {
@@ -59,6 +59,7 @@ interface ResolvedMission {
 }
 
 export default function Missions() {
+  const { t } = useTranslation(['missions', 'dashboard']);
   const activeMissions = useStore((state) => state.activeMissions);
   const achievements = useStore((state) => state.achievements);
   const goals = useStore((s) => s.goals);
@@ -133,23 +134,23 @@ export default function Missions() {
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <ScrollView className="flex-1 px-5 py-6">
         <View>
-        <Text className="mb-1 text-2xl font-black text-on-surface">Missions</Text>
-        <Text className="mb-6 text-sm font-medium text-on-surface-variant">Complete missions to earn XP and build habits</Text>
+        <Text className="mb-1 text-2xl font-black text-on-surface">{t('missions:title')}</Text>
+        <Text className="mb-6 text-sm font-medium text-on-surface-variant">{t('missions:subtitle')}</Text>
 
         {/* Level bar */}
         <View className="mb-6 rounded-2xl bg-surface-container-low p-4" style={CARD_SHADOW}>
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center gap-2">
               <Zap size={18} color="#22C55E" />
-              <Text className="text-sm font-bold text-on-surface">Saver Lv.{level}</Text>
+              <Text className="text-sm font-bold text-on-surface">{t('dashboard:saverLevel', { level })}</Text>
               <View className="rounded-full bg-primary-container px-2 py-0.5">
-                <Text className="text-[10px] font-bold text-primary">{TIER_LABELS[tier]}</Text>
+                <Text className="text-[10px] font-bold text-primary">{t(`missions:tier${tier}` as const)}</Text>
               </View>
             </View>
-            <Text className="text-xs font-bold text-on-surface-variant">{xp % 100}/100 XP</Text>
+            <Text className="text-xs font-bold text-on-surface-variant">{t('dashboard:xpProgress', { xp: xp % 100 })}</Text>
           </View>
           <AnimatedProgressBar progress={(xp % 100) / 100} />
-          <Text className="mt-3 text-xs font-medium text-on-surface-variant">{claimedCount}/{resolved.length} missions completed</Text>
+          <Text className="mt-3 text-xs font-medium text-on-surface-variant">{t('missions:missionsCompleted', { claimed: claimedCount, total: resolved.length })}</Text>
         </View>
 
         {/* Segmented Button */}
@@ -157,13 +158,13 @@ export default function Missions() {
 
         {tab === 'missions' ? (
           <View className="pb-10">
-            <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Daily Missions</Text>
+            <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">{t('missions:dailyMissions')}</Text>
             <View className="mb-6 gap-3">
               {dailyMissions.map((r, index) => (
                 <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleCardPress(r)} index={index} replay={replay} />
               ))}
             </View>
-            <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">Weekly Missions</Text>
+            <Text className="mb-3 text-sm font-bold text-on-surface-variant uppercase tracking-wide">{t('missions:weeklyMissions')}</Text>
             <View className="mb-6 gap-3">
               {weeklyMissions.map((r, index) => (
                 <MissionCard key={r.am.defId} entry={r} ctx={ctx} currency={currency} onComplete={() => handleCardPress(r)} index={index} replay={replay} />
@@ -210,6 +211,7 @@ function SegmentedControl({
   tab: 'missions' | 'achievements';
   onChange: (t: 'missions' | 'achievements') => void;
 }) {
+  const { t } = useTranslation('missions');
   const [segmentWidth, setSegmentWidth] = useState(0);
   const indicator = useSharedValue(tab === 'missions' ? 0 : 1);
 
@@ -246,7 +248,7 @@ function SegmentedControl({
       <PressableScale onPress={() => onChange('missions')} style={{ flex: 1 }}>
         <View className="rounded-full py-3 items-center">
           <Text className={`text-sm font-bold ${tab === 'missions' ? 'text-primary-foreground' : 'text-on-surface-variant'}`}>
-            Missions
+            {t('tabMissions')}
           </Text>
         </View>
       </PressableScale>
@@ -254,7 +256,7 @@ function SegmentedControl({
         <View className="rounded-full py-3 flex-row items-center justify-center gap-2">
           <Trophy size={14} color={tab === 'achievements' ? '#FFFFFF' : '#64748B'} />
           <Text className={`text-sm font-bold ${tab === 'achievements' ? 'text-primary-foreground' : 'text-on-surface-variant'}`}>
-            Badges
+            {t('tabBadges')}
           </Text>
         </View>
       </PressableScale>
@@ -295,12 +297,19 @@ const CARD_STATE_STYLES: Record<CardState, { row: string; circle: string; dimmed
   manual: { row: 'bg-surface border border-outline-variant', circle: 'border-outline bg-transparent', dimmed: false },
 };
 
-function formatProgress(progress: { current: number; target: number; isCurrency: boolean }, currency: string): string {
+function formatProgress(
+  progress: { current: number; target: number; isCurrency: boolean },
+  currency: string,
+  t: TFunction<'missions'>
+): string {
   if (progress.isCurrency) {
-    return `${formatCurrency(Math.max(0, progress.current), currency)} of ${formatCurrency(progress.target, currency)} saved`;
+    return t('progressCurrency', {
+      current: formatCurrency(Math.max(0, progress.current), currency),
+      target: formatCurrency(progress.target, currency),
+    });
   }
   const current = Math.max(0, Math.min(progress.current, progress.target));
-  return `${current} of ${progress.target}`;
+  return t('progressCount', { current, target: progress.target });
 }
 
 function MissionCard({
@@ -318,6 +327,7 @@ function MissionCard({
   index?: number;
   replay: SharedValue<number>;
 }) {
+  const { t } = useTranslation('missions');
   const { am, def } = entry;
   const state = getCardState(am, def, ctx);
   const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency));
@@ -355,16 +365,16 @@ function MissionCard({
               </Text>
               {state === 'manual' && (
                 <View className="rounded-full bg-surface-container px-2 py-0.5">
-                  <Text className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant">On your honour</Text>
+                  <Text className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant">{t('onYourHonour')}</Text>
                 </View>
               )}
             </View>
             <Text className="text-xs text-on-surface-variant">
-              {progress ? formatProgress(progress, currency) : copy.description}
+              {progress ? formatProgress(progress, currency, t) : copy.description}
             </Text>
           </View>
           <View className="bg-primary-container rounded-full px-3 py-1">
-            <Text className="text-xs font-bold text-primary">+{def.reward} XP</Text>
+            <Text className="text-xs font-bold text-primary">{t('rewardXp', { reward: def.reward })}</Text>
           </View>
         </View>
         {progress && progress.target > 0 && (

@@ -4,6 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Plus, ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
@@ -37,12 +38,15 @@ const CARD_SHADOW = {
   elevation: 4,
 };
 
+/** `label` stays the untranslated canonical goalName — see the equivalent
+ * comment on GOAL_CHIPS in app/onboarding.tsx. Displayed text is translated
+ * via `id` reusing onboarding.json's goal.chips.* keys (identical chip set). */
 const GOAL_CHIPS = [
-  { label: 'Vacation', emoji: '🏝️' },
-  { label: 'New Car', emoji: '🚗' },
-  { label: 'House Deposit', emoji: '🏠' },
-  { label: 'Emergency Fund', emoji: '💰' },
-  { label: 'Something Else', emoji: '✏️' },
+  { id: 'vacation', label: 'Vacation', emoji: '🏝️' },
+  { id: 'newCar', label: 'New Car', emoji: '🚗' },
+  { id: 'houseDeposit', label: 'House Deposit', emoji: '🏠' },
+  { id: 'emergencyFund', label: 'Emergency Fund', emoji: '💰' },
+  { id: 'somethingElse', label: 'Something Else', emoji: '✏️' },
 ];
 
 const GOAL_ICONS: Record<string, string> = {
@@ -68,6 +72,7 @@ enum CreateStep {
 const TOTAL_STEPS = 4;
 
 export default function Goals() {
+  const { t } = useTranslation(['goals', 'onboarding']);
   const router = useRouter();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const goals = useStore((state) => state.goals);
@@ -226,7 +231,7 @@ export default function Goals() {
               <View>
                 <TouchableOpacity onPress={() => setViewGoal(null)} className="mb-4 flex-row items-center gap-1">
                   <ArrowLeft size={16} color="#64748B" />
-                  <Text className="text-sm font-semibold text-on-surface-variant">Back</Text>
+                  <Text className="text-sm font-semibold text-on-surface-variant">{t('detail.back')}</Text>
                 </TouchableOpacity>
 
                 <View className="items-center mb-6">
@@ -236,22 +241,28 @@ export default function Goals() {
                   </ProgressRing>
                   <Text className="mt-4 text-xl font-black text-on-surface">{g.name}</Text>
                   <Text className="text-sm font-semibold text-tertiary mt-1">
-                    {formatCurrency(g.savedAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
+                    {t('detail.savedOfTarget', {
+                      saved: formatCurrency(g.savedAmount, currency),
+                      target: formatCurrency(g.targetAmount, currency),
+                    })}
                   </Text>
                   <Text className="text-xs text-on-surface-variant mt-2">
-                    Setting aside {formatCurrency(monthlySetAside, currency)}/month · Goal reached {formatTargetDate(g.deadline, language)}
+                    {t('detail.settingAside', {
+                      amount: formatCurrency(monthlySetAside, currency),
+                      date: formatTargetDate(g.deadline, language),
+                    })}
                   </Text>
                 </View>
 
                 <View className="mb-6 flex-row gap-3">
                   <View className="flex-1">
-                    <Input keyboardType="numeric" value={depositAmount} onChangeText={setDepositAmount} placeholder="Add savings..." />
+                    <Input keyboardType="numeric" value={depositAmount} onChangeText={setDepositAmount} placeholder={t('detail.addSavingsPlaceholder')} />
                   </View>
-                  <Button onPress={() => addDeposit(g)} disabled={!depositAmount} label="Save" />
+                  <Button onPress={() => addDeposit(g)} disabled={!depositAmount} label={t('detail.save')} />
                 </View>
 
                 <View className="mb-6">
-                  <Text className="mb-3 text-sm font-bold text-on-surface">Milestones</Text>
+                  <Text className="mb-3 text-sm font-bold text-on-surface">{t('detail.milestones')}</Text>
                   <View className="gap-2">
                     {[25, 50, 75, 100].map((m) => (
                       <View
@@ -272,7 +283,7 @@ export default function Goals() {
                 </View>
 
                 {reversedDeposits.length > 0 && (
-                  <Text className="mb-3 text-sm font-bold text-on-surface">Deposit History</Text>
+                  <Text className="mb-3 text-sm font-bold text-on-surface">{t('detail.depositHistory')}</Text>
                 )}
               </View>
             }
@@ -295,7 +306,7 @@ export default function Goals() {
           {/* Progress bar */}
           <View className="px-5 pt-6 pb-2">
             <Text className="mb-2 text-xs font-semibold text-on-surface-variant text-center">
-              Step {createStep + 1} of {TOTAL_STEPS}
+              {t('onboarding:common.stepProgress', { current: createStep + 1, total: TOTAL_STEPS })}
             </Text>
             <View className="flex-row gap-1.5">
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
@@ -309,13 +320,13 @@ export default function Goals() {
             {/* Step 0: What are we saving for? */}
             {createStep === CreateStep.GoalDeclaration && (
               <Animated.View entering={FadeInDown.springify()}>
-                <Text className="mb-2 text-3xl font-black text-on-surface">What are we saving for?</Text>
-                <Text className="mb-6 text-sm font-medium text-on-surface-variant">Pick a goal or type your own below.</Text>
+                <Text className="mb-2 text-3xl font-black text-on-surface">{t('onboarding:goal.headline')}</Text>
+                <Text className="mb-6 text-sm font-medium text-on-surface-variant">{t('onboarding:goal.sub')}</Text>
 
                 <View className="flex-row flex-wrap gap-2 mb-5">
                   {GOAL_CHIPS.map((chip) => (
                     <PressableScale
-                      key={chip.label}
+                      key={chip.id}
                       onPress={() => { setGoalName(chip.label); setGoalNameError(''); }}
                     >
                       <View
@@ -327,7 +338,7 @@ export default function Goals() {
                       >
                         <Text className="text-lg">{chip.emoji}</Text>
                         <Text className={`text-sm font-semibold ${goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'}`}>
-                          {chip.label}
+                          {t(`onboarding:goal.chips.${chip.id}`)}
                         </Text>
                       </View>
                     </PressableScale>
@@ -337,7 +348,7 @@ export default function Goals() {
                 <Input
                   value={goalName}
                   onChangeText={(v) => { setGoalName(v); if (v.trim().length >= 1) setGoalNameError(''); }}
-                  placeholder="I want to..."
+                  placeholder={t('onboarding:goal.placeholder')}
                 />
                 {goalNameError ? <Text className="mt-2 text-xs text-destructive">{goalNameError}</Text> : null}
 
@@ -347,12 +358,12 @@ export default function Goals() {
                   </Button>
                   <Button
                     onPress={() => {
-                      if (goalName.trim().length < 1) { setGoalNameError("Tell us what you're saving for! 🎯"); return; }
+                      if (goalName.trim().length < 1) { setGoalNameError(t('onboarding:goal.errorEmpty')); return; }
                       setCreateStep(CreateStep.TargetAmount);
                     }}
                     className="flex-1 items-center justify-center flex-row gap-2"
                   >
-                    <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                    <Text className="text-sm font-bold text-primary-foreground">{t('onboarding:common.continue')}</Text>
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
@@ -363,10 +374,10 @@ export default function Goals() {
             {createStep === CreateStep.TargetAmount && (
               <Animated.View entering={FadeInDown.springify()}>
                 <Text className="mb-2 text-3xl font-black text-on-surface">
-                  How much do you need{'\n'}for your {goalName}?
+                  {t('onboarding:targetAmount.headline', { goalName })}
                 </Text>
                 <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                  Don't worry, you can always adjust this later.
+                  {t('onboarding:targetAmount.sub')}
                 </Text>
 
                 <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
@@ -376,7 +387,7 @@ export default function Goals() {
                     value={targetAmount}
                     onChangeText={(v) => { setTargetAmount(v.replace(/[^0-9.]/g, '')); if (targetAmountError) setTargetAmountError(''); }}
                     keyboardType="numeric"
-                    placeholder="0.00"
+                    placeholder={t('onboarding:contribution.amountPlaceholder')}
                     placeholderTextColor={PLACEHOLDER_COLOR}
                     style={TEXT_INPUT_CENTERING}
                   />
@@ -389,12 +400,12 @@ export default function Goals() {
                   </Button>
                   <Button
                     onPress={() => {
-                      if (!(Number(targetAmount) > 0)) { setTargetAmountError('Please enter an amount greater than 0 💸'); return; }
+                      if (!(Number(targetAmount) > 0)) { setTargetAmountError(t('onboarding:targetAmount.errorEmpty')); return; }
                       setCreateStep(CreateStep.Contribution);
                     }}
                     className="flex-1 items-center justify-center flex-row gap-2"
                   >
-                    <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                    <Text className="text-sm font-bold text-primary-foreground">{t('onboarding:common.continue')}</Text>
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
@@ -430,21 +441,21 @@ export default function Goals() {
             {/* Step 3: Review */}
             {createStep === CreateStep.Review && (
               <Animated.View entering={FadeInDown.springify()}>
-                <Text className="mb-2 text-3xl font-black text-on-surface">Looks good!</Text>
+                <Text className="mb-2 text-3xl font-black text-on-surface">{t('review.headline')}</Text>
                 <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                  Here's your savings plan at a glance.
+                  {t('review.sub')}
                 </Text>
 
                 <View className="rounded-3xl bg-surface p-6 gap-4 mb-4" style={CARD_SHADOW}>
-                  <ReviewRow label="Goal" value={`${goalIcon}  ${goalName}`} />
-                  <ReviewRow label="Target" value={formatCurrency(Number(targetAmount), currency)} />
+                  <ReviewRow label={t('onboarding:blueprint.rowGoal')} value={`${goalIcon}  ${goalName}`} />
+                  <ReviewRow label={t('onboarding:blueprint.rowTarget')} value={formatCurrency(Number(targetAmount), currency)} />
                   <View className="h-px bg-outline-variant" />
                   <ReviewRow
-                    label="Monthly set-aside"
+                    label={t('onboarding:blueprint.rowMonthlySetAside')}
                     value={formatCurrency(monthlyContribution, currency)}
                     highlight
                   />
-                  <ReviewRow label="Goal reached" value={formatTargetDate(targetDate, language)} />
+                  <ReviewRow label={t('onboarding:blueprint.rowGoalReached')} value={formatTargetDate(targetDate, language)} />
                 </View>
 
                 {savingsExceedsIncome && (
@@ -452,8 +463,8 @@ export default function Goals() {
                     <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
                     <Text className="flex-1 text-sm text-warning">
                       {otherActiveGoalsMonthlyTotal > 0
-                        ? "Across all your active goals, this pushes your total monthly set-aside above your income. You can adjust anytime."
-                        : 'This target requires setting aside more than your monthly income. You can adjust it anytime.'}
+                        ? t('review.warningMultiGoal')
+                        : t('review.warningSingleGoal')}
                     </Text>
                   </View>
                 )}
@@ -463,7 +474,7 @@ export default function Goals() {
                     <ArrowLeft size={16} color="#1D4ED8" />
                   </Button>
                   <Button onPress={finishCreate} className="flex-1 items-center justify-center flex-row gap-2 h-14">
-                    <Text className="text-base font-bold text-primary-foreground">Create Goal 🎉</Text>
+                    <Text className="text-base font-bold text-primary-foreground">{t('review.createGoal')}</Text>
                     <ArrowRight size={16} color="#ffffff" />
                   </Button>
                 </View>
@@ -481,16 +492,16 @@ export default function Goals() {
     <ScreenTransition>
     <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
       <View className="flex-1 px-5 py-6">
-        <Text className="mb-6 text-2xl font-black text-on-surface">Your Goals</Text>
+        <Text className="mb-6 text-2xl font-black text-on-surface">{t('yourGoals')}</Text>
 
         {goals.length === 0 ? (
           <View className="rounded-3xl bg-primary-container p-10 items-center" style={CARD_SHADOW}>
             <Mascot size={48} />
-            <Text className="mb-2 mt-4 text-xl font-black text-on-primary-container">No goals yet</Text>
+            <Text className="mb-2 mt-4 text-xl font-black text-on-primary-container">{t('empty.title')}</Text>
             <Text className="mb-6 text-sm font-medium text-center text-on-primary-container/70">
-              Create your first savings goal to get started!
+              {t('empty.body')}
             </Text>
-            <Button onPress={startCreate} className="flex-row items-center gap-2" label="Create Goal" />
+            <Button onPress={startCreate} className="flex-row items-center gap-2" label={t('empty.cta')} />
           </View>
         ) : (
           <FlashList
@@ -546,6 +557,7 @@ const GoalListRow = memo(function GoalListRow({
   replay: SharedValue<number>;
   onPress: (g: Goal) => void;
 }) {
+  const { t } = useTranslation('goals');
   const pct = Math.round((goal.savedAmount / goal.targetAmount) * 100);
   return (
     <FadeInStagger index={index} delayStep={100} replay={replay}>
@@ -557,7 +569,7 @@ const GoalListRow = memo(function GoalListRow({
               <Text className="text-sm font-bold text-on-surface" numberOfLines={1}>{goal.name}</Text>
               {goal.isPrimary && (
                 <View className="bg-primary-container px-2 py-0.5 rounded-full">
-                  <Text className="text-[10px] font-bold text-on-primary-container">Primary</Text>
+                  <Text className="text-[10px] font-bold text-on-primary-container">{t('primary')}</Text>
                 </View>
               )}
             </View>

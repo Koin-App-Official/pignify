@@ -1,1 +1,10 @@
-{}
+{
+  "noEmailApp": "Na tym urządzeniu nie skonfigurowano aplikacji pocztowej. Napisz do nas na {{email}}.",
+  "tabs": {
+    "home": "Start",
+    "goals": "Cele",
+    "missions": "Misje",
+    "coach": "Trener",
+    "profile": "Profil"
+  }
+}

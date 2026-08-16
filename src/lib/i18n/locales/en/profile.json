@@ -1,1 +1,32 @@
-{}
+{
+  "defaultName": "Saver",
+  "levelLabel": "Lv.{{level}}",
+  "personalitySuffix": "{{type}} personality",
+  "financialExplorer": "Financial explorer",
+  "totalSaved": "Total Saved",
+  "goals": "Goals",
+  "badges": "Badges",
+  "monthlyIncome": "Monthly Income",
+  "notProvided": "Not provided",
+  "expenseBreakdown": "Expense Breakdown",
+  "notifications": {
+    "title": "Notifications",
+    "paydayReminder": "Payday saving reminder",
+    "streakProtection": "Streak protection alert",
+    "milestoneAlerts": "Milestone celebrations",
+    "weeklyReflection": "Weekly reflection",
+    "softAskTitle": "Stay on track",
+    "softAskBody": "Piggy uses reminders to help you keep your streak and hit your savings goals. Enable notifications?",
+    "notNow": "Not now",
+    "enable": "Enable",
+    "disabledTitle": "Notifications disabled",
+    "disabledBody": "Enable notifications for Piggy in your device Settings to turn this on."
+  },
+  "reset": {
+    "title": "Reset Data",
+    "body": "Are you sure you want to reset all data? This cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Reset",
+    "button": "Reset All Data (Demo)"
+  }
+}

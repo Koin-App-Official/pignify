@@ -1,1 +1,10 @@
-{}
+{
+  "noEmailApp": "No email app is set up on this device. Reach us at {{email}}.",
+  "tabs": {
+    "home": "Home",
+    "goals": "Goals",
+    "missions": "Missions",
+    "coach": "Coach",
+    "profile": "Profile"
+  }
+}
