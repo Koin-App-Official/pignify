@@ -12,6 +12,9 @@ import * as SecureStore from 'expo-secure-store';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { SecureKeys } from './secureStorage';
 import { decryptSessionWithKey } from './pin';
+import { createLogger } from './logger';
+
+const log = createLogger('biometrics');
 
 export type BiometricKind = 'face' | 'fingerprint' | 'iris' | 'none';
 
@@ -46,22 +49,37 @@ export async function isBiometricEnabled(): Promise<boolean> {
  * Requires a successful biometric prompt up front (proves the user can unlock).
  */
 export async function enableBiometric(key: Uint8Array): Promise<boolean> {
-  if (!(await isBiometricAvailable())) return false;
+  const [hasHardware, enrolled] = await Promise.all([
+    LocalAuthentication.hasHardwareAsync(),
+    LocalAuthentication.isEnrolledAsync(),
+  ]);
+  if (!hasHardware || !enrolled) {
+    log.warn('unavailable', { hasHardware, enrolled });
+    return false;
+  }
 
   const result = await LocalAuthentication.authenticateAsync({
     promptMessage: 'Confirm to enable biometric unlock',
     disableDeviceFallback: false,
   });
-  if (!result.success) return false;
+  if (!result.success) {
+    log.warn('authenticateAsync failed', { error: result.error });
+    return false;
+  }
 
-  await SecureStore.setItemAsync(SecureKeys.BIOMETRIC_KEY, bytesToHex(key), {
-    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    requireAuthentication: true,
-    authenticationPrompt: 'Unlock Piggy',
-  });
-  await SecureStore.setItemAsync(SecureKeys.BIOMETRIC_KEY + '.enabled', '1', {
-    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-  });
+  try {
+    await SecureStore.setItemAsync(SecureKeys.BIOMETRIC_KEY, bytesToHex(key), {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      requireAuthentication: true,
+      authenticationPrompt: 'Unlock Piggy',
+    });
+    await SecureStore.setItemAsync(SecureKeys.BIOMETRIC_KEY + '.enabled', '1', {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
+  } catch (err) {
+    log.error('SecureStore.setItemAsync failed', err);
+    return false;
+  }
   return true;
 }
 

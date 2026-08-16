@@ -4,9 +4,10 @@
  * app-version footer were relocated here from profile.tsx (which keeps only
  * profile display + notification toggles).
  */
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Constants from 'expo-constants';
 import {
   LogOut,
@@ -20,11 +21,20 @@ import {
   ShieldCheck,
   Mail,
   X,
+  FingerprintPattern as Fingerprint,
+  ScanFace,
 } from 'lucide-react-native';
 
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { getPlanConfig, formatUSD } from '@/lib/entitlements';
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  getBiometricKind,
+  disableBiometric,
+  type BiometricKind,
+} from '@/lib/biometrics';
 import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
@@ -91,6 +101,53 @@ export default function Settings() {
   const planConfig = getPlanConfig(profile.plan);
   const pendingConfig = profile.pendingPlan ? getPlanConfig(profile.pendingPlan) : null;
 
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioKind, setBioKind] = useState<BiometricKind>('none');
+  const [bioEnabled, setBioEnabled] = useState(false);
+
+  // Re-read on every focus: covers both the initial mount and returning from
+  // /enable-biometric after a successful PIN confirmation.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const [available, enabled, kind] = await Promise.all([
+          isBiometricAvailable(),
+          isBiometricEnabled(),
+          getBiometricKind(),
+        ]);
+        if (cancelled) return;
+        setBioAvailable(available);
+        setBioEnabled(enabled);
+        setBioKind(kind);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const bioLabel = bioKind === 'face' ? 'Face ID' : bioKind === 'iris' ? 'Iris unlock' : 'Fingerprint unlock';
+  const BioIcon = bioKind === 'face' ? ScanFace : Fingerprint;
+
+  const handleBiometricToggle = (next: boolean) => {
+    if (next) {
+      router.push('/enable-biometric');
+      return;
+    }
+    Alert.alert(`Turn off ${bioLabel}?`, "You'll unlock with your PIN instead.", [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Turn off',
+        style: 'destructive',
+        onPress: async () => {
+          await disableBiometric();
+          setBioEnabled(false);
+        },
+      },
+    ]);
+  };
+
   const handleLogout = () => {
     Alert.alert('Log out', 'You can log back in anytime with your email.', [
       { text: 'Cancel', style: 'cancel' },
@@ -156,6 +213,23 @@ export default function Settings() {
                 label="Change PIN"
                 onPress={() => router.push('/change-pin')}
               />
+              {bioAvailable ? (
+                <>
+                  <View className="h-px bg-outline/10" />
+                  <View className="flex-row items-center justify-between py-4">
+                    <View className="flex-row items-center gap-[14px]">
+                      <BioIcon size={18} color="#64748B" />
+                      <Text className="text-[16px] font-semibold text-on-surface">{bioLabel}</Text>
+                    </View>
+                    <Switch
+                      value={bioEnabled}
+                      onValueChange={handleBiometricToggle}
+                      trackColor={{ false: '#CBD5E1', true: '#1D4ED8' }}
+                      thumbColor={'#ffffff'}
+                    />
+                  </View>
+                </>
+              ) : null}
               <View className="h-px bg-outline/10" />
               <View className="py-4">
                 <View className="flex-row items-center gap-[14px] mb-[14px]">

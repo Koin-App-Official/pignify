@@ -51,7 +51,7 @@ export type LockStatus =
   | 'unlocked';
 
 export type UnlockResult =
-  | { ok: true }
+  | { ok: true; key?: Uint8Array }
   | {
       ok: false;
       reason:
@@ -320,7 +320,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     }
 
     const outcome = await activateSession(res.secret, set);
-    return outcome === 'ok' ? { ok: true } : { ok: false, reason: outcome };
+    return outcome === 'ok' ? { ok: true, key: res.key } : { ok: false, reason: outcome };
   },
 
   confirmExistingPin: async (pin) => {
