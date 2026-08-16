@@ -4,6 +4,7 @@
  *
  *   loading            → nothing (native splash still covers, or blank)
  *   unauthenticated    → onboarding (new user) OR login (returning user / new device)
+ *   needs_plan         → the trial intro, or a lapsed trial (see planGate.ts)
  *   needs_pin_setup    → set a brand-new PIN (no PIN exists on this device yet)
  *   needs_pin_confirm  → re-confirm the EXISTING PIN (normal logout, not forgot-PIN)
  *   locked             → lock screen
@@ -20,6 +21,7 @@ import { View } from 'react-native';
 import { useStore } from '@/lib/store';
 import { useAppLock } from '@/hooks/useAppLock';
 import { LoginGate } from './LoginGate';
+import { PlanGate } from './PlanGate';
 import { SetPinGate } from './SetPinGate';
 import { ConfirmPinGate } from './ConfirmPinGate';
 import { LockGate } from './LockGate';
@@ -32,6 +34,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <View className="flex-1 bg-surface" />;
   }
 
+  if (status === 'needs_plan') return <PlanGate />;
   if (status === 'needs_pin_setup') return <SetPinGate />;
   if (status === 'needs_pin_confirm') return <ConfirmPinGate />;
   if (status === 'locked') return <LockGate />;

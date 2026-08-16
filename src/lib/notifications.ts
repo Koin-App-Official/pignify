@@ -58,6 +58,9 @@ async function cancel(id: string) {
   await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
 }
 
+/** How many days before the trial ends the reminder fires (day 12 of 14). */
+const TRIAL_REMINDER_DAYS_BEFORE = 2;
+
 /** 8:30pm — fallback evening slot used until we've learned when this user is actually active. */
 export const DEFAULT_HOUR = 20;
 const EVENING_MINUTE = 30;
@@ -186,16 +189,21 @@ export async function scheduleTrialEnding(params: {
   const periodEnd = new Date(params.currentPeriodEnd);
   if (Number.isNaN(periodEnd.getTime())) return;
 
+  // Two days out (day 12 of 14), not one. There is no card on file, so nothing
+  // converts on its own — this reminder is the only signal the user gets, and a
+  // single day's notice to act on something is thin.
   const fireAt = new Date(periodEnd);
-  fireAt.setDate(fireAt.getDate() - 1);
+  fireAt.setDate(fireAt.getDate() - TRIAL_REMINDER_DAYS_BEFORE);
   fireAt.setHours(10, 0, 0, 0);
-  if (fireAt.getTime() <= Date.now()) return; // already inside the last day (or past) — nothing to schedule
+  if (fireAt.getTime() <= Date.now()) return; // already inside the window (or past) — nothing to schedule
 
   await Notifications.scheduleNotificationAsync({
     identifier: IDS.trialEnding,
     content: {
-      title: '⏳ Trial ending tomorrow',
-      body: `Your ${params.planDisplayName} trial ends tomorrow. Keep your perks — no action needed if you've already added a payment method.`,
+      title: '⏳ Your free trial ends in 2 days',
+      // Deliberately no "payment method" language: this is a no-card trial, so
+      // there is nothing on file and nothing to have already done.
+      body: `Your ${params.planDisplayName} trial wraps up in 2 days. Take a look at what changes — nothing you've saved goes anywhere.`,
       data: { type: 'trial-ending' },
     },
     trigger: {

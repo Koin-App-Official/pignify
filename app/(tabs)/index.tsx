@@ -28,6 +28,8 @@ import { getTodayString, normalizeDay, sumDepositsForDate } from '@/lib/deposits
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
+import { useCelebrate } from '@/components/animation/useCelebrate';
 import { triggerDeepAnalysis } from '@/lib/deepAnalysis';
 
 function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
@@ -56,6 +58,7 @@ export default function Dashboard() {
   const expenses = useStore((s) => s.profile.expenses);
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
   const welcomeSeen = useStore((s) => s.profile.welcomeSeen);
+  const justOnboarded = useStore((s) => s.profile.justOnboarded);
   const incomeSkipped = useStore((s) => s.profile.incomeSkipped);
   const name = useStore((s) => s.profile.name);
   const streak = useStore((s) => s.profile.streak);
@@ -64,7 +67,7 @@ export default function Dashboard() {
   const goals = useStore((state) => state.goals);
   const [showExpense, setShowExpense] = useState(false);
   const [activeGoalIndex, setActiveGoalIndex] = useState(0);
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const replay = useFocusReplay();
 
   // Opened via a "daily check-in" notification tap (app/_layout.tsx) deep-linking to ?openExpense=1.
@@ -73,6 +76,17 @@ export default function Dashboard() {
     setShowExpense(true);
     router.setParams({ openExpense: undefined });
   }, [openExpense]);
+
+  // Onboarding hands straight off to the plan gate and PIN setup, so the
+  // "you're all set" moment belongs here — the first time the finished app is
+  // actually on screen, with their goal in view — rather than mid-flow.
+  const { confettiProgress, celebrate } = useCelebrate();
+  const updateProfile = useStore((s) => s.updateProfile);
+  useEffect(() => {
+    if (!justOnboarded) return;
+    celebrate();
+    updateProfile({ justOnboarded: false });
+  }, [justOnboarded]);
 
   const { plan, has, deepAnalysis } = useEntitlements();
   const incrementDeepAnalysis = useStore((s) => s.incrementDeepAnalysis);
@@ -403,6 +417,8 @@ export default function Dashboard() {
       </ScrollView>
 
       <AddExpenseModal open={showExpense} onClose={() => setShowExpense(false)} />
+
+      <SkiaConfetti progress={confettiProgress} width={screenWidth} height={screenHeight} />
 
       <UpgradeModal
         isVisible={gate !== null}

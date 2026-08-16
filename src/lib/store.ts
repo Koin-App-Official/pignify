@@ -205,6 +205,19 @@ export interface UserProfile {
    * carousel is only ever reachable when onboarding hasn't been completed.
    */
   welcomeSeen: boolean;
+  /**
+   * True once the user has acknowledged the trial-intro gate. Keeps that screen
+   * to a single appearance without needing a separate storage key, and is
+   * cleared by "Reset Data" along with the rest of the profile.
+   */
+  trialIntroSeen: boolean;
+  /**
+   * Set when onboarding finishes and cleared by the dashboard once it has fired
+   * the celebration. Onboarding no longer has a success screen of its own — it
+   * hands straight off to the plan gate and PIN setup — so this is what lets the
+   * confetti land after all of that, on a genuinely finished account.
+   */
+  justOnboarded: boolean;
   expenses: Expense[];
   notificationPrefs: {
     paydayReminder: boolean;
@@ -249,6 +262,8 @@ export const DEFAULT_PROFILE: UserProfile = {
   activityHourCounts: new Array(24).fill(0),
   onboardingCompleted: false,
   welcomeSeen: false,
+  trialIntroSeen: false,
+  justOnboarded: false,
   expenses: [],
   notificationPrefs: {
     paydayReminder: true,
