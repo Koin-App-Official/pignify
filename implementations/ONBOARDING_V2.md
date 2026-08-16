@@ -1,7 +1,7 @@
 # Onboarding v2 — Implementation Plan
 
 Derived from the onboarding pattern-library report + the audit of `app/onboarding.tsx`.
-Status: **in progress** — A–D merged. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
+Status: **in progress** — A–D merged, E deployed. E–H rewritten 2026-08-16 after the RevenueCat plan was dropped.
 
 ## Progress
 
@@ -11,8 +11,8 @@ Status: **in progress** — A–D merged. E–H rewritten 2026-08-16 after the R
 | B | Pre-signup carousel | ✅ merged ([#58](https://github.com/Koin-App-Official/pignify/pull/58)) — copy + visuals pending review |
 | C | Trust & consent copy pass | ✅ merged ([#60](https://github.com/Koin-App-Official/pignify/pull/60)) — "email me this plan" deferred |
 | D | Push pre-permission step | ✅ merged ([#62](https://github.com/Koin-App-Official/pignify/pull/62)) — device check pending |
-| E | Trial entitlement machinery (no payment) | ☐ ready to start |
-| F | App-side trial state | ☐ blocked on E |
+| E | Trial entitlement machinery (no payment) | ☑ deployed ([#80](https://github.com/Koin-App-Official/pignify/issues/80)) — live E2E blocked by a dead n8n Appwrite key |
+| F | App-side trial state | ☐ ready to start |
 | G | Trial gate + day-15 lockout | ☐ blocked on F |
 | H | Payment rail | ⛔ deferred — rail undecided, see open decisions |
 
@@ -142,17 +142,20 @@ Draft state persists across app kills at every step up to account creation. ✅ 
 
 # Issue E — Trial entitlement machinery (no payment rail)
 
-**Branch:** `feat/issue-E-trial-entitlements` · **Depends on:** nothing · **Blocks:** F, G · **Files:** n8n workflows, Appwrite schema
+**Branch:** `feat/issue-80-trial-entitlements` ([#80](https://github.com/Koin-App-Official/pignify/issues/80)) · **Depends on:** nothing · **Blocks:** F, G · **Files:** n8n workflows, Appwrite schema
 
 > **Rewritten.** Was "RevenueCat backend & product configuration". No store, no RC, no Stripe changes. Nothing here needs the Apple Developer Program.
 
-- [ ] **Add `trial_ends_at`** to the `entitlements` table (and `trial_started_at` for analytics).
-- [ ] **`CLAUDE_onboarding` grants the trial.** It already seeds beginner entitlements on signup — extend it to stamp a 14-day trial with `status: trialing` and the chosen plan. One workflow, one node.
-- [ ] **Expire lazily on read, not on a cron.** `CLAUDE_entitlements_get` compares `trial_ends_at` to now and returns `expired` past the date. This mirrors the lazy period-key pattern already used for quotas in `src/lib/quota.ts` and needs no scheduler.
-- [ ] **Return `trialEndsAt` and `status`** from `CLAUDE_entitlements_get` so the client can render the countdown and the day-12 reminder without a second call.
-- [ ] **Which plan does the trial grant?** Recommend Family (best first impression, and the drop at day 15 is the conversion argument). Alternative: the plan the user picks at the gate. Decide during implementation.
-- [ ] **Leave the Stripe workflows alone.** `CLAUDE_billing_checkout`, `billing_addon`, `stripe_webhook`, `billing_sync` stay live and untouched — they are the fastest path to H if Stripe wins.
-- [ ] **Do NOT touch `CLAUDE_account_delete`.** Its Stripe cancellation still works. The store-cancellation regression flagged in the old plan was a RevenueCat consequence and no longer applies.
+- [x] **Add `trial_ends_at`** to the `entitlements` table (and `trial_started_at` for analytics). Both live and `available`.
+- [x] **`CLAUDE_onboarding` grants the trial.** `Build Beginner Entitlements` renamed to `Build Trial Entitlements`; stamps `status: trialing`, `trial_started_at`, `trial_ends_at`.
+- [x] **Expire lazily on read, not on a cron.** Plus a write-back to Appwrite, so `CLAUDE_coach_reply` (which reads the row directly) can't keep spending a Family allowance against a lapsed trial. Write-back is `neverError` so a failed reconcile degrades to a stale row rather than 500ing a plan read.
+- [x] **Return `trialEndsAt`, `status` and `locked`** from `CLAUDE_entitlements_get`. Additive — the existing `plan`/quota fields are unchanged, so older clients keep working.
+- [x] **Which plan does the trial grant?** **Family.** `TRIAL_PLAN_ID` in the `Build Trial Entitlements` node is the single place to change it.
+- [x] **Left the Stripe workflows alone.** `CLAUDE_billing_checkout`, `billing_addon`, `stripe_webhook`, `billing_sync` untouched.
+- [x] **Did not touch `CLAUDE_account_delete`.**
+- [x] Added an `expired` element to the `status` enum, so a lapsed trial is distinguishable from a cancelled paid subscription (issue G's win-back copy needs that).
+- [x] Logic verified with pinned-data tests on both branches: lapsed trial → `expired`/`locked`/quota 0 + write-back fired; live trial → `trialing`/quota intact + write-back correctly skipped.
+- [ ] **Live end-to-end verification — BLOCKED.** The shared n8n credential `Appwrite Header Auth` returns `401 user_unauthorized` on every call, so no workflow can reach Appwrite. Pre-existing and unrelated to this work: the same 401 hit a real signup at 07:27 on 2026-08-16, before any of these changes were published. Needs a fresh Appwrite API key in n8n. Re-run the E2E once fixed.
 
 ---
 
