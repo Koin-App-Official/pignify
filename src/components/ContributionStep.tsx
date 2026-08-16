@@ -6,6 +6,8 @@ import { CalendarModal } from '@/components/ui/calendar-modal';
 import { CURRENCIES } from '@/lib/store';
 import { deriveGoalDate, requiredContribution, suggestedContribution } from '@/lib/goalMath';
 import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
+import { formatDate, formatMonthYear } from '@/lib/i18n/format';
+import type { SupportedLanguage } from '@/lib/i18n/detect';
 
 export type PlanningMode = 'contribution' | 'deadline';
 
@@ -17,6 +19,7 @@ export interface ContributionResult {
 
 interface ContributionStepProps {
   currency: string;
+  language: SupportedLanguage;
   targetAmount: number;
   monthlyIncome: number | null;
   incomeSkipped: boolean;
@@ -44,10 +47,6 @@ interface ContributionStepProps {
 const SUGGESTION_PCTS = [0.1, 0.15, 0.2];
 const INCOME_WARNING_PCT = 35;
 
-function formatMonthYear(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-}
-
 function getCurrencySymbol(currencyCode: string): string {
   return CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
 }
@@ -61,6 +60,7 @@ function getCurrencySymbol(currencyCode: string): string {
  */
 export function ContributionStep({
   currency,
+  language,
   targetAmount,
   monthlyIncome,
   incomeSkipped,
@@ -171,7 +171,7 @@ export function ContributionStep({
             <Text className="mt-3 text-sm font-medium text-on-surface-variant">
               At {currencySymbol}
               {contributionNumber}/month you'll reach your goal by{' '}
-              <Text className="font-bold text-on-surface">{formatMonthYear(derived.date)}</Text>
+              <Text className="font-bold text-on-surface">{formatMonthYear(derived.date, language)}</Text>
             </Text>
           )}
 
@@ -220,11 +220,7 @@ export function ContributionStep({
           >
             <Text className="text-base font-medium text-on-surface">
               {deadline
-                ? new Date(deadline).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
+                ? formatDate(deadline, language, { year: 'numeric', month: 'long', day: 'numeric' })
                 : 'Select a date'}
             </Text>
           </TouchableOpacity>
@@ -236,7 +232,7 @@ export function ContributionStep({
                 {currencySymbol}
                 {requiredMonthly.toFixed(2)}/month
               </Text>{' '}
-              to hit this by {formatMonthYear(new Date(deadline).toISOString())}.
+              to hit this by {formatMonthYear(new Date(deadline).toISOString(), language)}.
             </Text>
           )}
 

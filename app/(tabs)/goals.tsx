@@ -26,6 +26,8 @@ import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { springPresets } from '@/lib/springPresets';
 import { Mascot } from '@/components/Mascot';
+import { formatMonthYear } from '@/lib/i18n/format';
+import type { SupportedLanguage } from '@/lib/i18n/detect';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -51,9 +53,8 @@ const GOAL_ICONS: Record<string, string> = {
   'Something Else': '✏️',
 };
 
-function formatTargetDate(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+function formatTargetDate(isoDate: string, language: SupportedLanguage): string {
+  return formatMonthYear(isoDate, language);
 }
 
 /** Named steps for the add-goal flow — see the equivalent enum in app/onboarding.tsx. */
@@ -71,6 +72,7 @@ export default function Goals() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const goals = useStore((state) => state.goals);
   const currency = useStore((state) => state.profile.currency);
+  const language = useStore((state) => state.profile.language);
   const { plan, goals: goalQuota } = useEntitlements();
   const [gate, setGate] = useState<GateInfo | null>(null);
   const replay = useFocusReplay();
@@ -237,7 +239,7 @@ export default function Goals() {
                     {formatCurrency(g.savedAmount, currency)} of {formatCurrency(g.targetAmount, currency)}
                   </Text>
                   <Text className="text-xs text-on-surface-variant mt-2">
-                    Setting aside {formatCurrency(monthlySetAside, currency)}/month · Goal reached {formatTargetDate(g.deadline)}
+                    Setting aside {formatCurrency(monthlySetAside, currency)}/month · Goal reached {formatTargetDate(g.deadline, language)}
                   </Text>
                 </View>
 
@@ -404,6 +406,7 @@ export default function Goals() {
               <Animated.View entering={FadeInDown.springify()}>
                 <ContributionStep
                   currency={currency}
+                  language={language}
                   targetAmount={Number(targetAmount)}
                   monthlyIncome={monthlyIncome}
                   incomeSkipped={!monthlyIncome}
@@ -441,7 +444,7 @@ export default function Goals() {
                     value={formatCurrency(monthlyContribution, currency)}
                     highlight
                   />
-                  <ReviewRow label="Goal reached" value={formatTargetDate(targetDate)} />
+                  <ReviewRow label="Goal reached" value={formatTargetDate(targetDate, language)} />
                 </View>
 
                 {savingsExceedsIncome && (

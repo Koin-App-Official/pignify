@@ -32,6 +32,8 @@ import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
 import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { Mascot } from '@/components/Mascot';
+import { formatMonthYear } from '@/lib/i18n/format';
+import type { SupportedLanguage } from '@/lib/i18n/detect';
 
 const GOAL_CHIPS = [
   { label: 'Vacation', emoji: '🏝️' },
@@ -161,9 +163,8 @@ const TOTAL_STEPS = OnboardingStep.AccountFinalization + 1;
 
 const ONBOARDING_WEBHOOK_TIMEOUT_MS = 15_000;
 
-function formatTargetDate(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+function formatTargetDate(isoDate: string, language: SupportedLanguage): string {
+  return formatMonthYear(isoDate, language);
 }
 
 function getCurrencySymbol(currencyCode: string): string {
@@ -261,6 +262,7 @@ export default function Onboarding() {
   const updateProfile = useStore((s) => s.updateProfile);
   const unlockAchievement = useStore((s) => s.unlockAchievement);
   const refreshNotifications = useStore((s) => s.refreshNotifications);
+  const language = useStore((s) => s.profile.language);
   const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
   const requestLogin = useAuthLock((s) => s.requestLogin);
 
@@ -1161,6 +1163,7 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.springify()}>
               <ContributionStep
                 currency={currency}
+                language={language}
                 targetAmount={Number(targetAmount)}
                 monthlyIncome={incomeSkipped ? null : incomeNumber}
                 incomeSkipped={incomeSkipped}
@@ -1208,7 +1211,7 @@ export default function Onboarding() {
                   value={formatCurrency(monthlyContribution, currency)}
                   highlight
                 />
-                <Row label="Goal reached" value={formatTargetDate(targetDate)} />
+                <Row label="Goal reached" value={formatTargetDate(targetDate, language)} />
               </View>
 
               {savingsExceedsIncome && (
@@ -1287,7 +1290,7 @@ export default function Onboarding() {
                   ? `Your email is confirmed — we just need to finish building your plan for your ${goalName}.`
                   : otpSent
                     ? `Enter the 6-digit code we emailed to ${email} to finish setting up your account.`
-                    : `Enter your email — we'll send a sign-in code to lock in your plan for your ${goalName} by ${formatTargetDate(targetDate)}.`}
+                    : `Enter your email — we'll send a sign-in code to lock in your plan for your ${goalName} by ${formatTargetDate(targetDate, language)}.`}
               </Text>
 
               <Input
@@ -1382,6 +1385,7 @@ export default function Onboarding() {
         <DobConfirmModal
           isVisible={dobConfirmModalVisible}
           dateOfBirth={dateOfBirth}
+          language={language}
           onEdit={handleDobEdit}
           onConfirm={handleDobConfirmed}
         />

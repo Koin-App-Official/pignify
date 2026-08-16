@@ -20,6 +20,7 @@ import { canSubscribe } from '@/lib/planGate';
 import { evaluateDowngradeRetention } from '@/lib/retention';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
+import { formatDate } from '@/lib/i18n/format';
 
 const log = createLogger('plans');
 
@@ -69,11 +70,7 @@ export default function Plans() {
 
   const formatPeriodEnd = () =>
     profile.currentPeriodEnd
-      ? new Date(profile.currentPeriodEnd).toLocaleDateString(undefined, {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        })
+      ? formatDate(profile.currentPeriodEnd, profile.language, { month: 'long', day: 'numeric', year: 'numeric' })
       : 'the end of your billing period';
 
   /**

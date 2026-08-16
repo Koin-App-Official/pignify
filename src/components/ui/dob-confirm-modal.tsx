@@ -2,24 +2,23 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { BottomSheet } from '@/components/animation/BottomSheet';
 import { Button } from './button';
+import { formatDate } from '@/lib/i18n/format';
+import type { SupportedLanguage } from '@/lib/i18n/detect';
 
 interface DobConfirmModalProps {
   isVisible: boolean;
   dateOfBirth: string;
+  language: SupportedLanguage;
   onEdit: () => void;
   onConfirm: () => void;
 }
 
-function formatDob(isoDate: string): string {
+function formatDob(isoDate: string, language: SupportedLanguage): string {
   const [y, m, d] = isoDate.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatDate(new Date(y, m - 1, d), language, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-export const DobConfirmModal = ({ isVisible, dateOfBirth, onEdit, onConfirm }: DobConfirmModalProps) => {
+export const DobConfirmModal = ({ isVisible, dateOfBirth, language, onEdit, onConfirm }: DobConfirmModalProps) => {
   return (
     <BottomSheet visible={isVisible} onClose={onEdit}>
       <View className="p-6 gap-2">
@@ -28,7 +27,7 @@ export const DobConfirmModal = ({ isVisible, dateOfBirth, onEdit, onConfirm }: D
           Once confirmed, this can't be changed.
         </Text>
         <Text className="mt-4 text-2xl font-black text-primary text-center">
-          {dateOfBirth ? formatDob(dateOfBirth) : ''}
+          {dateOfBirth ? formatDob(dateOfBirth, language) : ''}
         </Text>
       </View>
 

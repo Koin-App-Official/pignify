@@ -26,6 +26,7 @@ import {
 import { PIGGY_STORE_VERSION, migratePiggyState } from './storeMigrations';
 import { PLAN_RANK } from './entitlements';
 import { detectDeviceLanguage, type SupportedLanguage } from './i18n/detect';
+import { formatMoney } from './i18n/format';
 
 export interface Goal {
   id: string;
@@ -539,11 +540,11 @@ function buildAndRefreshSchedule(state: PiggyState) {
     hasActiveTarget: target > 0,
     targetMet,
     streak: profile.streak,
-    remainingLabel: formatCurrency(remaining, profile.currency),
+    remainingLabel: formatCurrency(remaining, profile.currency, profile.language),
     checkinIgnoredStreak: profile.checkinIgnoredStreak ?? 0,
     hasWeeklyActivity: savedThisWeek > 0 || expenseCountThisWeek > 0,
     preferredHour: getPreferredHour(profile.activityHourCounts),
-    savedThisWeekLabel: formatCurrency(savedThisWeek, profile.currency),
+    savedThisWeekLabel: formatCurrency(savedThisWeek, profile.currency, profile.language),
     expenseCountThisWeek,
     planStatus: profile.planStatus,
     // `trialEndsAt` first: it's the only one of the two the entitlements sync
@@ -658,7 +659,7 @@ export const useStore = create<PiggyState>()(
             const prevPct = before.savedAmount / target;
             const newPct = updates.savedAmount / target;
             if (prevPct < 1 && newPct >= 1) {
-              fireMilestoneNotification('👑 Goal crushed!', `You just hit ${name} — ${formatCurrency(updates.savedAmount, profile.currency)} saved.`).catch(() => {});
+              fireMilestoneNotification('👑 Goal crushed!', `You just hit ${name} — ${formatCurrency(updates.savedAmount, profile.currency, profile.language)} saved.`).catch(() => {});
             } else {
               const thresholds: [number, string][] = [
                 [0.75, '🚀'],
@@ -910,11 +911,22 @@ export const useStore = create<PiggyState>()(
 /**
  * Format a numeric amount with the correct currency symbol and position.
  * e.g. formatCurrency(1000, 'USD') → '$1,000'
- *      formatCurrency(1000, 'PLN') → '1,000 zł'
+ *      formatCurrency(1000, 'PLN') → '1 000 zł'
+ *
+ * `language` defaults to the current app language rather than requiring
+ * every call site to pass it — this function used to read the *device's*
+ * ambient locale via bare `toLocaleString()` (a pre-existing bug: an
+ * English-language user on a Polish phone saw Polish-grouped numbers), which
+ * this preserves the ergonomics of while fixing. The actual formatting is
+ * delegated to i18n/format.ts's pure formatMoney, which Phase 0
+ * (implementations/I18N_PL.md) found could not just reuse
+ * Intl.NumberFormat — it's independently broken for pl-PL below 10,000.
  */
-export function formatCurrency(amount: number, currencyCode: string): string {
+export function formatCurrency(amount: number, currencyCode: string, language?: SupportedLanguage): string {
   const currency = CURRENCIES.find((c) => c.code === currencyCode);
-  const symbol = currency?.symbol ?? currencyCode;
-  const formatted = amount.toLocaleString();
-  return currency?.symbolAfter ? `${formatted} ${symbol}` : `${symbol}${formatted}`;
+  return formatMoney(
+    amount,
+    { symbol: currency?.symbol ?? currencyCode, symbolAfter: currency?.symbolAfter ?? false },
+    language ?? useStore.getState().profile.language
+  );
 }
