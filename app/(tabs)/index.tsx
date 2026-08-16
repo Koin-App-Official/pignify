@@ -86,7 +86,7 @@ export default function Dashboard() {
   // the effect below clears `justOnboarded` in the store immediately, and a
   // condition bound directly to it would make the banner vanish on the very
   // next render, before anyone could read it.
-  const { confettiProgress, celebrate } = useCelebrate();
+  const { confettiProgress, celebrate, active: confettiActive } = useCelebrate();
   const updateProfile = useStore((s) => s.updateProfile);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(justOnboarded);
   useEffect(() => {
@@ -464,7 +464,9 @@ export default function Dashboard() {
 
       <AddExpenseModal open={showExpense} onClose={() => setShowExpense(false)} />
 
-      <SkiaConfetti progress={confettiProgress} width={screenWidth} height={screenHeight} />
+      {confettiActive && (
+        <SkiaConfetti progress={confettiProgress} width={screenWidth} height={screenHeight} />
+      )}
 
       <UpgradeModal
         isVisible={gate !== null}
