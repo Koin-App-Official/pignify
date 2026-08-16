@@ -25,6 +25,7 @@ import {
 } from './missions';
 import { PIGGY_STORE_VERSION, migratePiggyState } from './storeMigrations';
 import { PLAN_RANK } from './entitlements';
+import { detectDeviceLanguage, type SupportedLanguage } from './i18n/detect';
 
 export interface Goal {
   id: string;
@@ -225,6 +226,15 @@ export interface UserProfile {
    * behavior), null = never lock on backgrounding.
    */
   autoLockMinutes: 0 | 1 | 5 | null;
+  /**
+   * App display language. Seeded from the device for brand-new profiles
+   * (`detectDeviceLanguage`, below) — existing installs are backfilled to
+   * 'en' by the v4→v5 migration instead, so an app update never silently
+   * changes a returning user's language (see implementations/I18N_PL.md's
+   * Decisions). Independent of `country`/`currency`: a Polish speaker in the
+   * UK wants `pl` copy with `GBP` amounts.
+   */
+  language: SupportedLanguage;
 }
 
 export const DEFAULT_PROFILE: UserProfile = {
@@ -265,6 +275,7 @@ export const DEFAULT_PROFILE: UserProfile = {
     weeklyReflection: true,
   },
   autoLockMinutes: 0,
+  language: detectDeviceLanguage(),
 };
 
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [

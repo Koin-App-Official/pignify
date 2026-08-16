@@ -9,6 +9,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, Switch } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Constants from 'expo-constants';
+import { useTranslation } from 'react-i18next';
 import {
   LogOut,
   Trash2,
@@ -23,9 +24,11 @@ import {
   X,
   FingerprintPattern as Fingerprint,
   ScanFace,
+  Globe,
 } from 'lucide-react-native';
 
 import { useStore } from '@/lib/store';
+import { SUPPORTED_LANGUAGES } from '@/lib/i18n/detect';
 import { useAuthLock } from '@/lib/authLock';
 import { getPlanConfig, formatUSD } from '@/lib/entitlements';
 import {
@@ -94,6 +97,7 @@ function Row({
 
 export default function Settings() {
   const router = useRouter();
+  const { t } = useTranslation('settings');
   const profile = useStore((state) => state.profile);
   const updateProfile = useStore((state) => state.updateProfile);
   const logout = useAuthLock((state) => state.logout);
@@ -260,8 +264,41 @@ export default function Settings() {
             </View>
           </FadeInStagger>
 
-          {/* Account */}
+          {/* Language */}
           <FadeInStagger index={2} delayStep={60}>
+            <SectionLabel>{t('language.sectionLabel')}</SectionLabel>
+            <View className="mb-7 rounded-2xl bg-surface-container-low px-6" style={CARD_SHADOW}>
+              <View className="py-4">
+                <View className="flex-row items-center gap-[14px] mb-[14px]">
+                  <Globe size={18} color="#64748B" />
+                  <Text className="text-[16px] font-semibold text-on-surface">{t('language.sectionLabel')}</Text>
+                </View>
+                <View className="flex-row gap-[9px]">
+                  {SUPPORTED_LANGUAGES.map((code) => {
+                    const active = profile.language === code;
+                    return (
+                      <TouchableOpacity
+                        key={code}
+                        onPress={() => updateProfile({ language: code })}
+                        className={`flex-1 items-center rounded-[14px] py-[9px] px-1 ${active ? 'bg-primary' : 'bg-surface-container'}`}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          className={`text-[14px] font-bold ${active ? 'text-primary-foreground' : 'text-on-surface-variant'}`}
+                        >
+                          {t(`language.${code}`)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          </FadeInStagger>
+
+          {/* Account */}
+          <FadeInStagger index={3} delayStep={60}>
             <SectionLabel>Account</SectionLabel>
             <View className="mb-7 rounded-2xl bg-surface-container-low px-6" style={CARD_SHADOW}>
               <Row icon={<LogOut size={18} color="#64748B" />} label="Log out" onPress={handleLogout} />
@@ -276,7 +313,7 @@ export default function Settings() {
           </FadeInStagger>
 
           {/* Support & About */}
-          <FadeInStagger index={3} delayStep={60}>
+          <FadeInStagger index={4} delayStep={60}>
             <SectionLabel>Support & About</SectionLabel>
             <View className="mb-7 rounded-2xl bg-surface-container-low px-6" style={CARD_SHADOW}>
               {PRIVACY_URL ? (
@@ -321,7 +358,7 @@ export default function Settings() {
             </View>
           </FadeInStagger>
 
-          <FadeInStagger index={4} delayStep={60}>
+          <FadeInStagger index={5} delayStep={60}>
             <View className="mb-[54px] items-center">
               <Text className="text-[11px] text-on-surface-variant/40 uppercase tracking-widest">
                 Piggy v{Constants.expoConfig?.version || '1.0.0'}
