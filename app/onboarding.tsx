@@ -261,6 +261,7 @@ export default function Onboarding() {
   const unlockAchievement = useStore((s) => s.unlockAchievement);
   const refreshNotifications = useStore((s) => s.refreshNotifications);
   const onLoggedIn = useAuthLock((s) => s.onLoggedIn);
+  const requestLogin = useAuthLock((s) => s.requestLogin);
 
   // Restore a previous session's answers, falling back to locale detection for a
   // fresh start. Both live in one effect so the detected country/currency can't
@@ -955,6 +956,12 @@ export default function Onboarding() {
               {firstNameError ? (
                 <Text className="mt-2 text-xs text-destructive">{firstNameError}</Text>
               ) : null}
+
+              <TouchableOpacity onPress={requestLogin} className="mt-6 items-center py-2">
+                <Text className="text-sm font-semibold text-on-surface-variant">
+                  Already have an account? <Text className="text-primary underline">Sign in</Text>
+                </Text>
+              </TouchableOpacity>
             </Animated.View>
           )}
 

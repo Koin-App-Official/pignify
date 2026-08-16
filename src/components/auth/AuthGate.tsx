@@ -19,6 +19,7 @@
  */
 import { View } from 'react-native';
 import { useStore } from '@/lib/store';
+import { useAuthLock } from '@/lib/authLock';
 import { useAppLock } from '@/hooks/useAppLock';
 import { LoginGate } from './LoginGate';
 import { PlanGate } from './PlanGate';
@@ -29,6 +30,7 @@ import { LockGate } from './LockGate';
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const status = useAppLock();
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
+  const loginRequested = useAuthLock((s) => s.loginRequested);
 
   if (status === 'loading') {
     return <View className="flex-1 bg-surface" />;
@@ -41,8 +43,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (status === 'unauthenticated') {
     // New user → let onboarding render (it handles OTP + set-PIN inline).
-    // Returning user (profile exists, PIN wiped) → dedicated login.
-    if (onboardingCompleted) return <LoginGate />;
+    // Returning user (profile exists, PIN wiped) → dedicated login. Same for
+    // a brand-new install where the user tapped "I already have an account"
+    // (loginRequested) — reachable before onboarding has ever completed.
+    if (onboardingCompleted || loginRequested) return <LoginGate />;
     return <>{children}</>;
   }
 
