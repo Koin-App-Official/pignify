@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react-native';
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
@@ -31,6 +32,7 @@ const log = createLogger('LoginGate');
 const isEmailValid = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 export function LoginGate() {
+  const { t } = useTranslation('auth');
   const profileEmail = useStore((s) => s.profile.email);
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
   const updateProfile = useStore((s) => s.updateProfile);
@@ -50,7 +52,7 @@ export function LoginGate() {
   const [busy, setBusy] = useState(false);
 
   const sendCode = async () => {
-    if (!isEmailValid(email)) return setError('Please enter a valid email address.');
+    if (!isEmailValid(email)) return setError(t('login.invalidEmail'));
     setBusy(true);
     setError('');
     try {
@@ -58,14 +60,14 @@ export function LoginGate() {
       setOtpUserId(userId);
       setStage('code');
     } catch {
-      setError('Could not send the code. Check your connection and try again.');
+      setError(t('login.sendCodeError'));
     } finally {
       setBusy(false);
     }
   };
 
   const verify = async () => {
-    if (code.length !== 6) return setError('Enter the 6-digit code from your email.');
+    if (code.length !== 6) return setError(t('login.invalidCode'));
     setBusy(true);
     setError('');
     try {
@@ -94,10 +96,10 @@ export function LoginGate() {
         // The code was right and createSession succeeded — only reading back the
         // token failed. Don't imply the code was wrong, but it IS consumed now,
         // so a retry needs a fresh one.
-        setError('Signed in, but we could not secure the session. Request a new code and try again.');
+        setError(t('login.sessionSecretError'));
         setCode('');
       } else {
-        setError('That code is incorrect or expired. Request a new one.');
+        setError(t('login.codeIncorrect'));
         setCode('');
       }
     } finally {
@@ -123,9 +125,9 @@ export function LoginGate() {
 
             {stage === 'email' ? (
               <>
-                <Text className="text-2xl font-black text-on-surface mb-2 text-center">Sign back in</Text>
+                <Text className="text-2xl font-black text-on-surface mb-2 text-center">{t('login.signBackIn')}</Text>
                 <Text className="text-sm font-medium text-on-surface-variant mb-8 text-center">
-                  Enter your email and we'll send you a sign-in code.
+                  {t('login.signBackInSub')}
                 </Text>
                 <Input
                   value={email}
@@ -135,22 +137,22 @@ export function LoginGate() {
                   }}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  placeholder="you@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                 />
                 {error ? <Text className="mt-2 text-xs text-destructive">{error}</Text> : null}
                 <Button onPress={sendCode} disabled={busy} className="mt-8 w-full h-14">
                   {busy ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Text className="text-base font-bold text-primary-foreground">Send code</Text>
+                    <Text className="text-base font-bold text-primary-foreground">{t('login.sendCode')}</Text>
                   )}
                 </Button>
               </>
             ) : (
               <>
-                <Text className="text-2xl font-black text-on-surface mb-2 text-center">Enter your code</Text>
+                <Text className="text-2xl font-black text-on-surface mb-2 text-center">{t('login.enterCode')}</Text>
                 <Text className="text-sm font-medium text-on-surface-variant mb-8 text-center">
-                  We emailed a 6-digit code to {email}.
+                  {t('login.codeSentTo', { email })}
                 </Text>
                 <TextInput
                   value={code}
@@ -171,11 +173,11 @@ export function LoginGate() {
                   {busy ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Text className="text-base font-bold text-primary-foreground">Verify</Text>
+                    <Text className="text-base font-bold text-primary-foreground">{t('login.verify')}</Text>
                   )}
                 </Button>
                 <Pressable onPress={sendCode} disabled={busy} className="mt-4 items-center py-2">
-                  <Text className="text-sm font-semibold text-primary underline">Resend code</Text>
+                  <Text className="text-sm font-semibold text-primary underline">{t('login.resendCode')}</Text>
                 </Pressable>
               </>
             )}

@@ -1,1 +1,161 @@
-{}
+{
+  "welcome": {
+    "skip": "Pomiń",
+    "next": "Dalej",
+    "getStarted": "Zaczynamy",
+    "haveAccount": "Masz już konto?",
+    "signIn": "Zaloguj się",
+    "slides": {
+      "goal": {
+        "headline": "Każdy cel zaczyna się\nod liczby",
+        "sub": "Powiedz Piggy, na co oszczędzasz. Zamienimy to w miesięczny plan, którego naprawdę się utrzymasz."
+      },
+      "noBank": {
+        "headline": "Żadnego logowania do banku.\nNigdy.",
+        "sub": "Piggy nigdy nie łączy się z Twoimi kontami. Nie ma czego podłączać ani czego ukraść."
+      },
+      "coach": {
+        "headline": "Trener\nw Twojej kieszeni",
+        "sub": "Serie, misje i trener AI, który zna Twój plan — dzięki temu trzeci miesiąc jest tak samo dobry jak pierwszy dzień."
+      }
+    }
+  },
+  "contribution": {
+    "monthlyHeadline": "Ile możesz\nodkładać co miesiąc?",
+    "monthlySub": "Wyliczymy, kiedy osiągniesz cel.",
+    "suggestionChip": "{{pct}}% · {{symbol}}{{amount}}",
+    "amountPlaceholder": "0,00",
+    "reachGoalBy": "Przy {{symbol}}{{amount}}/mies. osiągniesz cel do",
+    "pctOfIncome": "To {{pct}}% Twojego miesięcznego dochodu.",
+    "cappedWarning": "W tym tempie zajmie to ponad 10 lat. Spróbuj zwiększyć miesięczną kwotę lub zmniejszyć cel.",
+    "incomeWarning": "To spora część Twojego dochodu. Upewnij się, że to komfortowa kwota — zawsze możesz to później zmienić.",
+    "switchToDeadline": "Mam już konkretny termin",
+    "deadlineHeadline": "Kiedy chcesz\nto osiągnąć?",
+    "deadlineSub": "Wybierz datę — wyliczymy Twoją miesięczną wpłatę.",
+    "selectDate": "Wybierz datę",
+    "needToSetAside": "Musisz odkładać",
+    "amountPerMonth": "{{symbol}}{{amount}}/mies.",
+    "hitDeadlineBy": "aby zdążyć do {{date}}.",
+    "deadlineIncomeWarning": "Ta data wymaga odkładania dużej części dochodu. Możesz to później dostosować!",
+    "switchToMonthly": "Przełącz na miesięczne odkładanie",
+    "continue": "Dalej"
+  },
+  "common": {
+    "next": "Dalej",
+    "continue": "Dalej",
+    "notNow": "Nie teraz",
+    "stepProgress": "Krok {{current}} z {{total}}",
+    "resumeBanner": "Witaj ponownie, {{firstName}} — wracamy tam, gdzie skończyliśmy.",
+    "resumeBannerNoName": "Wracamy tam, gdzie skończyliśmy."
+  },
+  "name": {
+    "headline": "Witaj w Piggy!\nJak mamy się do Ciebie zwracać?",
+    "sub": "Spersonalizujmy to.",
+    "placeholder": "Twoje imię",
+    "errorEmpty": "Hej, chcielibyśmy poznać Twoje imię! 😊"
+  },
+  "ageGate": {
+    "blockedTitle": "Piggy jest dla osób 18+",
+    "blockedBody": "Nie możemy założyć dla Ciebie konta na podstawie potwierdzonej daty urodzenia. Ta aplikacja nie jest dostępna dla osób poniżej 18 roku życia.",
+    "headline": "Jaka jest Twoja data urodzenia,\n{{firstName}}?",
+    "sub": "Piggy jest dostępne tylko dla osób od 18 roku życia, więc musimy potwierdzić Twój wiek, zanim przejdziemy dalej.",
+    "privacyNote": "To wymóg prawny dotyczący wieku, a nie profilowanie. Używamy Twojej daty urodzenia wyłącznie do potwierdzenia, że masz 18 lat — nigdy nie jest wykorzystywana do targetowania ani udostępniana nikomu."
+  },
+  "localization": {
+    "headline": "Gdzie mieszkasz,\n{{firstName}}?",
+    "sub": "Użyjemy tego do formatowania waluty i ustawienia pomocnych wartości domyślnych.",
+    "countryLabel": "Kraj",
+    "currencyLabel": "Waluta",
+    "selectCountry": "Wybierz kraj",
+    "selectCurrency": "Wybierz walutę",
+    "currencyDisplay": "{{symbol}} — {{name}}",
+    "continue": "Wygląda dobrze, zaczynamy!",
+    "selectCountryTitle": "Wybierz kraj",
+    "selectCurrencyTitle": "Wybierz walutę",
+    "languageLabel": "Język",
+    "selectLanguageTitle": "Wybierz język",
+    "languageEn": "Angielski",
+    "languagePl": "Polski"
+  },
+  "goal": {
+    "headline": "Na co oszczędzamy?",
+    "sub": "Wybierz cel lub wpisz własny poniżej.",
+    "placeholder": "Chcę...",
+    "errorEmpty": "Powiedz nam, na co oszczędzasz! 🎯",
+    "chips": {
+      "vacation": "Wakacje",
+      "newCar": "Nowy samochód",
+      "houseDeposit": "Wkład własny na dom",
+      "emergencyFund": "Fundusz awaryjny",
+      "somethingElse": "Coś innego"
+    }
+  },
+  "targetAmount": {
+    "headline": "Ile potrzebujesz\nna {{goalName}}?",
+    "sub": "Nie martw się, zawsze możesz to później zmienić.",
+    "errorEmpty": "Podaj kwotę większą niż 0 💸"
+  },
+  "income": {
+    "headline": "Aby zbudować Twój plan,\npodaj swój średni\nmiesięczny dochód",
+    "sub": "Używamy tego wyłącznie do obliczenia, ile musisz odkładać. Twoje dane są zaszyfrowane i całkowicie prywatne.",
+    "skip": "Wolę teraz nie podawać"
+  },
+  "blueprint": {
+    "headline": "Zróbmy to oficjalnie!",
+    "sub": "Oto Twój osobisty plan oszczędzania.",
+    "rowName": "Imię",
+    "rowGoal": "Cel",
+    "rowTarget": "Kwota docelowa",
+    "rowMonthlyIncome": "Miesięczny dochód",
+    "notProvided": "Nie podano",
+    "rowMonthlySetAside": "Miesięczna wpłata",
+    "rowGoalReached": "Cel osiągnięty",
+    "exceedsIncomeWarning": "Ten plan zakłada odkładanie więcej niż wynosi Twój miesięczny dochód. Możesz to zmienić w każdej chwili!",
+    "incomeSkippedNote": "Podanie dochodu na pulpicie odblokuje szczegółową analizę Twoich możliwości finansowych.",
+    "monthsAway_one": "Dzieli Cię już tylko {{count}} miesiąc od Twojego marzenia. Zróbmy to.",
+    "monthsAway_few": "Dzieli Cię już tylko {{count}} miesiące od Twojego marzenia. Zróbmy to.",
+    "monthsAway_many": "Dzieli Cię już tylko {{count}} miesięcy od Twojego marzenia. Zróbmy to.",
+    "createAccount": "Utwórz moje konto Piggy"
+  },
+  "pushPermission": {
+    "headline": "Chcesz przypomnienia w kluczowych momentach,\n{{firstName}}?",
+    "sub": "Odkładanie {{amount}} miesięcznie łatwo zaplanować, ale też łatwo o tym zapomnieć. Szybkie przypomnienie utrzymuje serię przy życiu.",
+    "streakTitle": "Ochrona serii",
+    "streakBody": "Przypomnienie, gdy dzisiejsza wpłata wciąż czeka.",
+    "milestoneTitle": "Świętowanie kamieni milowych",
+    "milestoneBody": "Powiadomimy Cię, gdy Twój cel {{goalName}} osiągnie 25%, 50%, 75%.",
+    "milestoneBodyFallback": "Powiadomimy Cię, gdy Twój cel osiągnie 25%, 50%, 75%.",
+    "weeklyTitle": "Cotygodniowe podsumowanie",
+    "weeklyBody": "Spokojne podsumowanie mijającego tygodnia. Zero spamu.",
+    "footerNote": "Możesz to później zmienić w Ustawieniach.",
+    "keepMeOnTrack": "Włącz przypomnienia"
+  },
+  "account": {
+    "headline": "Twój plan Piggy jest gotowy!",
+    "subEmailConfirmed": "Twój e-mail został potwierdzony — zostało nam tylko dokończyć budowę planu na {{goalName}}.",
+    "subOtpSent": "Wprowadź 6-cyfrowy kod, który wysłaliśmy na {{email}}, aby dokończyć zakładanie konta.",
+    "subInitial": "Podaj swój e-mail — wyślemy kod logowania, aby zabezpieczyć Twój plan na {{goalName}} do {{date}}.",
+    "emailPlaceholder": "ty@przyklad.com",
+    "emailError": "Podaj prawidłowy adres e-mail 📧",
+    "codeLabel": "Kod logowania (to nie jest Twój PIN aplikacji)",
+    "resendCode": "Wyślij kod ponownie",
+    "sendCode": "Wyślij kod",
+    "verifyCreate": "Zweryfikuj i utwórz konto",
+    "retry": "Spróbuj ponownie",
+    "requestCodeError": "Ups! Nie udało się wysłać kodu. Sprawdź połączenie i spróbuj ponownie.",
+    "otpEnterCode": "Wprowadź 6-cyfrowy kod z e-maila.",
+    "sessionSecretError": "Zalogowano, ale nie udało się zabezpieczyć sesji. Poproś o nowy kod i spróbuj ponownie.",
+    "codeIncorrect": "Ten kod jest nieprawidłowy lub wygasł. Poproś o nowy kod i spróbuj ponownie.",
+    "provisionError": "Zweryfikowaliśmy Twój e-mail, ale nie udało się dokończyć zakładania konta. Twój kod nadal jest ważny — dotknij Spróbuj ponownie."
+  },
+  "legal": {
+    "reassuranceTitle": "Prosimy o Twój e-mail. Nie o dane bankowe.",
+    "reassuranceBody": "Piggy nigdy nie łączy się z Twoimi kontami — nie ma czego podłączać ani czego ukraść. Twój plan jest zaszyfrowany i prywatny.",
+    "acceptTerms": "Zakładając konto, akceptujesz nasze warunki",
+    "privacyPolicy": "Polityka prywatności",
+    "termsOfService": "Regulamin",
+    "aiTransparency": "Przejrzystość AI",
+    "services": "Usługi",
+    "aiFeatureAccess": "Dostęp do AI i funkcji"
+  }
+}

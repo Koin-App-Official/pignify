@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { View, Text, ActivityIndicator, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Button } from '@/components/ui/button';
@@ -54,13 +55,16 @@ interface PinCreationFlowProps {
 
 export function PinCreationFlow({
   sessionSecret,
-  title = 'Create your PIN',
-  subtitle = 'Choose a 6-digit PIN to lock the app on this device',
+  title,
+  subtitle,
   offerBiometricEnrollment = true,
   reuseCheckSource,
   onCancel,
   onDone,
 }: PinCreationFlowProps) {
+  const { t } = useTranslation('auth');
+  const effectiveTitle = title ?? t('pinCreation.defaultTitle');
+  const effectiveSubtitle = subtitle ?? t('pinCreation.defaultSubtitle');
   const [stage, setStage] = useState<Stage>('enter');
   const [first, setFirst] = useState('');
   const [pin, setPinValue] = useState('');
@@ -95,13 +99,13 @@ export function PinCreationFlow({
 
   const handleComplete = async (value: string) => {
     if (stage === 'enter') {
-      const weak = validatePinStrength(value);
+      const weak = validatePinStrength(value, t);
       if (weak) return fail(weak);
       if (reuseCheckSource) {
         setBusy(true);
         const reused = await isPinReused(value, reuseCheckSource);
         setBusy(false);
-        if (reused) return fail('Choose a PIN different from your previous one.');
+        if (reused) return fail(t('pinCreation.reusedPin'));
       }
       setFirst(value);
       setPinValue('');
@@ -114,7 +118,7 @@ export function PinCreationFlow({
     if (value !== first) {
       setFirst('');
       setStage('enter');
-      return fail("PINs didn't match. Start again.");
+      return fail(t('pinCreation.pinsDidntMatch'));
     }
 
     setBusy(true);
@@ -123,7 +127,7 @@ export function PinCreationFlow({
       await finish(key);
     } catch {
       setBusy(false);
-      fail('Could not save PIN. Please try again.');
+      fail(t('pinCreation.saveFailed'));
     }
   };
 
@@ -149,30 +153,32 @@ export function PinCreationFlow({
   };
 
   if (stage === 'biometric') {
-    const label = bioKind === 'face' ? 'Face ID' : 'biometrics';
+    const isFace = bioKind === 'face';
     return (
       <View className="flex-1 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <Text className="text-5xl mb-4">🔐</Text>
           <Text className="text-2xl font-black text-on-surface mb-2 text-center">
-            Unlock faster with {label}?
+            {isFace ? t('pinCreation.unlockFasterWithFaceId') : t('pinCreation.unlockFasterWithBiometrics')}
           </Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
-            You can always use your PIN instead.
+            {t('pinCreation.useYourPinInstead')}
           </Text>
           <Button onPress={enrollBiometric} disabled={busy} className="w-full h-14 mb-3">
-            <Text className="text-base font-bold text-primary-foreground">Enable {label}</Text>
+            <Text className="text-base font-bold text-primary-foreground">
+              {isFace ? t('pinCreation.enableFaceId') : t('pinCreation.enableBiometrics')}
+            </Text>
           </Button>
           <Button variant="ghost" onPress={skipBiometric} disabled={busy} className="w-full">
-            <Text className="text-base font-bold text-primary">Not now</Text>
+            <Text className="text-base font-bold text-primary">{t('pinCreation.notNow')}</Text>
           </Button>
         </Animated.View>
       </View>
     );
   }
 
-  const stageTitle = stage === 'enter' ? title : 'Confirm your PIN';
-  const stageSubtitle = stage === 'enter' ? subtitle : 'Enter your PIN again to confirm';
+  const stageTitle = stage === 'enter' ? effectiveTitle : t('pinCreation.confirmTitle');
+  const stageSubtitle = stage === 'enter' ? effectiveSubtitle : t('pinCreation.confirmSubtitle');
 
   return (
     <View className="flex-1 items-center justify-center px-8">
@@ -195,7 +201,7 @@ export function PinCreationFlow({
           <View className="mt-6 items-center gap-3">
             <ActivityIndicator color="#1D4ED8" />
             <Text className="text-sm font-medium text-on-surface-variant">
-              {stage === 'enter' ? 'Checking…' : 'Securing your PIN…'}
+              {stage === 'enter' ? t('pinCreation.checking') : t('pinCreation.securing')}
             </Text>
           </View>
         ) : (

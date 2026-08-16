@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { springPresets } from '@/lib/springPresets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,24 +34,31 @@ import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { requestNotificationPermission } from '@/lib/notifications';
 import { Mascot } from '@/components/Mascot';
 import { formatMonthYear } from '@/lib/i18n/format';
-import type { SupportedLanguage } from '@/lib/i18n/detect';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/lib/i18n/detect';
 
+/**
+ * `label` is the canonical (English) goal name written to `goalName` and, from
+ * there, to the persisted Goal and the onboarding webhook payload — it is NOT
+ * re-translated per language, matching how plan names stay untranslated (see
+ * implementations/I18N_PL.md's Decisions). Only the on-screen chip text is
+ * translated, via `id` into goal.chips.* below.
+ */
 const GOAL_CHIPS = [
-  { label: 'Vacation', emoji: '🏝️' },
-  { label: 'New Car', emoji: '🚗' },
-  { label: 'House Deposit', emoji: '🏠' },
-  { label: 'Emergency Fund', emoji: '💰' },
-  { label: 'Something Else', emoji: '✏️' },
+  { id: 'vacation', label: 'Vacation', emoji: '🏝️' },
+  { id: 'newCar', label: 'New Car', emoji: '🚗' },
+  { id: 'houseDeposit', label: 'House Deposit', emoji: '🏠' },
+  { id: 'emergencyFund', label: 'Emergency Fund', emoji: '💰' },
+  { id: 'somethingElse', label: 'Something Else', emoji: '✏️' },
 ];
 
 const LEGAL_LINK_STYLE = 'text-primary underline';
 
 const LEGAL_LINKS = [
-  { label: 'Privacy Policy', url: 'https://piggnify.com/privacy-policy' },
-  { label: 'Terms of Service', url: 'https://piggnify.com/terms-of-service' },
-  { label: 'AI Transparency', url: 'https://piggnify.com/ai-transparency' },
-  { label: 'Services', url: 'https://piggnify.com/services' },
-  { label: 'AI & Feature Access', url: 'https://piggnify.com/ai-feature-access' },
+  { id: 'privacyPolicy', url: 'https://piggnify.com/privacy-policy' },
+  { id: 'termsOfService', url: 'https://piggnify.com/terms-of-service' },
+  { id: 'aiTransparency', url: 'https://piggnify.com/ai-transparency' },
+  { id: 'services', url: 'https://piggnify.com/services' },
+  { id: 'aiFeatureAccess', url: 'https://piggnify.com/ai-feature-access' },
 ];
 
 /**
@@ -67,6 +75,7 @@ const LEGAL_LINKS = [
  * it is structural — there is no bank connection to abuse.
  */
 function LegalLinksNote() {
+  const { t } = useTranslation('onboarding');
   const [expanded, setExpanded] = useState(false);
   const open = (url: string) => Linking.openURL(url);
 
@@ -77,11 +86,10 @@ function LegalLinksNote() {
           <ShieldCheck size={16} color="#1D4ED8" style={{ marginTop: 1 }} />
           <View className="flex-1">
             <Text className="text-sm font-bold text-on-surface">
-              We're asking for your email. Not your bank.
+              {t('legal.reassuranceTitle')}
             </Text>
             <Text className="mt-1 text-xs leading-5 text-on-surface-variant">
-              Piggy never connects to your accounts — there's nothing to link, and nothing for
-              anyone to steal. Your plan is encrypted and private.
+              {t('legal.reassuranceBody')}
             </Text>
           </View>
         </View>
@@ -94,7 +102,7 @@ function LegalLinksNote() {
         className="mt-3 flex-row items-center justify-center gap-1 py-2"
       >
         <Text className="text-xs font-semibold text-on-surface-variant">
-          By creating an account you accept our terms
+          {t('legal.acceptTerms')}
         </Text>
         <ChevronDown
           size={14}
@@ -107,11 +115,11 @@ function LegalLinksNote() {
         <Animated.View entering={FadeInDown.springify()} className="items-center gap-2 pb-2">
           {LEGAL_LINKS.map((link) => (
             <Text
-              key={link.url}
+              key={link.id}
               className={`text-xs ${LEGAL_LINK_STYLE}`}
               onPress={() => open(link.url)}
             >
-              {link.label}
+              {t(`legal.${link.id}`)}
             </Text>
           ))}
         </Animated.View>
@@ -193,6 +201,7 @@ function detectLocaleCountry(): { country: string; currency: string } {
 }
 
 export default function Onboarding() {
+  const { t } = useTranslation('onboarding');
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.Name);
   const emailInputRef = useRef<TextInput>(null);
 
@@ -257,6 +266,7 @@ export default function Onboarding() {
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [currencyPickerVisible, setCurrencyPickerVisible] = useState(false);
+  const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
 
   const addGoal = useStore((s) => s.addGoal);
   const updateProfile = useStore((s) => s.updateProfile);
@@ -359,6 +369,7 @@ export default function Onboarding() {
   const currencySymbol = getCurrencySymbol(currency);
   const countryName = COUNTRIES.find((c) => c.code === country)?.name ?? country;
   const currencyName = CURRENCIES.find((c) => c.code === currency)?.name ?? currency;
+  const languageName = language === 'pl' ? t('localization.languagePl') : t('localization.languageEn');
 
   const handleCountrySelect = (item: PickerItem) => {
     setCountry(item.code);
@@ -451,7 +462,7 @@ export default function Onboarding() {
   const handleRequestCode = async () => {
     if (!isEmailValid(email)) {
       setEmailTouched(true);
-      setEmailError('Please enter a valid email address 📧');
+      setEmailError(t('account.emailError'));
       return;
     }
     setIsLoading(true);
@@ -461,9 +472,7 @@ export default function Onboarding() {
       setOtpUserId(userId);
       setOtpSent(true);
     } catch {
-      setNetworkError(
-        "Oops! We couldn't send your code. Please check your connection and try again."
-      );
+      setNetworkError(t('account.requestCodeError'));
     } finally {
       setIsLoading(false);
     }
@@ -573,9 +582,7 @@ export default function Onboarding() {
       // setting up the account, not a bad code. Keep the verified session so
       // the footer can offer a direct retry instead of a pointless resend.
       setVerifiedSession({ userId, secret });
-      setNetworkError(
-        "We verified your email but couldn't finish setting up your account. Your code is still good — tap Retry."
-      );
+      setNetworkError(t('account.provisionError'));
       setCode('');
     } finally {
       setIsLoading(false);
@@ -592,7 +599,7 @@ export default function Onboarding() {
     }
 
     if (code.length !== 6) {
-      setNetworkError('Enter the 6-digit code from your email.');
+      setNetworkError(t('account.otpEnterCode'));
       return;
     }
     setIsLoading(true);
@@ -609,13 +616,11 @@ export default function Onboarding() {
         // spent either way), but don't tell the user their code was wrong when
         // it wasn't. Deliberately no setVerifiedSession: there is no usable
         // secret to retry provisioning with.
-        setNetworkError(
-          'Signed in, but we could not secure the session. Request a new code and try again.'
-        );
+        setNetworkError(t('account.sessionSecretError'));
       } else {
         // Bad/expired OTP — distinct from a webhook/network failure, so the user
         // isn't told their code was wrong when the account was actually fine.
-        setNetworkError('That code is incorrect or expired. Request a new code and try again.');
+        setNetworkError(t('account.codeIncorrect'));
       }
       setCode('');
       setIsLoading(false);
@@ -641,14 +646,14 @@ export default function Onboarding() {
             onPress={() => {
               setFirstNameTouched(true);
               if (firstName.trim().length < 1) {
-                setFirstNameError("Hey, we'd love to know your name! 😊");
+                setFirstNameError(t("name.errorEmpty"));
                 return;
               }
               setStep(OnboardingStep.AgeGate);
             }}
             className="w-full flex-row items-center justify-center gap-2 h-14"
           >
-            <Text className="text-base font-bold text-primary-foreground">Next</Text>
+            <Text className="text-base font-bold text-primary-foreground">{t("common.next")}</Text>
             <ArrowRight size={18} color="#ffffff" />
           </Button>
         );
@@ -665,7 +670,7 @@ export default function Onboarding() {
               onPress={() => setDobConfirmModalVisible(true)}
               className="flex-1 items-center justify-center flex-row gap-2 h-14"
             >
-              <Text className="text-base font-bold text-primary-foreground">Continue</Text>
+              <Text className="text-base font-bold text-primary-foreground">{t("common.continue")}</Text>
               <ArrowRight size={16} color="#ffffff" />
             </Button>
           </View>
@@ -681,7 +686,7 @@ export default function Onboarding() {
               onPress={() => setStep(OnboardingStep.GoalDeclaration)}
               className="flex-1 items-center justify-center flex-row gap-2"
             >
-              <Text className="text-sm font-bold text-primary-foreground">Looks right, let's go!</Text>
+              <Text className="text-sm font-bold text-primary-foreground">{t('localization.continue')}</Text>
               <ArrowRight size={16} color="#ffffff" />
             </Button>
           </View>
@@ -696,14 +701,14 @@ export default function Onboarding() {
             <Button
               onPress={() => {
                 if (goalName.trim().length < 1) {
-                  setGoalNameError("Tell us what you're saving for! 🎯");
+                  setGoalNameError(t("goal.errorEmpty"));
                   return;
                 }
                 setStep(OnboardingStep.TargetAmount);
               }}
               className="flex-1 items-center justify-center flex-row gap-2"
             >
-              <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+              <Text className="text-sm font-bold text-primary-foreground">{t("common.continue")}</Text>
               <ArrowRight size={16} color="#ffffff" />
             </Button>
           </View>
@@ -718,14 +723,14 @@ export default function Onboarding() {
             <Button
               onPress={() => {
                 if (!(Number(targetAmount) > 0)) {
-                  setTargetAmountError('Please enter an amount greater than 0 💸');
+                  setTargetAmountError(t('targetAmount.errorEmpty'));
                   return;
                 }
                 setStep(OnboardingStep.Income);
               }}
               className="flex-1 items-center justify-center flex-row gap-2"
             >
-              <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+              <Text className="text-sm font-bold text-primary-foreground">{t("common.continue")}</Text>
               <ArrowRight size={16} color="#ffffff" />
             </Button>
           </View>
@@ -746,13 +751,13 @@ export default function Onboarding() {
                 disabled={!(Number(monthlyIncome) > 0)}
                 className="flex-1 items-center justify-center flex-row gap-2"
               >
-                <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                <Text className="text-sm font-bold text-primary-foreground">{t("common.continue")}</Text>
                 <ArrowRight size={16} color="#ffffff" />
               </Button>
             </View>
             <TouchableOpacity onPress={handleSkipIncome} className="mt-4 items-center py-2">
               <Text className="text-sm font-medium text-primary underline">
-                I'd rather not say right now
+                {t('income.skip')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -770,7 +775,7 @@ export default function Onboarding() {
                 disabled={!contributionCanContinue}
                 className="flex-1 items-center justify-center flex-row gap-2"
               >
-                <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+                <Text className="text-sm font-bold text-primary-foreground">{t("common.continue")}</Text>
                 <ArrowRight size={16} color="#ffffff" />
               </Button>
             </View>
@@ -780,8 +785,8 @@ export default function Onboarding() {
             >
               <Text className="text-sm font-medium text-primary underline">
                 {planningMode === 'contribution'
-                  ? 'I have a fixed deadline instead'
-                  : 'Switch back to monthly set-aside'}
+                  ? t('contribution.switchToDeadline')
+                  : t('contribution.switchToMonthly')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -797,7 +802,7 @@ export default function Onboarding() {
               onPress={() => setStep(OnboardingStep.PushPermission)}
               className="flex-1 items-center justify-center flex-row gap-2 h-14"
             >
-              <Text className="text-base font-bold text-primary-foreground">Create My Piggy Account</Text>
+              <Text className="text-base font-bold text-primary-foreground">{t('blueprint.createAccount')}</Text>
               <ArrowRight size={16} color="#ffffff" />
             </Button>
           </View>
@@ -816,7 +821,7 @@ export default function Onboarding() {
               ) : (
                 <>
                   <Text className="text-base font-bold text-primary-foreground">
-                    Keep me on track
+                    {t('pushPermission.keepMeOnTrack')}
                   </Text>
                   <ArrowRight size={18} color="#ffffff" />
                 </>
@@ -827,7 +832,7 @@ export default function Onboarding() {
               disabled={isLoading}
               className="mt-4 items-center py-2"
             >
-              <Text className="text-sm font-medium text-primary underline">Not now</Text>
+              <Text className="text-sm font-medium text-primary underline">{t('common.notNow')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -868,10 +873,10 @@ export default function Onboarding() {
                 <>
                   <Text className="text-base font-bold text-primary-foreground">
                     {verifiedSession
-                      ? 'Retry'
+                      ? t('account.retry')
                       : otpSent
-                        ? 'Verify & Create Account'
-                        : 'Send Code'}
+                        ? t('account.verifyCreate')
+                        : t('account.sendCode')}
                   </Text>
                   <ArrowRight size={16} color="#ffffff" />
                 </>
@@ -910,7 +915,7 @@ export default function Onboarding() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <View className="px-5 pt-6 pb-2">
           <Text className="mb-2 text-xs font-semibold text-on-surface-variant text-center">
-            Step {step + 1} of {TOTAL_STEPS}
+            {t('common.stepProgress', { current: step + 1, total: TOTAL_STEPS })}
           </Text>
           <View className="flex-row gap-1">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
@@ -924,8 +929,8 @@ export default function Onboarding() {
             <View className="rounded-2xl bg-surface-container px-4 py-3">
               <Text className="text-xs font-medium text-on-surface-variant text-center">
                 {firstName
-                  ? `Welcome back, ${firstName} — picking up where you left off.`
-                  : 'Picking up where you left off.'}
+                  ? t('common.resumeBanner', { firstName })
+                  : t('common.resumeBannerNoName')}
               </Text>
             </View>
           </Animated.View>
@@ -937,10 +942,10 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.springify()}>
               <View className="items-center mb-4"><Mascot size={64} /></View>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                Welcome to Piggy!{'\n'}What should we call you?
+                {t('name.headline')}
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                Let's make this personal.
+                {t('name.sub')}
               </Text>
 
               <Input
@@ -949,9 +954,9 @@ export default function Onboarding() {
                   setFirstName(v);
                   if (firstNameTouched && v.trim().length >= 1) setFirstNameError('');
                   if (firstNameTouched && v.trim().length === 0)
-                    setFirstNameError("Hey, we'd love to know your name! 😊");
+                    setFirstNameError(t("name.errorEmpty"));
                 }}
-                placeholder="Your first name"
+                placeholder={t("name.placeholder")}
                 maxLength={50}
                 autoCapitalize="words"
                 autoFocus
@@ -962,7 +967,7 @@ export default function Onboarding() {
 
               <TouchableOpacity onPress={requestLogin} className="mt-6 items-center py-2">
                 <Text className="text-sm font-semibold text-on-surface-variant">
-                  Already have an account? <Text className="text-primary underline">Sign in</Text>
+                  {t('welcome.haveAccount')} <Text className="text-primary underline">{t('welcome.signIn')}</Text>
                 </Text>
               </TouchableOpacity>
             </Animated.View>
@@ -974,11 +979,10 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.springify()} className="items-center pt-10">
               <Text className="text-6xl text-center mb-4">🔒</Text>
               <Text className="mb-3 text-2xl font-black text-on-surface text-center">
-                Piggy is for adults 18+
+                {t('ageGate.blockedTitle')}
               </Text>
               <Text className="text-sm font-medium text-on-surface-variant text-center px-4">
-                We're not able to create an account for you based on the date of birth you confirmed.
-                This app isn't available to users under 18.
+                {t('ageGate.blockedBody')}
               </Text>
             </Animated.View>
           )}
@@ -988,18 +992,16 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🎂</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                When were you born,{'\n'}{firstName}?
+                {t('ageGate.headline', { firstName })}
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                Piggy is only available to users 18 and older, so we need to confirm your age before
-                we go any further.
+                {t('ageGate.sub')}
               </Text>
 
               <View className="mb-6 flex-row items-start gap-2 rounded-2xl bg-surface-container p-4">
                 <ShieldCheck size={16} color="#1D4ED8" style={{ marginTop: 1 }} />
                 <Text className="flex-1 text-xs leading-5 text-on-surface-variant">
-                  This is a legal age requirement, not profiling. We use your date of birth to
-                  confirm you're 18 — it's never used to target you or shared with anyone.
+                  {t('ageGate.privacyNote')}
                 </Text>
               </View>
 
@@ -1011,33 +1013,46 @@ export default function Onboarding() {
           {step === OnboardingStep.Localization && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                Where are you based,{'\n'}{firstName}?
+                {t('localization.headline', { firstName })}
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                We'll use this to format currency and set helpful defaults.
+                {t('localization.sub')}
               </Text>
 
               <View className="gap-4">
                 <View>
-                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">Country</Text>
+                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">{t('localization.countryLabel')}</Text>
                   <TouchableOpacity
                     onPress={() => setCountryPickerVisible(true)}
                     className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
                   >
-                    <Text className="text-base font-medium text-on-surface">{countryName || 'Select country'}</Text>
+                    <Text className="text-base font-medium text-on-surface">{countryName || t('localization.selectCountry')}</Text>
                     <ChevronDown size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
 
                 <View>
-                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">Currency</Text>
+                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">{t('localization.currencyLabel')}</Text>
                   <TouchableOpacity
                     onPress={() => setCurrencyPickerVisible(true)}
                     className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
                   >
                     <Text className="text-base font-medium text-on-surface">
-                      {currency ? `${currencySymbol} — ${currencyName}` : 'Select currency'}
+                      {currency
+                        ? t('localization.currencyDisplay', { symbol: currencySymbol, name: currencyName })
+                        : t('localization.selectCurrency')}
                     </Text>
+                    <ChevronDown size={18} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+
+                <View>
+                  <Text className="mb-2 text-xs font-semibold text-on-surface-variant">{t('localization.languageLabel')}</Text>
+                  <TouchableOpacity
+                    onPress={() => setLanguagePickerVisible(true)}
+                    className="h-14 flex-row items-center justify-between rounded-2xl border border-outline bg-surface-container-low px-4 active:bg-surface-container"
+                  >
+                    <Text className="text-base font-medium text-on-surface">{languageName}</Text>
                     <ChevronDown size={18} color="#64748B" />
                   </TouchableOpacity>
                 </View>
@@ -1049,16 +1064,16 @@ export default function Onboarding() {
           {step === OnboardingStep.GoalDeclaration && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                What are we saving for?
+                {t('goal.headline')}
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                Pick a goal or type your own below.
+                {t('goal.sub')}
               </Text>
 
               <View className="flex-row flex-wrap gap-2 mb-5">
                 {GOAL_CHIPS.map((chip) => (
                   <PressableScale
-                    key={chip.label}
+                    key={chip.id}
                     onPress={() => {
                       setGoalName(chip.label);
                       setGoalNameError('');
@@ -1077,7 +1092,7 @@ export default function Onboarding() {
                           goalName === chip.label ? 'text-on-primary-container' : 'text-on-surface'
                         }`}
                       >
-                        {chip.label}
+                        {t(`goal.chips.${chip.id}`)}
                       </Text>
                     </View>
                   </PressableScale>
@@ -1090,7 +1105,7 @@ export default function Onboarding() {
                   setGoalName(v);
                   if (v.trim().length >= 1) setGoalNameError('');
                 }}
-                placeholder="I want to..."
+                placeholder={t("goal.placeholder")}
                 autoFocus
               />
               {goalNameError ? (
@@ -1103,10 +1118,10 @@ export default function Onboarding() {
           {step === OnboardingStep.TargetAmount && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                How much do you need{'\n'}for your {goalName}?
+                {t('targetAmount.headline', { goalName })}
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
-                Don't worry, you can always adjust this later.
+                {t('targetAmount.sub')}
               </Text>
 
               <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
@@ -1119,7 +1134,7 @@ export default function Onboarding() {
                     if (targetAmountError) setTargetAmountError('');
                   }}
                   keyboardType="numeric"
-                  placeholder="0.00"
+                  placeholder={t("contribution.amountPlaceholder")}
                   placeholderTextColor={PLACEHOLDER_COLOR}
                   style={TEXT_INPUT_CENTERING}
                   autoFocus
@@ -1136,10 +1151,10 @@ export default function Onboarding() {
           {step === OnboardingStep.Income && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                To build your roadmap,{'\n'}what is your average{'\n'}monthly income?
+                {t('income.headline')}
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                We use this only to calculate how much you need to set aside. Your data is encrypted and completely private.
+                {t('income.sub')}
               </Text>
 
               <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
@@ -1149,7 +1164,7 @@ export default function Onboarding() {
                   value={monthlyIncome}
                   onChangeText={(v) => setMonthlyIncome(v.replace(/[^0-9.]/g, ''))}
                   keyboardType="numeric"
-                  placeholder="0.00"
+                  placeholder={t("contribution.amountPlaceholder")}
                   placeholderTextColor={PLACEHOLDER_COLOR}
                   style={TEXT_INPUT_CENTERING}
                   autoFocus
@@ -1189,36 +1204,36 @@ export default function Onboarding() {
           {step === OnboardingStep.BlueprintReview && (
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                Let's make this official!
+                {t('blueprint.headline')}
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                Here's your personal savings blueprint.
+                {t('blueprint.sub')}
               </Text>
 
               <View className="rounded-3xl bg-surface p-6 gap-4 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 4 }}>
-                <Row label="Name" value={firstName} />
-                <Row label="Goal" value={goalName} />
-                <Row label="Target" value={formatCurrency(Number(targetAmount), currency)} />
+                <Row label={t('blueprint.rowName')} value={firstName} />
+                <Row label={t('blueprint.rowGoal')} value={goalName} />
+                <Row label={t('blueprint.rowTarget')} value={formatCurrency(Number(targetAmount), currency)} />
                 <Row
-                  label="Monthly Income"
-                  value={incomeSkipped ? 'Not provided' : formatCurrency(Number(monthlyIncome), currency)}
+                  label={t('blueprint.rowMonthlyIncome')}
+                  value={incomeSkipped ? t('blueprint.notProvided') : formatCurrency(Number(monthlyIncome), currency)}
                 />
 
                 <View className="h-px bg-outline-variant" />
 
                 <Row
-                  label="Monthly set-aside"
+                  label={t('blueprint.rowMonthlySetAside')}
                   value={formatCurrency(monthlyContribution, currency)}
                   highlight
                 />
-                <Row label="Goal reached" value={formatTargetDate(targetDate, language)} />
+                <Row label={t('blueprint.rowGoalReached')} value={formatTargetDate(targetDate, language)} />
               </View>
 
               {savingsExceedsIncome && (
                 <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mb-4">
                   <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
                   <Text className="flex-1 text-sm text-warning">
-                    This plan sets aside more than your income each month. We can adjust it anytime!
+                    {t('blueprint.exceedsIncomeWarning')}
                   </Text>
                 </View>
               )}
@@ -1226,13 +1241,13 @@ export default function Onboarding() {
               {incomeSkipped && (
                 <View className="rounded-2xl bg-surface-container p-4 mb-4">
                   <Text className="text-xs text-on-surface-variant">
-                    Providing your income on the dashboard will unlock deep affordability insights tailored to your situation.
+                    {t('blueprint.incomeSkippedNote')}
                   </Text>
                 </View>
               )}
 
               <Text className="mb-6 text-sm font-medium text-on-surface-variant text-center">
-                You're only {totalMonths} months away from your dream. Let's make it happen.
+                {t('blueprint.monthsAway', { count: totalMonths })}
               </Text>
             </Animated.View>
           )}
@@ -1247,33 +1262,36 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.springify()}>
               <Text className="text-6xl text-center mb-4">🔔</Text>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                Want a nudge when{'\n'}it counts, {firstName}?
+                {t('pushPermission.headline', { firstName })}
               </Text>
               <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-                Saving {formatCurrency(monthlyContribution, currency)} a month is easy to plan and
-                easy to forget. A quick reminder is what keeps a streak alive.
+                {t('pushPermission.sub', { amount: formatCurrency(monthlyContribution, currency) })}
               </Text>
 
               <View className="gap-3">
                 <PermissionPoint
                   emoji="🔥"
-                  title="Streak protection"
-                  body="A heads-up when today's set-aside is still outstanding."
+                  title={t('pushPermission.streakTitle')}
+                  body={t('pushPermission.streakBody')}
                 />
                 <PermissionPoint
                   emoji="🎯"
-                  title="Milestone celebrations"
-                  body={`We'll tell you the moment your ${goalName || 'goal'} hits 25%, 50%, 75%.`}
+                  title={t('pushPermission.milestoneTitle')}
+                  body={
+                    goalName
+                      ? t('pushPermission.milestoneBody', { goalName })
+                      : t('pushPermission.milestoneBodyFallback')
+                  }
                 />
                 <PermissionPoint
                   emoji="🧘"
-                  title="A weekly recap"
-                  body="One calm summary of how the week went. No spam, ever."
+                  title={t('pushPermission.weeklyTitle')}
+                  body={t('pushPermission.weeklyBody')}
                 />
               </View>
 
               <Text className="mt-6 text-xs text-on-surface-variant text-center">
-                You can change any of this later in Settings.
+                {t('pushPermission.footerNote')}
               </Text>
             </Animated.View>
           )}
@@ -1283,14 +1301,14 @@ export default function Onboarding() {
             <Animated.View entering={FadeInDown.springify()}>
               <View className="items-center mb-4"><Mascot expression="celebrating" size={64} /></View>
               <Text className="mb-2 text-3xl font-black text-on-surface">
-                Your Piggy Plan is ready!
+                {t('account.headline')}
               </Text>
               <Text className="mb-8 text-sm font-medium text-on-surface-variant">
                 {verifiedSession
-                  ? `Your email is confirmed — we just need to finish building your plan for your ${goalName}.`
+                  ? t('account.subEmailConfirmed', { goalName })
                   : otpSent
-                    ? `Enter the 6-digit code we emailed to ${email} to finish setting up your account.`
-                    : `Enter your email — we'll send a sign-in code to lock in your plan for your ${goalName} by ${formatTargetDate(targetDate, language)}.`}
+                    ? t('account.subOtpSent', { email })
+                    : t('account.subInitial', { goalName, date: formatTargetDate(targetDate, language) })}
               </Text>
 
               <Input
@@ -1303,15 +1321,15 @@ export default function Onboarding() {
                   setEmail(v);
                   if (emailTouched && isEmailValid(v)) setEmailError('');
                   if (emailTouched && !isEmailValid(v))
-                    setEmailError('Please enter a valid email address 📧');
+                    setEmailError(t('account.emailError'));
                 }}
                 onBlur={() => {
                   if (email && !isEmailValid(email)) {
                     setEmailTouched(true);
-                    setEmailError('Please enter a valid email address 📧');
+                    setEmailError(t('account.emailError'));
                   }
                 }}
-                placeholder="you@example.com"
+                placeholder={t("account.emailPlaceholder")}
                 className={otpSent ? 'opacity-60' : ''}
                 autoFocus
               />
@@ -1324,7 +1342,7 @@ export default function Onboarding() {
               {otpSent && !verifiedSession && (
                 <View className="mt-4">
                   <Text className="mb-2 text-xs font-semibold text-on-surface-variant">
-                    Sign-in code (this is not your app PIN)
+                    {t('account.codeLabel')}
                   </Text>
                   <TextInput
                     value={code}
@@ -1341,7 +1359,7 @@ export default function Onboarding() {
                     autoFocus
                   />
                   <TouchableOpacity onPress={handleRequestCode} disabled={isLoading} className="mt-3 items-center py-1">
-                    <Text className="text-sm font-semibold text-primary underline">Resend code</Text>
+                    <Text className="text-sm font-semibold text-primary underline">{t('account.resendCode')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1370,7 +1388,7 @@ export default function Onboarding() {
           onSelect={handleCountrySelect}
           items={COUNTRIES.map((c) => ({ code: c.code, name: c.name }))}
           selectedCode={country}
-          title="Select Country"
+          title={t('localization.selectCountryTitle')}
         />
 
         <PickerModal
@@ -1379,7 +1397,19 @@ export default function Onboarding() {
           onSelect={(item) => setCurrency(item.code)}
           items={CURRENCIES.map((c) => ({ code: c.code, name: c.name, symbol: c.symbol }))}
           selectedCode={currency}
-          title="Select Currency"
+          title={t('localization.selectCurrencyTitle')}
+        />
+
+        <PickerModal
+          isVisible={languagePickerVisible}
+          onClose={() => setLanguagePickerVisible(false)}
+          onSelect={(item) => updateProfile({ language: item.code as SupportedLanguage })}
+          items={SUPPORTED_LANGUAGES.map((code) => ({
+            code,
+            name: code === 'pl' ? t('localization.languagePl') : t('localization.languageEn'),
+          }))}
+          selectedCode={language}
+          title={t('localization.selectLanguageTitle')}
         />
 
         <DobConfirmModal
