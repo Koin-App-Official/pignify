@@ -4,7 +4,7 @@
  * app-version footer were relocated here from profile.tsx (which keeps only
  * profile display + notification toggles).
  */
-import { View, Text, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -25,6 +25,7 @@ import {
 import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { getPlanConfig, formatUSD } from '@/lib/entitlements';
+import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 
@@ -38,25 +39,6 @@ const CARD_SHADOW = {
 
 const PRIVACY_URL = 'https://piggnify.com/privacy-policy';
 const TERMS_URL = 'https://piggnify.com/terms-of-service';
-const SUPPORT_EMAIL = 'support@piggnify.com';
-
-/**
- * Linking.openURL rejects (unhandled promise) when there's no app registered
- * to handle the URL — e.g. no Mail account configured on the Simulator.
- * canOpenURL first lets us fail with a friendly alert instead of a crash log.
- */
-async function safeOpenURL(url: string, notAvailableMessage: string) {
-  try {
-    const canOpen = await Linking.canOpenURL(url);
-    if (!canOpen) {
-      Alert.alert('Not available', notAvailableMessage);
-      return;
-    }
-    await Linking.openURL(url);
-  } catch {
-    Alert.alert('Not available', notAvailableMessage);
-  }
-}
 
 const AUTO_LOCK_OPTIONS: { label: string; value: 0 | 1 | 5 | null }[] = [
   { label: 'Immediately', value: 0 },

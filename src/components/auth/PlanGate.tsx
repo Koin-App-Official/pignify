@@ -19,7 +19,7 @@
  * doing nothing, which would be indistinguishable from a dead button.
  */
 import { useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowRight, Check, ShieldCheck } from 'lucide-react-native';
@@ -29,14 +29,19 @@ import { useStore } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { getPlanConfig, PLAN_ORDER, formatUSD } from '@/lib/entitlements';
 import { planGateReason, trialDaysRemaining, lockoutEnforced } from '@/lib/planGate';
-import { startCheckout, requestSubscriptionSync, isBillingConfigured } from '@/lib/billing';
+import { startCheckout, requestSubscriptionSync, isBillingConfigured, requestAccountDeletion } from '@/lib/billing';
 import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
+import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
 import type { UserPlan } from '@/lib/store';
 
 export function PlanGate() {
   const profile = useStore((s) => s.profile);
   const updateProfile = useStore((s) => s.updateProfile);
+  const resetForDemo = useStore((s) => s.resetForDemo);
   const onPlanAcknowledged = useAuthLock((s) => s.onPlanAcknowledged);
+  const userId = useAuthLock((s) => s.userId);
+  const authLogout = useAuthLock((s) => s.logout);
+  const resetToLogin = useAuthLock((s) => s.resetToLogin);
 
   const reason = planGateReason({
     planStatus: profile.planStatus,
@@ -53,6 +58,7 @@ export function PlanGate() {
   const [busy, setBusy] = useState<UserPlan | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const acknowledge = () => {
     updateProfile({ trialIntroSeen: true });
@@ -107,6 +113,44 @@ export function PlanGate() {
     } finally {
       setChecking(false);
     }
+  };
+
+  /**
+   * A locked user has exactly two ways out short of subscribing: log out, or
+   * delete their account. Both bypass the PIN — this gate can appear ahead of
+   * the PIN step entirely (a fresh login on a new device), so there may be no
+   * device PIN to re-confirm yet. The server session is already verified by
+   * the time either gate reason can show.
+   */
+  const handleLogout = () => {
+    Alert.alert('Log out', 'You can log back in anytime with your email.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: () => authLogout() },
+    ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete account',
+      'This permanently deletes your account and all data from our servers. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: performDeleteAccount },
+      ]
+    );
+  };
+
+  const performDeleteAccount = async () => {
+    if (!userId) return;
+    setDeletingAccount(true);
+    const ok = await requestAccountDeletion(userId);
+    if (!ok) {
+      setDeletingAccount(false);
+      Alert.alert('Something went wrong', 'We could not delete your account. Please try again.');
+      return;
+    }
+    resetForDemo();
+    await resetToLogin();
   };
 
   // The gate is driven by store state, so a status change can clear the reason
@@ -200,6 +244,43 @@ export function PlanGate() {
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
             )}
+
+            <View className="mt-8 pt-5 border-t border-outline/10">
+              {deletingAccount ? (
+                <View className="flex-row items-center justify-center gap-2 py-2">
+                  <ActivityIndicator color="#DC2626" />
+                  <Text className="text-sm font-medium text-on-surface-variant">
+                    Deleting your account…
+                  </Text>
+                </View>
+              ) : (
+                <View className="flex-row flex-wrap items-center justify-center gap-5">
+                  <TouchableOpacity onPress={handleLogout} disabled={busy !== null || checking}>
+                    <Text className="text-sm font-semibold text-on-surface-variant underline">
+                      Log out
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      safeOpenURL(
+                        `mailto:${SUPPORT_EMAIL}`,
+                        `No email app is set up on this device. Reach us at ${SUPPORT_EMAIL}.`
+                      )
+                    }
+                    disabled={busy !== null || checking}
+                  >
+                    <Text className="text-sm font-semibold text-on-surface-variant underline">
+                      Contact support
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleDeleteAccount} disabled={busy !== null || checking}>
+                    <Text className="text-sm font-semibold text-destructive underline">
+                      Delete account
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
