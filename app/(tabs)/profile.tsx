@@ -11,6 +11,7 @@ import { useAuthLock } from '@/lib/authLock';
 import { Button } from '@/components/ui/button';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { requestNotificationPermission, getNotificationPermissionStatus } from '@/lib/notifications';
+import { TEXT_INPUT_CENTERING } from '@/lib/utils';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -120,6 +121,7 @@ export default function Profile() {
                 value={nameInput}
                 onChangeText={setNameInput}
                 className="w-36 h-10 text-center bg-primary/10 rounded-xl text-on-primary-container font-bold"
+                style={TEXT_INPUT_CENTERING}
                 autoFocus
                 onSubmitEditing={saveName}
               />

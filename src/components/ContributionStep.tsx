@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarModal } from '@/components/ui/calendar-modal';
 import { CURRENCIES } from '@/lib/store';
 import { deriveGoalDate, requiredContribution, suggestedContribution } from '@/lib/goalMath';
-import { PLACEHOLDER_COLOR } from '@/lib/utils';
+import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 
 export type PlanningMode = 'contribution' | 'deadline';
 
@@ -162,6 +162,7 @@ export function ContributionStep({
               keyboardType="numeric"
               placeholder="0.00"
               placeholderTextColor={PLACEHOLDER_COLOR}
+              style={TEXT_INPUT_CENTERING}
               autoFocus
             />
           </View>

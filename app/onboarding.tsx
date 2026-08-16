@@ -25,7 +25,7 @@ import { DobWheelPicker } from '@/components/ui/dob-picker';
 import { DobConfirmModal } from '@/components/ui/dob-confirm-modal';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
-import { PLACEHOLDER_COLOR } from '@/lib/utils';
+import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath';
 import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
@@ -1118,6 +1118,7 @@ export default function Onboarding() {
                   keyboardType="numeric"
                   placeholder="0.00"
                   placeholderTextColor={PLACEHOLDER_COLOR}
+                  style={TEXT_INPUT_CENTERING}
                   autoFocus
                 />
               </View>
@@ -1147,6 +1148,7 @@ export default function Onboarding() {
                   keyboardType="numeric"
                   placeholder="0.00"
                   placeholderTextColor={PLACEHOLDER_COLOR}
+                  style={TEXT_INPUT_CENTERING}
                   autoFocus
                 />
               </View>
@@ -1329,6 +1331,7 @@ export default function Onboarding() {
                     keyboardType="number-pad"
                     placeholder="••••••"
                     placeholderTextColor={PLACEHOLDER_COLOR}
+                    style={TEXT_INPUT_CENTERING}
                     className="h-16 rounded-2xl border border-outline bg-surface-container-low text-center text-3xl font-bold tracking-[12px] text-on-surface"
                     maxLength={6}
                     autoFocus
