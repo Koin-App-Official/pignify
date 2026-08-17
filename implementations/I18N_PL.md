@@ -483,13 +483,48 @@ published to production after user confirmation — both are now live and servin
 
 ## Phase 7 — Native layer
 
-- [ ] Add `CFBundleLocalizations: ['en', 'pl']` to the iOS config in [app.json](app.json)
-- [ ] Localize `NSFaceIDUsageDescription` — the `faceIDPermission` string in [app.json](app.json) is
-      baked into `Info.plist` and never passes through i18next
-- [ ] Localize the notification permission prompt strings
-- [ ] Android: add `values-pl/strings.xml` for any native-facing string
+- [x] Add `CFBundleLocalizations: ['en', 'pl']` to the iOS config in [app.json](app.json)
+- [x] Localize `NSFaceIDUsageDescription`. **Found the right built-in mechanism instead of hand-rolling
+      a config plugin**: Expo's top-level `expo.locales` field (`@expo/config-plugins`'s
+      `IOSConfig.Locales.withLocales`, part of the default prebuild pipeline — no custom plugin
+      needed) generates a real `pl.lproj/InfoPlist.strings` file and registers it in the Xcode project
+      automatically. Added [languages/pl.json](languages/pl.json) with the Polish
+      `NSFaceIDUsageDescription` under an `ios` key, referenced from `app.json`'s new
+      `locales: { pl: "./languages/pl.json" }`. Verified end-to-end by actually running
+      `expo prebuild --platform ios` and confirming
+      `ios/Piggy/Supporting/pl.lproj/InfoPlist.strings` was generated with the correct content — the
+      base (English) `faceIDPermission` plugin option is untouched and still serves as the fallback
+      for any other locale
+- [x] **Gap found and fixed, not on the original list**: the *actual* biometric-prompt text users see
+      every time they unlock — `promptMessage`/`authenticationPrompt` passed to
+      `LocalAuthentication.authenticateAsync`/`SecureStore` in `src/lib/biometrics.ts` — was hardcoded
+      English and is far more visible than `NSFaceIDUsageDescription` (which only shows if a user
+      digs into iOS Settings › Face ID & Passcode). `enableBiometric`/`unlockWithBiometric` gained a
+      required `language` param (no test coverage to preserve), resolved via
+      `i18n.getFixedT(language, 'auth')`; updated all 4 call sites
+      (`authLock.ts` ×2, `enable-biometric.tsx`, `PinCreationFlow.tsx` ×2)
+- [x] "Notification permission prompt strings" turned out to mean two different things once
+      investigated: (1) the OS system permission dialog itself (`Notifications.requestPermissionsAsync()`)
+      has no app-controlled text on either platform — it's boilerplate the OS supplies from the
+      device's own language setting, nothing to translate; (2) **Android notification channel names**
+      ("Reminders", "Digests & celebrations", shown in Android Settings › App notifications) *are*
+      app-controlled JS strings (`initNotifications()`) and were hardcoded English — translated via
+      the same `i18n.getFixedT` pattern Phase 6 established. `app/_layout.tsx` now re-runs
+      `initNotifications(language)` on language change too; Android channels are relabeled in place
+      when a channel ID is reused, not duplicated, so an existing install's channel names actually
+      update
+- [x] Android: **nothing to add.** Ran `expo prebuild --platform android` after the `expo.locales`
+      change above and confirmed no `values-pl/` directory gets created — there is no Android-native
+      string in this app's manifest/resources that needs one; both potential candidates (biometric
+      prompt text, notification channel names) are JS-controlled and already fixed via i18next above,
+      not native XML resources
 - [ ] Rebuild both platforms and confirm the OS-level Face ID and notification dialogs appear in
-      Polish on a Polish-locale device
+      Polish on a Polish-locale device. **Not done** — this needs an actual on-device/simulator build
+      with the device's system language set to Polish (the app's own in-app language toggle doesn't
+      affect OS-level dialogs — only `CFBundleLocalizations`/device locale does), which is real native
+      build + device verification, left for the user's own pass per their stated preference to
+      self-verify. The config was verified as far as static generation goes: `expo prebuild` for both
+      platforms was actually run and the resulting `pl.lproj/InfoPlist.strings` inspected directly
 
 ---
 

@@ -24,5 +24,9 @@
     "progressTitle": "{{emoji}} {{percent}}% there!",
     "progressBody": "You're {{percent}}% of the way to {{name}}! Keep going.",
     "achievementUnlockedTitle": "🏆 Achievement unlocked"
+  },
+  "channels": {
+    "reminders": "Reminders",
+    "digest": "Digests & celebrations"
   }
 }

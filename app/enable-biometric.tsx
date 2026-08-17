@@ -14,6 +14,7 @@ import type { TFunction } from 'i18next';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuthLock } from '@/lib/authLock';
+import { useStore } from '@/lib/store';
 import { PIN_LENGTH } from '@/lib/pin';
 import { enableBiometric } from '@/lib/biometrics';
 import { PinPad, PinDots } from '@/components/auth/PinPad';
@@ -53,7 +54,9 @@ export default function EnableBiometric() {
     if (res.ok) {
       // tryUnlockPin already re-applied the session; enrolling is best-effort —
       // a declined/failed native prompt here just leaves biometrics off.
-      const enrolled = res.key ? await enableBiometric(res.key).catch(() => false) : false;
+      const enrolled = res.key
+        ? await enableBiometric(res.key, useStore.getState().profile.language).catch(() => false)
+        : false;
       setBusy(false);
       if (!enrolled) {
         setPin('');

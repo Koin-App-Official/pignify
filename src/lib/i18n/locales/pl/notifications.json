@@ -25,5 +25,9 @@
     "progressTitle": "{{emoji}} {{percent}}% za Tobą!",
     "progressBody": "Jesteś w {{percent}}% drogi do {{name}}! Tak trzymaj.",
     "achievementUnlockedTitle": "🏆 Odblokowano odznakę"
+  },
+  "channels": {
+    "reminders": "Przypomnienia",
+    "digest": "Podsumowania i celebracje"
   }
 }

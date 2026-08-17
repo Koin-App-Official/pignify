@@ -15,6 +15,7 @@ import {
 } from '@expo-google-fonts/nunito';
 import { AuthGate } from '@/components/auth/AuthGate';
 import { initNotifications } from '@/lib/notifications';
+import { useStore } from '@/lib/store';
 import i18n, { initI18n } from '@/lib/i18n';
 
 // React Native 0.81 uses its own deprecated SafeAreaView internally (LogBox UI).
@@ -32,6 +33,7 @@ export default function RootLayout() {
     Nunito_800ExtraBold,
   });
   const [i18nReady, setI18nReady] = useState(false);
+  const language = useStore((s) => s.profile.language);
 
   useEffect(() => {
     initI18n().then(() => setI18nReady(true));
@@ -42,7 +44,9 @@ export default function RootLayout() {
   }, [fontsLoaded, i18nReady]);
 
   useEffect(() => {
-    initNotifications();
+    // Re-runs on language change too — Android channel names are re-labeled
+    // in place rather than duplicated (see notifications.ts).
+    initNotifications(language);
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const type = response.notification.request.content.data?.type;
       if (type === 'trial-ending') {
@@ -56,7 +60,7 @@ export default function RootLayout() {
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [language]);
 
   if (!fontsLoaded || !i18nReady) {
     return <View className="flex-1 bg-surface" />;

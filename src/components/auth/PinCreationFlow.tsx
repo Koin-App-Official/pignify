@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Button } from '@/components/ui/button';
+import { useStore } from '@/lib/store';
 import { PIN_LENGTH, setPin, validatePinStrength, isPinReused, type PinReuseSource } from '@/lib/pin';
 import {
   isBiometricAvailable,
@@ -83,7 +84,7 @@ export function PinCreationFlow({
 
   const finish = async (key: Uint8Array) => {
     if (await isBiometricEnabled()) {
-      await enableBiometric(key).catch(() => false);
+      await enableBiometric(key, useStore.getState().profile.language).catch(() => false);
       await onDone();
       return;
     }
@@ -142,7 +143,7 @@ export function PinCreationFlow({
   const enrollBiometric = async () => {
     if (!derivedKey) return;
     setBusy(true);
-    await enableBiometric(derivedKey).catch(() => false);
+    await enableBiometric(derivedKey, useStore.getState().profile.language).catch(() => false);
     setBusy(false);
     await onDone();
   };

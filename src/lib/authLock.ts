@@ -361,7 +361,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     // the OLD derived key) is now stale — silently re-derive it, same as
     // PinCreationFlow does on a PIN change.
     if (await isBiometricEnabled()) {
-      await enableBiometric(key).catch(() => false);
+      await enableBiometric(key, useStore.getState().profile.language).catch(() => false);
     }
 
     const outcome = await activateSession(pendingSecret, set);
@@ -376,7 +376,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
   },
 
   tryUnlockBiometric: async () => {
-    const secret = await unlockWithBiometric();
+    const secret = await unlockWithBiometric(useStore.getState().profile.language);
     if (!secret) return false;
     const outcome = await activateSession(secret, set);
     return outcome === 'ok';

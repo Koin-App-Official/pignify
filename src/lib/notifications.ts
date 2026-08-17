@@ -40,14 +40,19 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function initNotifications() {
+export async function initNotifications(language: SupportedLanguage) {
   if (Platform.OS === 'android') {
+    const t = i18n.getFixedT(language, 'notifications');
+    // Re-creating a channel with the same ID updates its existing name rather
+    // than duplicating it, so calling this again on a language change (see
+    // app/_layout.tsx) re-labels the channels already visible in Android
+    // Settings > App notifications, not just newly-scheduled notifications.
     await Notifications.setNotificationChannelAsync(CHANNEL_REMINDERS, {
-      name: 'Reminders',
+      name: t('channels.reminders'),
       importance: Notifications.AndroidImportance.HIGH,
     });
     await Notifications.setNotificationChannelAsync(CHANNEL_DIGEST, {
-      name: 'Digests & celebrations',
+      name: t('channels.digest'),
       importance: Notifications.AndroidImportance.DEFAULT,
     });
   }
