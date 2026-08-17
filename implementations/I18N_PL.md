@@ -474,11 +474,8 @@ The half of the app's language that JS bundles do not control.
       away instead of waiting for the next unrelated reschedule trigger (adding an expense, updating
       a goal, etc.)
 
-**Not yet live:** two n8n workflow drafts (`CLAUDE_coach_reply`'s language-aware prompts,
-`CLAUDE_onboarding`'s language persistence) are saved but unpublished — production still runs the
-pre-Phase-6 versions until published. The Appwrite `users.language` attribute is already live (schema
-changes there don't have a separate publish step). Publishing the two workflow drafts needs an
-explicit decision from the user, since it takes effect on live traffic immediately with no dry-run.
+Both `CLAUDE_coach_reply` (language-aware prompts) and `CLAUDE_onboarding` (language persistence) were
+published to production after user confirmation — both are now live and serving real traffic.
 - [ ] Translate `fireMilestoneNotification` call sites in [store.ts:650](src/lib/store.ts:650), which
       pass composed English strings from the store layer
 
