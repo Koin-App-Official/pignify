@@ -16,6 +16,7 @@ interface Props {
 
 export function AddExpenseModal({ open, onClose }: Props) {
   const { t } = useTranslation('dashboard');
+  const { t: tContent } = useTranslation('content');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
@@ -83,7 +84,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
                       className={`text-xs text-center ${category === c.id ? 'text-on-primary-container font-bold' : 'text-on-surface-variant'}`}
                       numberOfLines={1}
                     >
-                      {c.name.split(' ')[0]}
+                      {tContent(`expenseCategories.${c.id}`).split(' ')[0]}
                     </Text>
                   </View>
                 </PressableScale>

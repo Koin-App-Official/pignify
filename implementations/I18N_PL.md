@@ -358,20 +358,65 @@ The flow the feature is actually about. Ships as a coherent unit.
 Data, not chrome. Keys live in the `content` namespace; the catalogs keep their stable IDs and lose
 their hardcoded display strings.
 
-- [ ] `src/lib/missions.ts` — 32 defs × (title + description), preserving `{amount}` interpolation via
-      the existing `renderMissionCopy` injection point ([missions.ts:842](src/lib/missions.ts:842))
-- [ ] Apply Polish plural forms to the mission copy that counts things (days, expenses, deposits)
-- [ ] `src/lib/lessons.ts` — 15 lessons × (topic + question + 3 options + explanation) ≈ 75 strings
-- [ ] **Native financial review of the lesson translations.** These teach facts. `APY` is not `RRSO`
-      (that is APR for credit); the correct Polish framing is a rate-of-return term, and `50/30/20`
-      is universal but its wording is not. A mistranslation here teaches a user something false
-- [ ] `GOAL_TEMPLATES` — 12 names ([store.ts:285](src/lib/store.ts:285))
-- [ ] `EXPENSE_CATEGORIES` — 8 names ([store.ts:348](src/lib/store.ts:348))
-- [ ] `COUNTRIES` — 25 country names ([store.ts:298](src/lib/store.ts:298))
-- [ ] `CURRENCIES` — 19 currency names ([store.ts:326](src/lib/store.ts:326))
-- [ ] Plan descriptions in `src/lib/entitlements.ts` (names stay in English — see Decisions)
-- [ ] Verify `missions.test.ts` and `lessons.test.ts` still pass — they should assert on IDs and
-      behaviour, so if they break on copy that is itself worth fixing
+- [x] `src/lib/missions.ts` — all 30 defs (the "32" estimate was off by 2; the catalog has 12
+      tier-1 + 10 tier-2 + 8 tier-3 defs) × (title + description), preserving `{amount}`
+      interpolation via the existing `renderMissionCopy` injection point. **Key-separator gotcha:**
+      i18next splits lookup keys on `.` by default, which would mis-parse the id
+      `save-1.5x-target` as three path segments — the content-key slug replaces dots with
+      dashes (`save-1-5x-target`), computed identically in `renderMissionCopy` and in
+      `content.json`'s key. `renderMissionCopy` gained an optional trailing
+      `t?: TFunction<'content'>` (English-fallback pattern, same as `validateRetentionSelection`/
+      `gateInfo`) — kept optional specifically because `missions.test.ts` has real 3-arg call sites
+      asserting exact English output (`'Skip a coffee'`). `MissionCard` in
+      `app/(tabs)/missions.tsx` now passes a dedicated `useTranslation('content')` instance
+- [x] Mission copy that counts things (5 expenses, 3 expenses, 2 deposits, 7-day/30-day streaks) —
+      these are fixed constants baked into each def, not runtime-varying counts, so there's no
+      i18next `_one`/`_few`/`_many` interpolation to wire; each was hand-written in the
+      grammatically-correct static Polish form for its specific number instead (e.g. "5 wydatków"
+      genitive plural, "Dwie wpłaty" nominative-feminine for 2)
+- [x] `src/lib/lessons.ts` — all 15 lessons × (topic + question + 3 options + explanation) = 90
+      strings. `lessons.ts` itself is untouched (no test-compatibility need to preserve translated
+      output there); resolution happens entirely in `LessonQuizModal.tsx` via a new
+      `useTranslation('content')` keyed by `lesson.id`, options read back via
+      `t(..., { returnObjects: true })`
+- [x] **Native financial review of the lesson translations**, per the risk flagged here: the `apy`
+      lesson does NOT use "RRSO" (Rzeczywista Roczna Stopa Oprocentowania is specifically Polish
+      consumer-credit APR terminology, not a savings-yield concept) — it's reframed around
+      "oprocentowanie efektywne" / kapitalizacja odsetek (effective/compounding interest), which is
+      the term Polish banks actually use for savings yield. `50/30/20` kept its numbers but got
+      natural Polish budgeting phrasing. `credit-score` was framed around "scoring kredytowy" (the
+      BIK-score concept Polish readers actually encounter) rather than a literal, meaningless
+      transliteration
+- [x] `GOAL_TEMPLATES` — all 10 names translated in `content.json`. **Finding:** this export is
+      dead code — grepped for every possible reference and found none; nothing in the app currently
+      renders it. Translated anyway since it's cheap and explicitly in scope, but flagging so it
+      isn't mistaken for a verified-working picker somewhere
+- [x] `EXPENSE_CATEGORIES` — all 8 names. Resolved by id in `app/(tabs)/profile.tsx`'s expense
+      breakdown and `AddExpenseModal.tsx`'s category chips (the chip's `.split(' ')[0]` short-label
+      trick still works on the Polish translations — Polish word order also puts the primary word
+      first, e.g. "Jedzenie i napoje" → "Jedzenie")
+- [x] `COUNTRIES` — all 25 country names. Resolved by code in `onboarding.tsx`'s country picker,
+      its confirmation-row display, and the `PickerModal` items list (so search filtering matches
+      the Polish name too, not just the English one hidden behind it)
+- [x] `CURRENCIES` — all 19 currency names, same treatment as countries. `.symbol` (never
+      language-dependent) stays untouched everywhere it's used on its own (index.tsx, goals.tsx,
+      ContributionStep.tsx, AddExpenseModal.tsx)
+- [x] Plan descriptions in `src/lib/entitlements.ts` — turned out to be nothing here to translate.
+      `PlanConfig` has no free-text description field; `displayName` is the only string and it's
+      already covered by the existing "names stay in English" decision (Beginner/Medium/Family).
+      The plan-feature copy this checklist item was probably anticipating (`plans:feature.*`) was
+      already translated in Phase 4
+- [x] `DEFAULT_ACHIEVEMENTS` (12 badges) — not in the original Phase 5 list, but flagged as a gap
+      during Phase 4's audit (missions.tsx's badge grid). Same id-based resolution pattern: the
+      persisted store data (`store.ts`'s `DEFAULT_ACHIEVEMENTS`) stays the English canonical, and
+      `app/(tabs)/missions.tsx`'s achievements grid now resolves `content:achievements.<id>.title`/
+      `.description` instead of reading `a.title`/`a.description` off the (possibly stale,
+      English-only) persisted object directly
+- [x] Verified `missions.test.ts` and `lessons.test.ts` still pass — they assert on IDs and
+      behaviour as expected, so nothing broke. (5 unrelated pre-existing failures in
+      `missions.test.ts` are a date-fixture flake — tests hardcode an expected `weekStart` that
+      only held on the date they were written; confirmed via `git stash` that they fail identically
+      with none of this phase's changes applied, so left alone as out of scope)
 
 ---
 

@@ -202,6 +202,7 @@ function detectLocaleCountry(): { country: string; currency: string } {
 
 export default function Onboarding() {
   const { t } = useTranslation('onboarding');
+  const { t: tContent } = useTranslation('content');
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.Name);
   const emailInputRef = useRef<TextInput>(null);
 
@@ -367,8 +368,8 @@ export default function Onboarding() {
   }, [resumed]);
 
   const currencySymbol = getCurrencySymbol(currency);
-  const countryName = COUNTRIES.find((c) => c.code === country)?.name ?? country;
-  const currencyName = CURRENCIES.find((c) => c.code === currency)?.name ?? currency;
+  const countryName = country ? tContent(`countries.${country}`) : '';
+  const currencyName = currency ? tContent(`currencies.${currency}`) : '';
   const languageName = language === 'pl' ? t('localization.languagePl') : t('localization.languageEn');
 
   const handleCountrySelect = (item: PickerItem) => {
@@ -1386,7 +1387,7 @@ export default function Onboarding() {
           isVisible={countryPickerVisible}
           onClose={() => setCountryPickerVisible(false)}
           onSelect={handleCountrySelect}
-          items={COUNTRIES.map((c) => ({ code: c.code, name: c.name }))}
+          items={COUNTRIES.map((c) => ({ code: c.code, name: tContent(`countries.${c.code}`) }))}
           selectedCode={country}
           title={t('localization.selectCountryTitle')}
         />
@@ -1395,7 +1396,7 @@ export default function Onboarding() {
           isVisible={currencyPickerVisible}
           onClose={() => setCurrencyPickerVisible(false)}
           onSelect={(item) => setCurrency(item.code)}
-          items={CURRENCIES.map((c) => ({ code: c.code, name: c.name, symbol: c.symbol }))}
+          items={CURRENCIES.map((c) => ({ code: c.code, name: tContent(`currencies.${c.code}`), symbol: c.symbol }))}
           selectedCode={currency}
           title={t('localization.selectCurrencyTitle')}
         />

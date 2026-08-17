@@ -183,8 +183,8 @@ export default function Missions() {
                 style={a.unlocked ? { borderWidth: 1, borderColor: 'rgba(34,197,94,0.25)' } : {}}
               >
                 <Text className="text-3xl">{a.icon}</Text>
-                <Text className="text-xs font-bold text-on-surface text-center leading-tight">{a.title}</Text>
-                <Text className="text-[9px] text-on-surface-variant text-center leading-tight">{a.description}</Text>
+                <Text className="text-xs font-bold text-on-surface text-center leading-tight">{t(`content:achievements.${a.id}.title`)}</Text>
+                <Text className="text-[9px] text-on-surface-variant text-center leading-tight">{t(`content:achievements.${a.id}.description`)}</Text>
               </Animated.View>
             ))}
           </View>
@@ -328,9 +328,10 @@ function MissionCard({
   replay: SharedValue<number>;
 }) {
   const { t } = useTranslation('missions');
+  const { t: tContent } = useTranslation('content');
   const { am, def } = entry;
   const state = getCardState(am, def, ctx);
-  const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency));
+  const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency), tContent);
   const progress = state === 'locked' || state === 'ready' ? getMissionProgress(def, ctx) : null;
   const styles = CARD_STATE_STYLES[state];
   // A locked money-quiz card still needs to be tappable — the tap opens the

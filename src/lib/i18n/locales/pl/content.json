@@ -1,1 +1,210 @@
-{}
+{
+  "missions": {
+    "save-today": { "title": "Zaoszczędź {amount} dziś", "description": "Odłóż coś na swój cel — nie musi to być dużo." },
+    "hit-daily-target": { "title": "Osiągnij dzisiejszy cel", "description": "Zaoszczędź dziś tyle, by nie wypaść z tempa realizacji celu." },
+    "log-expense": { "title": "Zapisz wydatek", "description": "Zapisz jedną rzecz, na którą dziś wydałeś pieniądze." },
+    "check-in": { "title": "Zajrzyj do aplikacji", "description": "Otwórz aplikację i sprawdź, jak Ci idzie." },
+    "skip-coffee": { "title": "Odpuść sobie kawę na mieście", "description": "Zrób ją dziś w domu." },
+    "no-spend-lunch": { "title": "Obiad bez wydawania", "description": "Zabierz lunch z domu zamiast go kupować." },
+    "walk-instead": { "title": "Idź pieszo zamiast jechać", "description": "Zaoszczędź dziś na transporcie." },
+    "cook-at-home": { "title": "Ugotuj kolację w domu", "description": "Odpuść dziś zamawianie jedzenia." },
+    "save-this-week": { "title": "Zaoszczędź {amount} w tym tygodniu", "description": "Cotygodniowy zastrzyk w stronę Twojego celu." },
+    "first-goal": { "title": "Skonfiguruj swój pierwszy cel", "description": "Utwórz cel oszczędnościowy, aby zacząć." },
+    "log-five-expenses": { "title": "Zapisz 5 wydatków w tym tygodniu", "description": "Zbuduj nawyk śledzenia wydatków." },
+    "no-spend-weekend": { "title": "Weekend bez wydawania", "description": "Utrzymaj wydatki niekonieczne na zerowym poziomie w ten weekend." },
+    "save-1-5x-target": { "title": "Zaoszczędź 1,5× dzisiejszego celu", "description": "Wyprzedź dziś swoje tempo." },
+    "log-three-expenses": { "title": "Zapisuj każdy dzisiejszy wydatek", "description": "Zapisz co najmniej 3 rzeczy, na które dziś wydałeś." },
+    "expense-with-note": { "title": "Dodaj notatkę do wydatku", "description": "Dodaj kontekst do jednego z dzisiejszych wydatków." },
+    "save-almost-bought": { "title": "Zaoszczędź to, co prawie wydałeś", "description": "Powstrzymałeś się przed czymś, na co miałeś ochotę? Przenieś tę kwotę do oszczędności." },
+    "beat-last-week": { "title": "Pokonaj wydatki z zeszłego tygodnia", "description": "Wydaj w tym tygodniu mniej niż w zeszłym." },
+    "dine-out-detox": { "title": "Detoks od jedzenia na mieście", "description": "Odpuść sobie w tym tygodniu jedzenie na mieście." },
+    "cancel-subscription": { "title": "Anuluj subskrypcję", "description": "Przejrzyj i anuluj jedną nieużywaną subskrypcję." },
+    "streak-seven": { "title": "Osiągnij 7-dniową serię", "description": "Oszczędzaj zgodnie z celem 7 dni z rzędu." },
+    "save-20-percent-over": { "title": "Zaoszczędź 20% ponad tygodniowy cel", "description": "Przekrocz w tym tygodniu swoje zwykłe tempo." },
+    "money-quiz": { "title": "Dzisiejszy quiz finansowy", "description": "Odpowiedz na 30-sekundowe pytanie o pieniądzach." },
+    "save-2x-target": { "title": "Zaoszczędź 2× dzisiejszego celu", "description": "Poważny wysiłek na dziś." },
+    "two-deposits-today": { "title": "Dwie wpłaty dzisiaj", "description": "Zaoszczędź dziś dwa razy zamiast raz." },
+    "pantry-day": { "title": "Dzień ze spiżarni", "description": "Ugotuj wyłącznie z tego, co już masz." },
+    "push-goal-ten-percent": { "title": "Przesuń cel o kolejne 10%", "description": "Wejdź w tym tygodniu w nową dziesiątą część swojego celu." },
+    "streak-thirty": { "title": "Osiągnij 30-dniową serię", "description": "Cały miesiąc trafiania w swój cel." },
+    "review-contribution": { "title": "Sprawdź wpłatę na przyszły miesiąc", "description": "Sprawdź, czy Twoja miesięczna kwota nadal Ci odpowiada." },
+    "add-second-goal": { "title": "Dodaj drugi cel", "description": "Zacznij oszczędzać także na coś innego." },
+    "negotiate-bill": { "title": "Wynegocjuj lub obniż rachunek", "description": "Zadzwoń do jednego dostawcy i poproś o lepszą stawkę." }
+  },
+  "lessons": {
+    "emergency-fund": {
+      "topic": "Fundusz awaryjny",
+      "question": "Do czego głównie służy fundusz awaryjny?",
+      "options": ["Pokrywania nieoczekiwanych wydatków", "Kupowania inwestycji podczas spadków", "Zarabiania najwyższego możliwego oprocentowania"],
+      "explanation": "To gotówka odłożona na niespodzianki — utratę pracy, wizytę u lekarza, naprawę samochodu — trzymana tak, by można było łatwo po nią sięgnąć, a nie zainwestowana z myślą o zysku."
+    },
+    "apy": {
+      "topic": "Oprocentowanie efektywne",
+      "question": "Co mówi Ci efektywne roczne oprocentowanie (uwzględniające kapitalizację odsetek)?",
+      "options": ["Twój miesięczny limit wydatków", "Rzeczywisty roczny zysk z uwzględnieniem kapitalizacji odsetek", "Jednorazowy bonus powitalny"],
+      "explanation": "Oprocentowanie efektywne uwzględnia kapitalizację odsetek, więc pokazuje, ile faktycznie zarobisz w ciągu roku — to bardziej uczciwa liczba niż nominalna stopa procentowa."
+    },
+    "needs-vs-wants": {
+      "topic": "Potrzeby a zachcianki",
+      "question": "Które z poniższych to zwykle „potrzeba”, a nie „zachcianka”?",
+      "options": ["Czynsz", "Subskrypcje streamingowe", "Jedzenie na mieście"],
+      "explanation": "Potrzeby zapewniają Ci dach nad głową, jedzenie i normalne funkcjonowanie. Zachcianki poprawiają życie, ale nie są niezbędne — to rozróżnienie to podstawa większości budżetów."
+    },
+    "50-30-20": {
+      "topic": "Zasada 50/30/20",
+      "question": "W budżetowej zasadzie 50/30/20, na co idzie tych 20%?",
+      "options": ["Zachcianki", "Potrzeby", "Oszczędności i spłata długów"],
+      "explanation": "Podział wygląda mniej więcej tak: 50% potrzeby, 30% zachcianki, 20% oszczędności i długi — to prosty punkt wyjścia, a nie sztywna reguła."
+    },
+    "compound-interest": {
+      "topic": "Procent składany",
+      "question": "Dlaczego wczesne rozpoczęcie oszczędzania ma takie znaczenie?",
+      "options": ["Procent składany nalicza zysk także od wcześniej wypracowanych zysków", "Banki płacą więcej nowym klientom", "Ceny rosną tylko na początku roku"],
+      "explanation": "W każdym okresie odsetki naliczane są od Twojej pierwotnej kwoty ORAZ od wszystkiego, co już wcześniej zarobiła — im dłużej to trwa, tym szybszy jest wzrost."
+    },
+    "budgeting-basics": {
+      "topic": "Budżetowanie",
+      "question": "Jaki jest główny sens zapisywania każdego wydatku?",
+      "options": ["Żeby czuć się winnym za wydawanie pieniędzy", "Żeby zobaczyć, gdzie naprawdę idą pieniądze", "Żeby zakwalifikować się do kredytu"],
+      "explanation": "Większość ludzi nie docenia skali drobnych, powtarzających się wydatków, dopóki ich nie zapisze — celem jest widoczność, a nie ocenianie."
+    },
+    "credit-score": {
+      "topic": "Scoring kredytowy",
+      "question": "Który nawyk najbardziej konsekwentnie poprawia scoring kredytowy?",
+      "options": ["Terminowe spłacanie rachunków", "Szybkie otwieranie wielu kart kredytowych", "Celowe utrzymywanie zadłużenia"],
+      "explanation": "Historia terminowych spłat to zwykle najważniejszy pojedynczy czynnik — regularne płacenie na czas liczy się bardziej niż jakikolwiek pojedynczy trik."
+    },
+    "diversification": {
+      "topic": "Dywersyfikacja",
+      "question": "Jaki problem rozwiązuje głównie dywersyfikacja?",
+      "options": ["Gwarantuje zysk", "Ogranicza wpływ słabego wyniku jednej inwestycji na całość", "Całkowicie pozwala uniknąć podatków"],
+      "explanation": "Rozłożenie pieniędzy na różne aktywa sprawia, że jeden słaby wynik nie zatapia całego portfela. To zarządzanie ryzykiem, a nie zwiększanie zysku."
+    },
+    "inflation": {
+      "topic": "Inflacja",
+      "question": "Co inflacja robi z gotówką, która po prostu leży odłożona?",
+      "options": ["Nic, wartość gotówki nigdy się nie zmienia", "Powoli obniża jej siłę nabywczą", "Zwiększa jej siłę nabywczą"],
+      "explanation": "Jeśli ceny rosną szybciej niż odsetki od Twojej gotówki, ta sama kwota kupuje co roku odrobinę mniej."
+    },
+    "debt-snowball": {
+      "topic": "Spłacanie długów",
+      "question": "W metodzie „kuli śnieżnej” (debt snowball), który dług spłacasz jako pierwszy?",
+      "options": ["Ten z najmniejszym saldem", "Ten z najwyższym oprocentowaniem", "Ten, który powstał najpóźniej"],
+      "explanation": "Metoda kuli śnieżnej celuje najpierw w najmniejsze saldo, by dać szybkie sukcesy i rozpęd — inna metoda (lawina) celuje zamiast tego w najwyższe oprocentowanie."
+    },
+    "opportunity-cost": {
+      "topic": "Koszt alternatywny",
+      "question": "Co oznacza „koszt alternatywny” przy wydawaniu pieniędzy?",
+      "options": ["Podatek, który płacisz od zakupu", "To, z czego rezygnujesz, nie wydając tych pieniędzy gdzie indziej", "Marża sklepu na danym produkcie"],
+      "explanation": "Każda złotówka wydana w jeden sposób to złotówka, która nie może pójść na coś innego — prawdziwy koszt obejmuje też to, czego przez to nie zrobiłeś."
+    },
+    "net-worth": {
+      "topic": "Wartość netto majątku",
+      "question": "Jak oblicza się wartość netto majątku?",
+      "options": ["Miesięczny dochód minus wydatki", "To, co posiadasz, minus to, co jesteś winien", "Łączne saldo konta oszczędnościowego"],
+      "explanation": "Wartość netto majątku to migawka: wszystko, co posiadasz (aktywa), minus wszystko, co jesteś winien (zobowiązania). Dochód to strumień; wartość netto to stan na dany moment."
+    },
+    "automatic-savings": {
+      "topic": "Automatyzacja oszczędzania",
+      "question": "Dlaczego automatyczne przelewy na oszczędności zwykle dobrze się sprawdzają?",
+      "options": ["Eliminują konieczność podejmowania decyzji za każdym razem", "Gwarantują prawnie wyższe oprocentowanie", "Są wymagane przez większość banków"],
+      "explanation": "Automatyzacja realizuje zasadę „zapłać najpierw sobie”, zanim zdążysz te pieniądze wydać — zamienia oszczędzanie w domyślne działanie zamiast decyzji, którą trzeba podejmować za każdym razem."
+    },
+    "high-yield-savings": {
+      "topic": "Konto oszczędnościowe z wysokim oprocentowaniem",
+      "question": "Co głównie odróżnia konto oszczędnościowe z wysokim oprocentowaniem od zwykłego?",
+      "options": ["Nie ma żadnych limitów wypłat", "Płaci wyraźnie wyższe oprocentowanie", "Pełni jednocześnie funkcję konta osobistego"],
+      "explanation": "Podstawowa różnica to oprocentowanie — często kilkukrotnie wyższe niż na zwykłym koncie oszczędnościowym — zwykle oferowane przez banki działające głównie online."
+    },
+    "index-funds": {
+      "topic": "Fundusze indeksowe",
+      "question": "Co robi fundusz indeksowy?",
+      "options": ["Wybiera garstkę „zwycięskich” spółek", "Odwzorowuje cały szeroki indeks rynkowy", "Gwarantuje stały roczny zwrot"],
+      "explanation": "Zamiast stawiać na pojedyncze spółki, fundusz indeksowy posiada szeroki wycinek rynku, rozkładając ryzyko na wiele różnych aktywów naraz."
+    }
+  },
+  "achievements": {
+    "a1": { "title": "Pierwszy krok", "description": "Utwórz swój pierwszy cel oszczędnościowy" },
+    "a2": { "title": "Początek serii", "description": "Oszczędzaj 3 dni z rzędu" },
+    "a3": { "title": "Wojownik tygodnia", "description": "Osiągnij 7-dniową serię" },
+    "a4": { "title": "Mistrz misji", "description": "Ukończ 5 misji" },
+    "a5": { "title": "Ćwierć drogi", "description": "Osiągnij 25% celu" },
+    "a6": { "title": "Bohater półmetka", "description": "Osiągnij 50% celu" },
+    "a7": { "title": "Już prawie", "description": "Osiągnij 75% celu" },
+    "a8": { "title": "Pogromca celów", "description": "Ukończ cel oszczędnościowy" },
+    "a9": { "title": "Szef budżetu", "description": "Śledź wydatki przez 7 dni" },
+    "a10": { "title": "Awans poziomu", "description": "Osiągnij 3. poziom oszczędzania" },
+    "a11": { "title": "Król konsekwencji", "description": "30-dniowa seria" },
+    "a12": { "title": "Mądry oszczędzający", "description": "Ukończ quiz osobowości AI" }
+  },
+  "goalTemplates": {
+    "holiday": "Wakacje",
+    "concert": "Koncert",
+    "car": "Samochód",
+    "emergency": "Fundusz awaryjny",
+    "laptop": "Laptop",
+    "education": "Edukacja",
+    "apartment": "Mieszkanie",
+    "wedding": "Wesele",
+    "trip": "Pierwsza podróż",
+    "purchase": "Duży zakup"
+  },
+  "countries": {
+    "US": "Stany Zjednoczone",
+    "GB": "Wielka Brytania",
+    "CA": "Kanada",
+    "AU": "Australia",
+    "DE": "Niemcy",
+    "FR": "Francja",
+    "ES": "Hiszpania",
+    "IT": "Włochy",
+    "NL": "Holandia",
+    "IE": "Irlandia",
+    "PT": "Portugalia",
+    "BR": "Brazylia",
+    "MX": "Meksyk",
+    "JP": "Japonia",
+    "CN": "Chiny",
+    "IN": "Indie",
+    "SG": "Singapur",
+    "CH": "Szwajcaria",
+    "SE": "Szwecja",
+    "NO": "Norwegia",
+    "DK": "Dania",
+    "PL": "Polska",
+    "AE": "Zjednoczone Emiraty Arabskie",
+    "ZA": "Republika Południowej Afryki",
+    "NZ": "Nowa Zelandia"
+  },
+  "currencies": {
+    "USD": "Dolar amerykański",
+    "EUR": "Euro",
+    "GBP": "Funt brytyjski",
+    "CAD": "Dolar kanadyjski",
+    "AUD": "Dolar australijski",
+    "BRL": "Real brazylijski",
+    "MXN": "Peso meksykańskie",
+    "JPY": "Jen japoński",
+    "CNY": "Juan chiński",
+    "INR": "Rupia indyjska",
+    "SGD": "Dolar singapurski",
+    "CHF": "Frank szwajcarski",
+    "SEK": "Korona szwedzka",
+    "NOK": "Korona norweska",
+    "DKK": "Korona duńska",
+    "PLN": "Polski złoty",
+    "AED": "Dirham ZEA",
+    "ZAR": "Rand południowoafrykański",
+    "NZD": "Dolar nowozelandzki"
+  },
+  "expenseCategories": {
+    "food": "Jedzenie i napoje",
+    "transport": "Transport",
+    "entertainment": "Rozrywka",
+    "shopping": "Zakupy",
+    "bills": "Rachunki",
+    "health": "Zdrowie",
+    "education": "Edukacja",
+    "other": "Inne"
+  }
+}

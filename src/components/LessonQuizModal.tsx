@@ -25,6 +25,7 @@ interface LessonQuizModalProps {
 
 export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: LessonQuizModalProps) {
   const { t } = useTranslation('missions');
+  const { t: tContent } = useTranslation('content');
   const [selected, setSelected] = useState<number | null>(null);
 
   // Reset per-lesson selection state whenever a new lesson is shown, not just
@@ -38,6 +39,7 @@ export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: L
 
   const revealed = selected !== null;
   const isCorrect = selected === lesson.correctIndex;
+  const options = tContent(`lessons.${lesson.id}.options`, { returnObjects: true }) as [string, string, string];
 
   const handleClose = () => {
     setSelected(null);
@@ -52,11 +54,11 @@ export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: L
   return (
     <BottomSheet visible={visible} onClose={handleClose}>
       <View className="px-5 pt-2 pb-2">
-        <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-on-surface-variant">{lesson.topic}</Text>
-        <Text className="mb-5 text-lg font-black text-on-surface">{lesson.question}</Text>
+        <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-on-surface-variant">{tContent(`lessons.${lesson.id}.topic`)}</Text>
+        <Text className="mb-5 text-lg font-black text-on-surface">{tContent(`lessons.${lesson.id}.question`)}</Text>
 
         <View className="gap-2 mb-4">
-          {lesson.options.map((option, index) => {
+          {options.map((option, index) => {
             const isSelected = selected === index;
             const isAnswer = index === lesson.correctIndex;
 
@@ -80,7 +82,7 @@ export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: L
 
         {revealed && (
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4">
-            <Text className="text-xs font-medium leading-5 text-on-surface-variant">{lesson.explanation}</Text>
+            <Text className="text-xs font-medium leading-5 text-on-surface-variant">{tContent(`lessons.${lesson.id}.explanation`)}</Text>
           </View>
         )}
 

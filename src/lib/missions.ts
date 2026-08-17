@@ -29,6 +29,7 @@
  * mission actually needs it.
  */
 
+import type { TFunction } from 'i18next';
 import type { DepositBearingGoal } from './deposits';
 import {
   addDaysString,
@@ -839,15 +840,27 @@ export interface MissionCopy {
   amount: number | null;
 }
 
-/** Resolve a def's `{amount}` placeholder via an injected formatter (e.g. `formatCurrency`). */
+/**
+ * Resolve a def's `{amount}` placeholder via an injected formatter (e.g.
+ * `formatCurrency`). `t`, when given, resolves the translated copy from the
+ * `content` namespace (key: `missions.<slug>.title`/`.description`, slug
+ * being the def id with dots replaced — i18next's default key separator is
+ * `.`, which would otherwise mis-parse an id like `save-1.5x-target`).
+ * Falls back to the catalog's own English `title`/`description` when `t` is
+ * omitted, matching every existing 3-arg call site (incl. tests).
+ */
 export function renderMissionCopy(
   def: MissionDef,
   ctx: MissionContext,
-  formatAmount: (n: number) => string
+  formatAmount: (n: number) => string,
+  t?: TFunction<'content'>
 ): MissionCopy {
   const amount = def.amount ? def.amount(ctx) : null;
-  const title = amount != null ? def.title.replace('{amount}', formatAmount(amount)) : def.title;
-  return { title, description: def.description, amount };
+  const slug = def.id.replace(/\./g, '-');
+  const rawTitle = t ? t(`missions.${slug}.title`) : def.title;
+  const description = t ? t(`missions.${slug}.description`) : def.description;
+  const title = amount != null ? rawTitle.replace('{amount}', formatAmount(amount)) : rawTitle;
+  return { title, description, amount };
 }
 
 /** Progress toward a def's target, or null for defs with no natural running total (see `MissionDef.progress`). */

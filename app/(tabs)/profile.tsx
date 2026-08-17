@@ -25,6 +25,7 @@ const CARD_SHADOW = {
 
 export default function Profile() {
   const { t } = useTranslation('profile');
+  const { t: tContent } = useTranslation('content');
   const router = useRouter();
   const profile = useStore((state) => state.profile);
   const goals = useStore((state) => state.goals);
@@ -201,7 +202,7 @@ export default function Profile() {
                     <View key={cat} className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-3">
                         <Text className="text-xl">{c?.icon || '📌'}</Text>
-                        <Text className="text-sm font-semibold text-on-surface">{c?.name || cat}</Text>
+                        <Text className="text-sm font-semibold text-on-surface">{c ? tContent(`expenseCategories.${c.id}`) : cat}</Text>
                       </View>
                       <Text className="text-sm font-bold text-on-surface">{formatCurrency(amount, profile.currency)}</Text>
                     </View>
