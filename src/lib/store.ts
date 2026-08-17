@@ -28,6 +28,19 @@ import { PIGGY_STORE_VERSION, migratePiggyState } from './storeMigrations';
 import { PLAN_RANK } from './entitlements';
 import { detectDeviceLanguage, type SupportedLanguage } from './i18n/detect';
 import { formatMoney } from './i18n/format';
+import {
+  type Achievement,
+  DEFAULT_ACHIEVEMENTS,
+  GOAL_TEMPLATES,
+  COUNTRIES,
+  CURRENCIES,
+  EXPENSE_CATEGORIES,
+  getCurrency,
+  getCurrencySymbol,
+} from './catalogs';
+
+export type { Achievement };
+export { GOAL_TEMPLATES, COUNTRIES, CURRENCIES, EXPENSE_CATEGORIES, getCurrency, getCurrencySymbol };
 
 export interface Goal {
   id: string;
@@ -86,15 +99,6 @@ export interface ActiveMission {
   periodKey: string;
   claimed: boolean;
   claimedAt?: string;
-}
-
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  unlockedAt?: string;
 }
 
 /**
@@ -279,95 +283,6 @@ export const DEFAULT_PROFILE: UserProfile = {
   autoLockMinutes: 0,
   language: detectDeviceLanguage(),
 };
-
-const DEFAULT_ACHIEVEMENTS: Achievement[] = [
-  { id: 'a1', title: 'First Step', description: 'Create your first savings goal', icon: '🎯', unlocked: false },
-  { id: 'a2', title: 'Streak Starter', description: 'Save 3 days in a row', icon: '🔥', unlocked: false },
-  { id: 'a3', title: 'Week Warrior', description: 'Complete a 7-day streak', icon: '⚡', unlocked: false },
-  { id: 'a4', title: 'Mission Master', description: 'Complete 5 missions', icon: '🏆', unlocked: false },
-  { id: 'a5', title: 'Quarter Way', description: 'Reach 25% of a goal', icon: '🌱', unlocked: false },
-  { id: 'a6', title: 'Halfway Hero', description: 'Reach 50% of a goal', icon: '💪', unlocked: false },
-  { id: 'a7', title: 'Almost There', description: 'Reach 75% of a goal', icon: '🚀', unlocked: false },
-  { id: 'a8', title: 'Goal Crusher', description: 'Complete a savings goal', icon: '👑', unlocked: false },
-  { id: 'a9', title: 'Budget Boss', description: 'Track expenses for 7 days', icon: '📊', unlocked: false },
-  { id: 'a10', title: 'Level Up', description: 'Reach Saver Level 3', icon: '⭐', unlocked: false },
-  { id: 'a11', title: 'Consistency King', description: '30-day streak', icon: '💎', unlocked: false },
-  { id: 'a12', title: 'Smart Saver', description: 'Complete the AI personality quiz', icon: '🧠', unlocked: false },
-];
-
-export const GOAL_TEMPLATES = [
-  { id: 'holiday', name: 'Holiday', icon: '✈️', suggestedAmount: 2000 },
-  { id: 'concert', name: 'Concert', icon: '🎵', suggestedAmount: 300 },
-  { id: 'car', name: 'Car', icon: '🚗', suggestedAmount: 15000 },
-  { id: 'emergency', name: 'Emergency Fund', icon: '🛡️', suggestedAmount: 5000 },
-  { id: 'laptop', name: 'Laptop', icon: '💻', suggestedAmount: 1500 },
-  { id: 'education', name: 'Education', icon: '📚', suggestedAmount: 10000 },
-  { id: 'apartment', name: 'Apartment', icon: '🏠', suggestedAmount: 20000 },
-  { id: 'wedding', name: 'Wedding', icon: '💍', suggestedAmount: 25000 },
-  { id: 'trip', name: 'First Trip', icon: '🌍', suggestedAmount: 1000 },
-  { id: 'purchase', name: 'Big Purchase', icon: '🎁', suggestedAmount: 500 },
-];
-
-export const COUNTRIES = [
-  { code: 'US', name: 'United States', currency: 'USD' },
-  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
-  { code: 'CA', name: 'Canada', currency: 'CAD' },
-  { code: 'AU', name: 'Australia', currency: 'AUD' },
-  { code: 'DE', name: 'Germany', currency: 'EUR' },
-  { code: 'FR', name: 'France', currency: 'EUR' },
-  { code: 'ES', name: 'Spain', currency: 'EUR' },
-  { code: 'IT', name: 'Italy', currency: 'EUR' },
-  { code: 'NL', name: 'Netherlands', currency: 'EUR' },
-  { code: 'IE', name: 'Ireland', currency: 'EUR' },
-  { code: 'PT', name: 'Portugal', currency: 'EUR' },
-  { code: 'BR', name: 'Brazil', currency: 'BRL' },
-  { code: 'MX', name: 'Mexico', currency: 'MXN' },
-  { code: 'JP', name: 'Japan', currency: 'JPY' },
-  { code: 'CN', name: 'China', currency: 'CNY' },
-  { code: 'IN', name: 'India', currency: 'INR' },
-  { code: 'SG', name: 'Singapore', currency: 'SGD' },
-  { code: 'CH', name: 'Switzerland', currency: 'CHF' },
-  { code: 'SE', name: 'Sweden', currency: 'SEK' },
-  { code: 'NO', name: 'Norway', currency: 'NOK' },
-  { code: 'DK', name: 'Denmark', currency: 'DKK' },
-  { code: 'PL', name: 'Poland', currency: 'PLN' },
-  { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
-  { code: 'ZA', name: 'South Africa', currency: 'ZAR' },
-  { code: 'NZ', name: 'New Zealand', currency: 'NZD' },
-];
-
-export const CURRENCIES = [
-  { code: 'USD', symbol: '$',    name: 'US Dollar',          symbolAfter: false },
-  { code: 'EUR', symbol: '€',    name: 'Euro',               symbolAfter: false },
-  { code: 'GBP', symbol: '£',    name: 'British Pound',      symbolAfter: false },
-  { code: 'CAD', symbol: 'CA$',  name: 'Canadian Dollar',    symbolAfter: false },
-  { code: 'AUD', symbol: 'A$',   name: 'Australian Dollar',  symbolAfter: false },
-  { code: 'BRL', symbol: 'R$',   name: 'Brazilian Real',     symbolAfter: false },
-  { code: 'MXN', symbol: 'MX$',  name: 'Mexican Peso',       symbolAfter: false },
-  { code: 'JPY', symbol: '¥',    name: 'Japanese Yen',       symbolAfter: false },
-  { code: 'CNY', symbol: '¥',    name: 'Chinese Yuan',       symbolAfter: false },
-  { code: 'INR', symbol: '₹',    name: 'Indian Rupee',       symbolAfter: false },
-  { code: 'SGD', symbol: 'S$',   name: 'Singapore Dollar',   symbolAfter: false },
-  { code: 'CHF', symbol: 'CHF',  name: 'Swiss Franc',        symbolAfter: false },
-  { code: 'SEK', symbol: 'kr',   name: 'Swedish Krona',      symbolAfter: true  },
-  { code: 'NOK', symbol: 'kr',   name: 'Norwegian Krone',    symbolAfter: true  },
-  { code: 'DKK', symbol: 'kr',   name: 'Danish Krone',       symbolAfter: true  },
-  { code: 'PLN', symbol: 'zł',   name: 'Polish Złoty',       symbolAfter: true  },
-  { code: 'AED', symbol: 'د.إ',  name: 'UAE Dirham',         symbolAfter: false },
-  { code: 'ZAR', symbol: 'R',    name: 'South African Rand', symbolAfter: false },
-  { code: 'NZD', symbol: 'NZ$',  name: 'New Zealand Dollar', symbolAfter: false },
-];
-
-export const EXPENSE_CATEGORIES = [
-  { id: 'food', name: 'Food & Drinks', icon: '🍔' },
-  { id: 'transport', name: 'Transport', icon: '🚌' },
-  { id: 'entertainment', name: 'Entertainment', icon: '🎮' },
-  { id: 'shopping', name: 'Shopping', icon: '🛍️' },
-  { id: 'bills', name: 'Bills', icon: '📄' },
-  { id: 'health', name: 'Health', icon: '💊' },
-  { id: 'education', name: 'Education', icon: '📖' },
-  { id: 'other', name: 'Other', icon: '📌' },
-];
 
 export interface PiggyState {
   profile: UserProfile;

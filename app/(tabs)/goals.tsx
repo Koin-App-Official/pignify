@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useFocusReplay } from '@/hooks/useFocusReplay';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,12 +10,12 @@ import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } fr
 import type { SharedValue } from 'react-native-reanimated';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyAmountInput } from '@/components/ui/currency-amount-input';
 import { ProgressRing } from '@/components/ProgressRing';
-import { useStore, CURRENCIES, Goal, UserPlan, formatCurrency } from '@/lib/store';
+import { useStore, Goal, UserPlan, formatCurrency } from '@/lib/store';
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
-import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { resolveMonthlyContribution } from '@/lib/goalMath';
@@ -57,10 +57,6 @@ const GOAL_ICONS: Record<string, string> = {
   'Something Else': '✏️',
 };
 
-function formatTargetDate(isoDate: string, language: SupportedLanguage): string {
-  return formatMonthYear(isoDate, language);
-}
-
 /** Named steps for the add-goal flow — see the equivalent enum in app/onboarding.tsx. */
 enum CreateStep {
   GoalDeclaration = 0,
@@ -89,8 +85,6 @@ export default function Goals() {
   const updateGoal = useStore((state) => state.updateGoal);
   const addXP = useStore((state) => state.addXP);
   const unlockAchievement = useStore((state) => state.unlockAchievement);
-
-  const currencySymbol = CURRENCIES.find((c) => c.code === currency)?.symbol ?? currency;
 
   const renderGoalListRow = useCallback(
     ({ item, index }: { item: Goal; index: number }) => (
@@ -250,7 +244,7 @@ export default function Goals() {
                   <Text className="text-xs text-on-surface-variant mt-2">
                     {t('detail.settingAside', {
                       amount: formatCurrency(monthlySetAside, currency),
-                      date: formatTargetDate(g.deadline, language),
+                      date: formatMonthYear(g.deadline, language),
                     })}
                   </Text>
                 </View>
@@ -381,18 +375,12 @@ export default function Goals() {
                   {t('onboarding:targetAmount.sub')}
                 </Text>
 
-                <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
-                  <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
-                  <TextInput
-                    className="flex-1 text-xl font-bold text-on-surface"
-                    value={targetAmount}
-                    onChangeText={(v) => { setTargetAmount(v.replace(/[^0-9.]/g, '')); if (targetAmountError) setTargetAmountError(''); }}
-                    keyboardType="numeric"
-                    placeholder={t('onboarding:contribution.amountPlaceholder')}
-                    placeholderTextColor={PLACEHOLDER_COLOR}
-                    style={TEXT_INPUT_CENTERING}
-                  />
-                </View>
+                <CurrencyAmountInput
+                  currencyCode={currency}
+                  value={targetAmount}
+                  onChangeText={(v) => { setTargetAmount(v); if (targetAmountError) setTargetAmountError(''); }}
+                  placeholder={t('onboarding:contribution.amountPlaceholder')}
+                />
                 {targetAmountError ? <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text> : null}
 
                 <View className="mt-8 flex-row gap-3">
@@ -456,7 +444,7 @@ export default function Goals() {
                     value={formatCurrency(monthlyContribution, currency)}
                     highlight
                   />
-                  <ReviewRow label={t('onboarding:blueprint.rowGoalReached')} value={formatTargetDate(targetDate, language)} />
+                  <ReviewRow label={t('onboarding:blueprint.rowGoalReached')} value={formatMonthYear(targetDate, language)} />
                 </View>
 
                 {savingsExceedsIncome && (

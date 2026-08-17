@@ -72,18 +72,16 @@ export interface RetentionValidation {
  * period boundary just before applying the downgrade (records may have changed
  * since the request).
  *
- * `t` is optional so this stays callable (and testable under vitest, with no
- * i18next instance available) without it — omitting it falls back to the
- * original plain-English message. The UI caller (downgrade-selection.tsx)
- * passes its `t` to get a translated one; this is a defensive/should-never-
- * happen path (the UI itself prevents an over-limit selection), so the exact
- * wording matters less than not silently breaking retention.test.ts's
- * existing 2-arg calls.
+ * `t` is required (Phase 6, implementations/I18N_SCALE.md) — the plain-English
+ * fallback this used to carry existed only so retention.test.ts could call
+ * this with 2 args; the fix is a real `t` in the test (via `createTestT`,
+ * i18n/testInstance.ts), not an English string living outside content.json.
+ * The UI caller (downgrade-selection.tsx) already passes its own `t`.
  */
 export function validateRetentionSelection(
   targetPlan: UserPlan,
   selection: RetentionSelection,
-  t?: TFunction<'plans'>
+  t: TFunction<'plans'>
 ): RetentionValidation {
   const errors: string[] = [];
   const checks: [keyof RetentionSelection, 'goals' | 'incomes' | 'devices'][] = [
@@ -98,14 +96,12 @@ export function validateRetentionSelection(
     const count = selection[field].length;
     if (count > limit) {
       errors.push(
-        t
-          ? t('downgradeSelection.retentionTooMany', {
-              resource: t(`downgradeSelection.retentionResource.${resource}`),
-              count,
-              plan: targetPlan,
-              limit,
-            })
-          : `Too many ${resource} selected to keep (${count}); ${targetPlan} allows ${limit}.`
+        t('downgradeSelection.retentionTooMany', {
+          resource: t(`downgradeSelection.retentionResource.${resource}`),
+          count,
+          plan: targetPlan,
+          limit,
+        })
       );
     }
   }

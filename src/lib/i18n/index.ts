@@ -1,17 +1,11 @@
-/**
- * i18next bootstrap. Namespace scaffolding for #120 (Polish i18n) — most
- * namespaces are still empty stubs (`{}`); Phases 3-6 of
- * implementations/I18N_PL.md fill them in screen by screen. `settings` is
- * the one namespace with real content so far, backing the language row this
- * phase adds to app/settings.tsx.
- */
+/** i18next bootstrap — see `resources` below for the locale/namespace guardrail. */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { shouldPolyfill } from '@formatjs/intl-pluralrules/should-polyfill.js';
 
 import { useStore } from '@/lib/store';
 import { createLogger } from '@/lib/logger';
-import { detectDeviceLanguage, SUPPORTED_LANGUAGES } from './detect';
+import { detectDeviceLanguage, SUPPORTED_LANGUAGES, type SupportedLanguage } from './detect';
 
 const log = createLogger('i18n');
 
@@ -41,21 +35,37 @@ import plPlans from './locales/pl/plans.json';
 import plNotifications from './locales/pl/notifications.json';
 import plContent from './locales/pl/content.json';
 
+/**
+ * `en`'s namespace set is the one source of truth for what a locale must
+ * cover — every other locale's resource bundle is checked against
+ * `keyof typeof enResources` below, so a locale missing a namespace is a
+ * type error, not a silent English fallback.
+ */
+const enResources = {
+  common: enCommon,
+  onboarding: enOnboarding,
+  dashboard: enDashboard,
+  goals: enGoals,
+  missions: enMissions,
+  coach: enCoach,
+  profile: enProfile,
+  settings: enSettings,
+  auth: enAuth,
+  plans: enPlans,
+  notifications: enNotifications,
+  content: enContent,
+};
+
+export type Namespace = keyof typeof enResources;
+
+/**
+ * `satisfies Record<SupportedLanguage, ...>` is the actual guardrail (Phase 1,
+ * implementations/I18N_SCALE.md): adding a language to `SupportedLanguage`
+ * without adding its resource bundle here used to compile clean and silently
+ * fall back every key to English. Now it's a type error on this object.
+ */
 const resources = {
-  en: {
-    common: enCommon,
-    onboarding: enOnboarding,
-    dashboard: enDashboard,
-    goals: enGoals,
-    missions: enMissions,
-    coach: enCoach,
-    profile: enProfile,
-    settings: enSettings,
-    auth: enAuth,
-    plans: enPlans,
-    notifications: enNotifications,
-    content: enContent,
-  },
+  en: enResources,
   pl: {
     common: plCommon,
     onboarding: plOnboarding,
@@ -70,7 +80,19 @@ const resources = {
     notifications: plNotifications,
     content: plContent,
   },
-} as const;
+} as const satisfies Record<SupportedLanguage, Record<Namespace, unknown>>;
+
+/**
+ * One entry per `SupportedLanguage` — a language added to `detect.ts` without
+ * its CLDR plural-category data here is a type error (Phase 1,
+ * implementations/I18N_SCALE.md), not a silent `_few`/`_many` resolution
+ * failure at runtime (see Phase 0, implementations/I18N_PL.md, for what that
+ * failure mode looks like without the polyfill at all).
+ */
+const PLURAL_LOCALE_DATA: Record<SupportedLanguage, () => Promise<unknown>> = {
+  en: () => import('@formatjs/intl-pluralrules/locale-data/en.js'),
+  pl: () => import('@formatjs/intl-pluralrules/locale-data/pl.js'),
+};
 
 let initPromise: Promise<typeof i18n> | null = null;
 
@@ -88,8 +110,7 @@ export function initI18n(): Promise<typeof i18n> {
         // doesn't crash — it silently falls back to English-style one/other
         // pluralization for every locale, including Polish.
         await import('@formatjs/intl-pluralrules/polyfill.js');
-        await import('@formatjs/intl-pluralrules/locale-data/en.js');
-        await import('@formatjs/intl-pluralrules/locale-data/pl.js');
+        await Promise.all(SUPPORTED_LANGUAGES.map((lang) => PLURAL_LOCALE_DATA[lang]()));
       }
 
       const initialLanguage = useStore.getState().profile.language ?? detectDeviceLanguage();
@@ -98,9 +119,9 @@ export function initI18n(): Promise<typeof i18n> {
         resources,
         lng: initialLanguage,
         fallbackLng: 'en',
-        supportedLngs: SUPPORTED_LANGUAGES as unknown as string[],
+        supportedLngs: SUPPORTED_LANGUAGES,
         defaultNS: 'common',
-        ns: Object.keys(resources.en),
+        ns: Object.keys(enResources),
         interpolation: { escapeValue: false },
         returnNull: false,
         // A missing key must never silently ship as a raw "namespace:key.path"

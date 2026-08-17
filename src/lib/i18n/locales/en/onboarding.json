@@ -21,21 +21,19 @@
     }
   },
   "contribution": {
-    "monthlyHeadline": "How much can you\nset aside each month?",
+    "monthlyHeadline": "How much can you set aside each month?",
     "monthlySub": "We'll work out when you'll hit your goal.",
-    "suggestionChip": "{{pct}}% · {{symbol}}{{amount}}",
+    "suggestionChip": "{{pct}}% · {{amount}}",
     "amountPlaceholder": "0.00",
-    "reachGoalBy": "At {{symbol}}{{amount}}/month you'll reach your goal by",
+    "reachGoalBy": "At {{amount}}/month you'll reach your goal by",
     "pctOfIncome": "That's {{pct}}% of your monthly income.",
     "cappedWarning": "At this rate it'll take over 10 years. Try raising your monthly amount or lowering your goal.",
     "incomeWarning": "That's a big chunk of your income. Make sure it's comfortable — you can always adjust later.",
     "switchToDeadline": "I have a fixed deadline instead",
-    "deadlineHeadline": "When do you want\nto achieve this?",
+    "deadlineHeadline": "When do you want to achieve this?",
     "deadlineSub": "Pick the date — we'll work out your monthly contribution.",
     "selectDate": "Select a date",
-    "needToSetAside": "You'll need to set aside",
-    "amountPerMonth": "{{symbol}}{{amount}}/month",
-    "hitDeadlineBy": "to hit this by {{date}}.",
+    "needToSetAside": "You'll need to set aside <bold>{{amount}}/month</bold> to hit this by {{date}}.",
     "deadlineIncomeWarning": "This date requires setting aside a large share of your income. We can adjust this later!",
     "switchToMonthly": "Switch back to monthly set-aside",
     "continue": "Continue"
@@ -49,7 +47,7 @@
     "resumeBannerNoName": "Picking up where you left off."
   },
   "name": {
-    "headline": "Welcome to Piggy!\nWhat should we call you?",
+    "headline": "Welcome to Piggy! What should we call you?",
     "sub": "Let's make this personal.",
     "placeholder": "Your first name",
     "errorEmpty": "Hey, we'd love to know your name! 😊"
@@ -57,12 +55,12 @@
   "ageGate": {
     "blockedTitle": "Piggy is for adults 18+",
     "blockedBody": "We're not able to create an account for you based on the date of birth you confirmed. This app isn't available to users under 18.",
-    "headline": "When were you born,\n{{firstName}}?",
+    "headline": "When were you born, {{firstName}}?",
     "sub": "Piggy is only available to users 18 and older, so we need to confirm your age before we go any further.",
     "privacyNote": "This is a legal age requirement, not profiling. We use your date of birth to confirm you're 18 — it's never used to target you or shared with anyone."
   },
   "localization": {
-    "headline": "Where are you based,\n{{firstName}}?",
+    "headline": "Where are you based, {{firstName}}?",
     "sub": "We'll use this to format currency and set helpful defaults.",
     "countryLabel": "Country",
     "currencyLabel": "Currency",
@@ -73,9 +71,7 @@
     "selectCountryTitle": "Select Country",
     "selectCurrencyTitle": "Select Currency",
     "languageLabel": "Language",
-    "selectLanguageTitle": "Select Language",
-    "languageEn": "English",
-    "languagePl": "Polski"
+    "selectLanguageTitle": "Select Language"
   },
   "goal": {
     "headline": "What are we saving for?",
@@ -91,12 +87,12 @@
     }
   },
   "targetAmount": {
-    "headline": "How much do you need\nfor your {{goalName}}?",
+    "headline": "How much do you need for your {{goalName}}?",
     "sub": "Don't worry, you can always adjust this later.",
     "errorEmpty": "Please enter an amount greater than 0 💸"
   },
   "income": {
-    "headline": "To build your roadmap,\nwhat is your average\nmonthly income?",
+    "headline": "To build your roadmap, what is your average monthly income?",
     "sub": "We use this only to calculate how much you need to set aside. Your data is encrypted and completely private.",
     "skip": "I'd rather not say right now"
   },
@@ -117,7 +113,7 @@
     "createAccount": "Create My Piggy Account"
   },
   "pushPermission": {
-    "headline": "Want a nudge when\nit counts, {{firstName}}?",
+    "headline": "Want a nudge when it counts, {{firstName}}?",
     "sub": "Saving {{amount}} a month is easy to plan and easy to forget. A quick reminder is what keeps a streak alive.",
     "streakTitle": "Streak protection",
     "streakBody": "A heads-up when today's set-aside is still outstanding.",

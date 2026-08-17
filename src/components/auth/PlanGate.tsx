@@ -318,6 +318,10 @@ export function PlanGate() {
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         <Animated.View entering={FadeInDown.springify()} className="items-center">
           <Mascot expression="celebrating" size={120} />
+          {/* planGate.trialIntro.title carries a deliberate `\n` (audited,
+              Phase 8, implementations/I18N_SCALE.md) — "on us" is meant to
+              land alone as the payoff line, same reasoning as welcome.tsx's
+              slide headlines. Not tied to a fixed-height container. */}
           <Text className="mt-8 mb-2 text-3xl font-black text-on-surface text-center">
             {t('planGate.trialIntro.title', { days: daysLeft ?? 14, plan: planName })}
           </Text>

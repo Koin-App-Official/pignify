@@ -35,91 +35,91 @@
     "emergency-fund": {
       "topic": "Fundusz awaryjny",
       "question": "Do czego głównie służy fundusz awaryjny?",
-      "options": ["Pokrywania nieoczekiwanych wydatków", "Kupowania inwestycji podczas spadków", "Zarabiania najwyższego możliwego oprocentowania"],
+      "options": { "a": "Pokrywania nieoczekiwanych wydatków", "b": "Kupowania inwestycji podczas spadków", "c": "Zarabiania najwyższego możliwego oprocentowania" },
       "explanation": "To gotówka odłożona na niespodzianki — utratę pracy, wizytę u lekarza, naprawę samochodu — trzymana tak, by można było łatwo po nią sięgnąć, a nie zainwestowana z myślą o zysku."
     },
     "apy": {
       "topic": "Oprocentowanie efektywne",
       "question": "Co mówi Ci efektywne roczne oprocentowanie (uwzględniające kapitalizację odsetek)?",
-      "options": ["Twój miesięczny limit wydatków", "Rzeczywisty roczny zysk z uwzględnieniem kapitalizacji odsetek", "Jednorazowy bonus powitalny"],
+      "options": { "a": "Twój miesięczny limit wydatków", "b": "Rzeczywisty roczny zysk z uwzględnieniem kapitalizacji odsetek", "c": "Jednorazowy bonus powitalny" },
       "explanation": "Oprocentowanie efektywne uwzględnia kapitalizację odsetek, więc pokazuje, ile faktycznie zarobisz w ciągu roku — to bardziej uczciwa liczba niż nominalna stopa procentowa."
     },
     "needs-vs-wants": {
       "topic": "Potrzeby a zachcianki",
       "question": "Które z poniższych to zwykle „potrzeba”, a nie „zachcianka”?",
-      "options": ["Czynsz", "Subskrypcje streamingowe", "Jedzenie na mieście"],
+      "options": { "a": "Czynsz", "b": "Subskrypcje streamingowe", "c": "Jedzenie na mieście" },
       "explanation": "Potrzeby zapewniają Ci dach nad głową, jedzenie i normalne funkcjonowanie. Zachcianki poprawiają życie, ale nie są niezbędne — to rozróżnienie to podstawa większości budżetów."
     },
     "50-30-20": {
       "topic": "Zasada 50/30/20",
       "question": "W budżetowej zasadzie 50/30/20, na co idzie tych 20%?",
-      "options": ["Zachcianki", "Potrzeby", "Oszczędności i spłata długów"],
+      "options": { "a": "Zachcianki", "b": "Potrzeby", "c": "Oszczędności i spłata długów" },
       "explanation": "Podział wygląda mniej więcej tak: 50% potrzeby, 30% zachcianki, 20% oszczędności i długi — to prosty punkt wyjścia, a nie sztywna reguła."
     },
     "compound-interest": {
       "topic": "Procent składany",
       "question": "Dlaczego wczesne rozpoczęcie oszczędzania ma takie znaczenie?",
-      "options": ["Procent składany nalicza zysk także od wcześniej wypracowanych zysków", "Banki płacą więcej nowym klientom", "Ceny rosną tylko na początku roku"],
+      "options": { "a": "Procent składany nalicza zysk także od wcześniej wypracowanych zysków", "b": "Banki płacą więcej nowym klientom", "c": "Ceny rosną tylko na początku roku" },
       "explanation": "W każdym okresie odsetki naliczane są od Twojej pierwotnej kwoty ORAZ od wszystkiego, co już wcześniej zarobiła — im dłużej to trwa, tym szybszy jest wzrost."
     },
     "budgeting-basics": {
       "topic": "Budżetowanie",
       "question": "Jaki jest główny sens zapisywania każdego wydatku?",
-      "options": ["Żeby czuć się winnym za wydawanie pieniędzy", "Żeby zobaczyć, gdzie naprawdę idą pieniądze", "Żeby zakwalifikować się do kredytu"],
+      "options": { "a": "Żeby czuć się winnym za wydawanie pieniędzy", "b": "Żeby zobaczyć, gdzie naprawdę idą pieniądze", "c": "Żeby zakwalifikować się do kredytu" },
       "explanation": "Większość ludzi nie docenia skali drobnych, powtarzających się wydatków, dopóki ich nie zapisze — celem jest widoczność, a nie ocenianie."
     },
     "credit-score": {
       "topic": "Scoring kredytowy",
       "question": "Który nawyk najbardziej konsekwentnie poprawia scoring kredytowy?",
-      "options": ["Terminowe spłacanie rachunków", "Szybkie otwieranie wielu kart kredytowych", "Celowe utrzymywanie zadłużenia"],
+      "options": { "a": "Terminowe spłacanie rachunków", "b": "Szybkie otwieranie wielu kart kredytowych", "c": "Celowe utrzymywanie zadłużenia" },
       "explanation": "Historia terminowych spłat to zwykle najważniejszy pojedynczy czynnik — regularne płacenie na czas liczy się bardziej niż jakikolwiek pojedynczy trik."
     },
     "diversification": {
       "topic": "Dywersyfikacja",
       "question": "Jaki problem rozwiązuje głównie dywersyfikacja?",
-      "options": ["Gwarantuje zysk", "Ogranicza wpływ słabego wyniku jednej inwestycji na całość", "Całkowicie pozwala uniknąć podatków"],
+      "options": { "a": "Gwarantuje zysk", "b": "Ogranicza wpływ słabego wyniku jednej inwestycji na całość", "c": "Całkowicie pozwala uniknąć podatków" },
       "explanation": "Rozłożenie pieniędzy na różne aktywa sprawia, że jeden słaby wynik nie zatapia całego portfela. To zarządzanie ryzykiem, a nie zwiększanie zysku."
     },
     "inflation": {
       "topic": "Inflacja",
       "question": "Co inflacja robi z gotówką, która po prostu leży odłożona?",
-      "options": ["Nic, wartość gotówki nigdy się nie zmienia", "Powoli obniża jej siłę nabywczą", "Zwiększa jej siłę nabywczą"],
+      "options": { "a": "Nic, wartość gotówki nigdy się nie zmienia", "b": "Powoli obniża jej siłę nabywczą", "c": "Zwiększa jej siłę nabywczą" },
       "explanation": "Jeśli ceny rosną szybciej niż odsetki od Twojej gotówki, ta sama kwota kupuje co roku odrobinę mniej."
     },
     "debt-snowball": {
       "topic": "Spłacanie długów",
       "question": "W metodzie „kuli śnieżnej” (debt snowball), który dług spłacasz jako pierwszy?",
-      "options": ["Ten z najmniejszym saldem", "Ten z najwyższym oprocentowaniem", "Ten, który powstał najpóźniej"],
+      "options": { "a": "Ten z najmniejszym saldem", "b": "Ten z najwyższym oprocentowaniem", "c": "Ten, który powstał najpóźniej" },
       "explanation": "Metoda kuli śnieżnej celuje najpierw w najmniejsze saldo, by dać szybkie sukcesy i rozpęd — inna metoda (lawina) celuje zamiast tego w najwyższe oprocentowanie."
     },
     "opportunity-cost": {
       "topic": "Koszt alternatywny",
       "question": "Co oznacza „koszt alternatywny” przy wydawaniu pieniędzy?",
-      "options": ["Podatek, który płacisz od zakupu", "To, z czego rezygnujesz, nie wydając tych pieniędzy gdzie indziej", "Marża sklepu na danym produkcie"],
+      "options": { "a": "Podatek, który płacisz od zakupu", "b": "To, z czego rezygnujesz, nie wydając tych pieniędzy gdzie indziej", "c": "Marża sklepu na danym produkcie" },
       "explanation": "Każda złotówka wydana w jeden sposób to złotówka, która nie może pójść na coś innego — prawdziwy koszt obejmuje też to, czego przez to nie zrobiłeś."
     },
     "net-worth": {
       "topic": "Wartość netto majątku",
       "question": "Jak oblicza się wartość netto majątku?",
-      "options": ["Miesięczny dochód minus wydatki", "To, co posiadasz, minus to, co jesteś winien", "Łączne saldo konta oszczędnościowego"],
+      "options": { "a": "Miesięczny dochód minus wydatki", "b": "To, co posiadasz, minus to, co jesteś winien", "c": "Łączne saldo konta oszczędnościowego" },
       "explanation": "Wartość netto majątku to migawka: wszystko, co posiadasz (aktywa), minus wszystko, co jesteś winien (zobowiązania). Dochód to strumień; wartość netto to stan na dany moment."
     },
     "automatic-savings": {
       "topic": "Automatyzacja oszczędzania",
       "question": "Dlaczego automatyczne przelewy na oszczędności zwykle dobrze się sprawdzają?",
-      "options": ["Eliminują konieczność podejmowania decyzji za każdym razem", "Gwarantują prawnie wyższe oprocentowanie", "Są wymagane przez większość banków"],
+      "options": { "a": "Eliminują konieczność podejmowania decyzji za każdym razem", "b": "Gwarantują prawnie wyższe oprocentowanie", "c": "Są wymagane przez większość banków" },
       "explanation": "Automatyzacja realizuje zasadę „zapłać najpierw sobie”, zanim zdążysz te pieniądze wydać — zamienia oszczędzanie w domyślne działanie zamiast decyzji, którą trzeba podejmować za każdym razem."
     },
     "high-yield-savings": {
       "topic": "Konto oszczędnościowe z wysokim oprocentowaniem",
       "question": "Co głównie odróżnia konto oszczędnościowe z wysokim oprocentowaniem od zwykłego?",
-      "options": ["Nie ma żadnych limitów wypłat", "Płaci wyraźnie wyższe oprocentowanie", "Pełni jednocześnie funkcję konta osobistego"],
+      "options": { "a": "Nie ma żadnych limitów wypłat", "b": "Płaci wyraźnie wyższe oprocentowanie", "c": "Pełni jednocześnie funkcję konta osobistego" },
       "explanation": "Podstawowa różnica to oprocentowanie — często kilkukrotnie wyższe niż na zwykłym koncie oszczędnościowym — zwykle oferowane przez banki działające głównie online."
     },
     "index-funds": {
       "topic": "Fundusze indeksowe",
       "question": "Co robi fundusz indeksowy?",
-      "options": ["Wybiera garstkę „zwycięskich” spółek", "Odwzorowuje cały szeroki indeks rynkowy", "Gwarantuje stały roczny zwrot"],
+      "options": { "a": "Wybiera garstkę „zwycięskich” spółek", "b": "Odwzorowuje cały szeroki indeks rynkowy", "c": "Gwarantuje stały roczny zwrot" },
       "explanation": "Zamiast stawiać na pojedyncze spółki, fundusz indeksowy posiada szeroki wycinek rynku, rozkładając ryzyko na wiele różnych aktywów naraz."
     }
   },

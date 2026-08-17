@@ -98,6 +98,14 @@ export default function Welcome() {
                 expression change is what drives the mascot's reaction, so
                 setting it up front would play the animation off-screen. */}
             <Mascot expression={i === index ? slide.expression : 'idle'} size={160} />
+            {/* Each welcome.slides.<id>.headline carries a deliberate `\n`
+                (audited, Phase 8, implementations/I18N_SCALE.md) — a
+                copywriting choice, not a layout constraint: e.g. "No bank
+                login.\nEver." depends on "Ever." landing alone on its own
+                line for the intended punch, something a natural wrap on a
+                wide screen could lose entirely. A translator may reposition
+                or drop the break to fit their own phrasing — it isn't tied
+                to a fixed-height container here. */}
             <Text className="mt-10 text-4xl font-black text-on-surface text-center">
               {t(`welcome.slides.${slide.id}.headline`)}
             </Text>

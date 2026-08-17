@@ -28,7 +28,7 @@ import {
 } from 'lucide-react-native';
 
 import { useStore } from '@/lib/store';
-import { SUPPORTED_LANGUAGES } from '@/lib/i18n/detect';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/lib/i18n/detect';
 import { useAuthLock } from '@/lib/authLock';
 import { getPlanConfig, formatUSD } from '@/lib/entitlements';
 import {
@@ -41,6 +41,7 @@ import {
 import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
+import { PickerModal } from '@/components/ui/picker-modal';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -71,11 +72,14 @@ function SectionLabel({ children }: { children: string }) {
 function Row({
   icon,
   label,
+  value,
   onPress,
   destructive,
 }: {
   icon: React.ReactNode;
   label: string;
+  /** Current selection shown before the chevron, e.g. a picker row's active value. */
+  value?: string;
   onPress: () => void;
   destructive?: boolean;
 }) {
@@ -90,7 +94,10 @@ function Row({
           {label}
         </Text>
       </View>
-      <ChevronRight size={18} color="#94A3B8" />
+      <View className="flex-row items-center gap-2">
+        {value ? <Text className="text-[14px] font-medium text-on-surface-variant">{value}</Text> : null}
+        <ChevronRight size={18} color="#94A3B8" />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -109,6 +116,7 @@ export default function Settings() {
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioKind, setBioKind] = useState<BiometricKind>('none');
   const [bioEnabled, setBioEnabled] = useState(false);
+  const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
 
   // Re-read on every focus: covers both the initial mount and returning from
   // /enable-biometric after a successful PIN confirmation.
@@ -269,38 +277,12 @@ export default function Settings() {
           <FadeInStagger index={2} delayStep={60}>
             <SectionLabel>{t('language.sectionLabel')}</SectionLabel>
             <View className="mb-7 rounded-2xl bg-surface-container-low px-6" style={CARD_SHADOW}>
-              <View className="py-4">
-                <View className="flex-row items-center gap-[14px] mb-[14px]">
-                  <Globe size={18} color="#64748B" />
-                  <Text className="text-[16px] font-semibold text-on-surface">{t('language.sectionLabel')}</Text>
-                </View>
-                <View className="flex-row gap-[9px]">
-                  {SUPPORTED_LANGUAGES.map((code) => {
-                    const active = profile.language === code;
-                    return (
-                      <TouchableOpacity
-                        key={code}
-                        onPress={() => {
-                          updateProfile({ language: code });
-                          // Local notifications are rendered at schedule time, not fire
-                          // time — without this, already-queued notifications would keep
-                          // showing the old language until the next unrelated reschedule.
-                          refreshNotifications();
-                        }}
-                        className={`flex-1 items-center rounded-[14px] py-[9px] px-1 ${active ? 'bg-primary' : 'bg-surface-container'}`}
-                      >
-                        <Text
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          className={`text-[14px] font-bold ${active ? 'text-primary-foreground' : 'text-on-surface-variant'}`}
-                        >
-                          {t(`language.${code}`)}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
+              <Row
+                icon={<Globe size={18} color="#64748B" />}
+                label={t('language.sectionLabel')}
+                value={t(`common:language.${profile.language}`)}
+                onPress={() => setLanguagePickerVisible(true)}
+              />
             </View>
           </FadeInStagger>
 
@@ -389,6 +371,21 @@ export default function Settings() {
         >
           <X size={22} color="#FFFFFF" />
         </TouchableOpacity>
+
+        <PickerModal
+          isVisible={languagePickerVisible}
+          onClose={() => setLanguagePickerVisible(false)}
+          onSelect={(item) => {
+            updateProfile({ language: item.code as SupportedLanguage });
+            // Local notifications are rendered at schedule time, not fire
+            // time — without this, already-queued notifications would keep
+            // showing the old language until the next unrelated reschedule.
+            refreshNotifications();
+          }}
+          items={SUPPORTED_LANGUAGES.map((code) => ({ code, name: t(`common:language.${code}`) }))}
+          selectedCode={profile.language}
+          title={t('language.sectionLabel')}
+        />
       </SafeAreaView>
     </ScreenTransition>
   );

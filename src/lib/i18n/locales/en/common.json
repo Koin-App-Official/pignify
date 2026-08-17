@@ -23,5 +23,9 @@
     "title": "Is this correct?",
     "body": "Once confirmed, this can't be changed.",
     "edit": "Edit"
+  },
+  "language": {
+    "en": "English",
+    "pl": "Polski"
   }
 }

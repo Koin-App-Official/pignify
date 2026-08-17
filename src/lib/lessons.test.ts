@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { LESSONS, lessonForDate } from './lessons';
+import { LESSONS, LESSON_OPTION_KEYS, lessonForDate } from './lessons';
 
+// Copy (topic/question/options/explanation) lives entirely in content.json
+// now (Phase 6, implementations/I18N_SCALE.md) — its own presence/shape
+// checks are contentParity.test.ts's job (`lessons: every content.json
+// lesson has topic, question, explanation, and exactly options a/b/c`,
+// `lessons: every locale's correctKey names one of that locale's own option
+// keys`). This file only owns what's actually data: ids and correctKey.
 describe('LESSONS', () => {
   it('has at least 15 items', () => {
     expect(LESSONS.length).toBeGreaterThanOrEqual(15);
@@ -11,25 +17,9 @@ describe('LESSONS', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('every lesson has exactly 3 non-empty options', () => {
+  it("every correctKey is one of the valid option keys", () => {
     for (const lesson of LESSONS) {
-      expect(lesson.options).toHaveLength(3);
-      for (const option of lesson.options) {
-        expect(option.trim().length).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it('every correctIndex is a valid index into options', () => {
-    for (const lesson of LESSONS) {
-      expect([0, 1, 2]).toContain(lesson.correctIndex);
-    }
-  });
-
-  it('every lesson has a non-empty question and explanation', () => {
-    for (const lesson of LESSONS) {
-      expect(lesson.question.trim().length).toBeGreaterThan(0);
-      expect(lesson.explanation.trim().length).toBeGreaterThan(0);
+      expect(LESSON_OPTION_KEYS, lesson.id).toContain(lesson.correctKey);
     }
   });
 });

@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import type { TFunction } from 'i18next';
 import {
   MISSION_CATALOG,
   buildMissionContext,
@@ -14,6 +15,13 @@ import {
   type MissionProfileSlice,
 } from './missions';
 import { lessonForDate } from './lessons';
+import { createTestT } from './i18n/testInstance';
+import enContent from './i18n/locales/en/content.json';
+
+let tContent: TFunction<'content'>;
+beforeAll(async () => {
+  tContent = await createTestT('content');
+});
 
 const PROFILE = (overrides: Partial<MissionProfileSlice> = {}): MissionProfileSlice => ({
   level: 1,
@@ -292,7 +300,7 @@ describe('renderMissionCopy', () => {
   it('substitutes the {amount} placeholder', () => {
     const def = MISSION_CATALOG.find((d) => d.id === 'save-today')!;
     const ctx = ctxFrom({ goals: [GOAL()] });
-    const copy = renderMissionCopy(def, ctx, fmt);
+    const copy = renderMissionCopy(def, ctx, fmt, tContent);
     expect(copy.title).not.toContain('{amount}');
     expect(copy.title).toContain('$');
     expect(copy.amount).toBeGreaterThan(0);
@@ -301,7 +309,7 @@ describe('renderMissionCopy', () => {
   it('leaves titles without a placeholder untouched', () => {
     const def = MISSION_CATALOG.find((d) => d.id === 'skip-coffee')!;
     const ctx = ctxFrom({});
-    const copy = renderMissionCopy(def, ctx, fmt);
+    const copy = renderMissionCopy(def, ctx, fmt, tContent);
     expect(copy.title).toBe('Skip a coffee');
     expect(copy.amount).toBeNull();
   });
@@ -497,10 +505,16 @@ describe('selectMissions', () => {
 describe('compliance: no mission requires spending money', () => {
   const BANNED = /\b(buy|purchase|spend \$|minimum spend)\b/i;
 
+  // Reads content.json directly (English-specific regex — checking translated
+  // pl copy against English banned words would be meaningless) now that copy
+  // no longer lives on MissionDef itself (Phase 6, implementations/I18N_SCALE.md).
   it('scans every catalog entry for spend-inducing language', () => {
     for (const def of MISSION_CATALOG) {
-      expect(BANNED.test(def.title)).toBe(false);
-      expect(BANNED.test(def.description)).toBe(false);
+      const slug = def.id.replace(/\./g, '-');
+      const copy = enContent.missions[slug as keyof typeof enContent.missions];
+      expect(copy, `content.json missions.${slug}`).toBeDefined();
+      expect(BANNED.test(copy.title), `missions.${slug}.title`).toBe(false);
+      expect(BANNED.test(copy.description), `missions.${slug}.description`).toBe(false);
     }
   });
 });

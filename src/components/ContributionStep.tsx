@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Trans, useTranslation } from 'react-i18next';
 import { AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
 import { CalendarModal } from '@/components/ui/calendar-modal';
-import { CURRENCIES } from '@/lib/store';
+import { CurrencyAmountInput } from '@/components/ui/currency-amount-input';
+import { formatCurrency } from '@/lib/store';
 import { deriveGoalDate, requiredContribution, suggestedContribution } from '@/lib/goalMath';
-import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 import { formatDate, formatMonthYear } from '@/lib/i18n/format';
 import type { SupportedLanguage } from '@/lib/i18n/detect';
 
@@ -48,10 +48,6 @@ interface ContributionStepProps {
 const SUGGESTION_PCTS = [0.1, 0.15, 0.2];
 const INCOME_WARNING_PCT = 35;
 
-function getCurrencySymbol(currencyCode: string): string {
-  return CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
-}
-
 /**
  * Shared "how much can you set aside" step used by onboarding and the goals
  * tab. Defaults to contribution-first (derives the date); offers a fixed-
@@ -77,7 +73,6 @@ export function ContributionStep({
 }: ContributionStepProps) {
   const { t } = useTranslation('onboarding');
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
-  const currencySymbol = getCurrencySymbol(currency);
   const hasIncome = !incomeSkipped && !!monthlyIncome && monthlyIncome > 0;
 
   const contributionNumber = Number(contribution);
@@ -142,7 +137,10 @@ export function ContributionStep({
                         selected ? 'text-on-primary-container' : 'text-on-surface'
                       }`}
                     >
-                      {t('contribution.suggestionChip', { pct: Math.round(pct * 100), symbol: currencySymbol, amount })}
+                      {t('contribution.suggestionChip', {
+                        pct: Math.round(pct * 100),
+                        amount: formatCurrency(amount, currency, language),
+                      })}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -150,23 +148,17 @@ export function ContributionStep({
             </View>
           )}
 
-          <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
-            <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
-            <TextInput
-              className="flex-1 text-xl font-bold text-on-surface"
-              value={contribution}
-              onChangeText={(v) => onContributionChange(v.replace(/[^0-9.]/g, ''))}
-              keyboardType="numeric"
-              placeholder={t('contribution.amountPlaceholder')}
-              placeholderTextColor={PLACEHOLDER_COLOR}
-              style={TEXT_INPUT_CENTERING}
-              autoFocus
-            />
-          </View>
+          <CurrencyAmountInput
+            currencyCode={currency}
+            value={contribution}
+            onChangeText={onContributionChange}
+            placeholder={t('contribution.amountPlaceholder')}
+            autoFocus
+          />
 
           {derived && (
             <Text className="mt-3 text-sm font-medium text-on-surface-variant">
-              {t('contribution.reachGoalBy', { symbol: currencySymbol, amount: contributionNumber })}{' '}
+              {t('contribution.reachGoalBy', { amount: formatCurrency(contributionNumber, currency, language) })}{' '}
               <Text className="font-bold text-on-surface">{formatMonthYear(derived.date, language)}</Text>
             </Text>
           )}
@@ -215,11 +207,19 @@ export function ContributionStep({
 
           {deadline && requiredMonthly !== null && (
             <Text className="mt-3 text-sm font-medium text-on-surface-variant">
-              {t('contribution.needToSetAside')}{' '}
-              <Text className="font-bold text-on-surface">
-                {t('contribution.amountPerMonth', { symbol: currencySymbol, amount: requiredMonthly.toFixed(2) })}
-              </Text>{' '}
-              {t('contribution.hitDeadlineBy', { date: formatMonthYear(new Date(deadline).toISOString(), language) })}
+              {/* Single assembled-sentence key rather than 3 concatenated ones
+                  (Phase 8, implementations/I18N_SCALE.md) — word order around
+                  the bolded amount is the translator's to choose, not fixed
+                  by this component's JSX structure. */}
+              <Trans
+                t={t}
+                i18nKey="contribution.needToSetAside"
+                values={{
+                  amount: formatCurrency(requiredMonthly, currency, language),
+                  date: formatMonthYear(new Date(deadline).toISOString(), language),
+                }}
+                components={{ bold: <Text className="font-bold text-on-surface" /> }}
+              />
             </Text>
           )}
 
