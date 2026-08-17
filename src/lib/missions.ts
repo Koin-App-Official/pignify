@@ -142,7 +142,10 @@ function sumExpenseAmounts(expenses: MissionExpense[]): number {
 
 export function buildMissionContext(input: MissionContextInput): MissionContext {
   const today = input.today ?? new Date().toISOString().split('T')[0];
-  const weekStart = getWeekMondayString();
+  // Derived from `today` (not real "now") so an injected `today` — e.g. in
+  // tests — produces a consistent, matching weekStart rather than one based
+  // on whatever day the test actually runs on.
+  const weekStart = getWeekMondayString(new Date(`${today}T00:00:00Z`));
   const lastWeekStart = addDaysString(weekStart, -7);
 
   const expensesToday = input.expenses.filter((e) => normalizeDay(e.date) === today);
