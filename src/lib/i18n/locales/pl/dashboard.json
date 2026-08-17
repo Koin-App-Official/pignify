@@ -28,7 +28,7 @@
     "title": "Szczegółowa analiza",
     "upgradeToUnlock": "Ulepsz, aby odblokować",
     "unlimited": "Bez limitu",
-    "remainingOfLimit": "{{remaining}} z {{limit}} pozostało"
+    "remainingOfLimit": "{{remaining}} z {{limit}}"
   },
   "todaysSpending": "Dzisiejsze wydatki",
   "expenseCount_one": "z {{count}} wydatku",
