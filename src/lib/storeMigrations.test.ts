@@ -223,7 +223,7 @@ describe('migratePiggyState — edge cases', () => {
   it('PIGGY_STORE_VERSION matches the highest migration step', () => {
     // Sanity guard: if a step is added above without bumping this, zustand
     // would never invoke migrate for it on a fresh install already at the old version.
-    expect(PIGGY_STORE_VERSION).toBe(4);
+    expect(PIGGY_STORE_VERSION).toBe(5);
   });
 });
 
@@ -263,5 +263,24 @@ describe('migratePiggyState — v3 → v4 (free → beginner rename)', () => {
     const migrated = migratePiggyState({ goals: [] }, 3) as any;
     expect(migrated.profile.plan).toBeUndefined();
     expect(migrated.goals).toEqual([]);
+  });
+});
+
+describe('migratePiggyState — v4 → v5 (language backfill)', () => {
+  it('backfills language to en on an installed profile with no language set', () => {
+    const migrated = migratePiggyState({ profile: {} }, 4) as any;
+    expect(migrated.profile.language).toBe('en');
+  });
+
+  it('does not override an explicitly set language', () => {
+    const migrated = migratePiggyState({ profile: { language: 'pl' } }, 4) as any;
+    expect(migrated.profile.language).toBe('pl');
+  });
+
+  it('carries the backfill through a full v0 payload', () => {
+    // V0_PAYLOAD predates every step, so this proves the backfill still lands
+    // after the goal/mission/lesson/plan steps have rewritten the state object.
+    const migrated = migratePiggyState(V0_PAYLOAD, 0) as any;
+    expect(migrated.profile.language).toBe('en');
   });
 });

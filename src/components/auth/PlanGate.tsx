@@ -20,6 +20,7 @@
  */
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert, AppState } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ArrowRight, Check, ShieldCheck } from 'lucide-react-native';
@@ -35,6 +36,7 @@ import { safeOpenURL, SUPPORT_EMAIL } from '@/lib/linking';
 import type { UserPlan } from '@/lib/store';
 
 export function PlanGate() {
+  const { t } = useTranslation('plans');
   const profile = useStore((s) => s.profile);
   const updateProfile = useStore((s) => s.updateProfile);
   const resetForDemo = useStore((s) => s.resetForDemo);
@@ -73,9 +75,7 @@ export function PlanGate() {
       if (result.status !== 'completed') {
         // 'completed' only means the browser opened. Anything else has to be
         // said out loud — with no escape hatch, a silent no-op is a dead button.
-        setError(
-          `We couldn't open checkout. Check your connection and try again, or email us at ${SUPPORT_EMAIL}.`
-        );
+        setError(t('planGate.locked.checkoutFailed', { email: SUPPORT_EMAIL }));
       }
     } finally {
       setBusy(null);
@@ -106,9 +106,7 @@ export function PlanGate() {
         });
       }
       if (!entitlements || entitlements.status === 'expired' || entitlements.status === 'canceled') {
-        setError(
-          "We couldn't find an active subscription yet. If you've just paid, give it a moment and tap again."
-        );
+        setError(t('planGate.locked.noActiveSubscription'));
       }
     } finally {
       setChecking(false);
@@ -151,19 +149,19 @@ export function PlanGate() {
    * the time either gate reason can show.
    */
   const handleLogout = () => {
-    Alert.alert('Log out', 'You can log back in anytime with your email.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log out', style: 'destructive', onPress: () => authLogout() },
+    Alert.alert(t('planGate.locked.logOut'), t('planGate.locked.logoutBody'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('planGate.locked.logOut'), style: 'destructive', onPress: () => authLogout() },
     ]);
   };
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Delete account',
-      'This permanently deletes your account and all data from our servers. This cannot be undone.',
+      t('planGate.locked.deleteAccountTitle'),
+      t('planGate.locked.deleteAccountBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: performDeleteAccount },
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('planGate.locked.deleteAction'), style: 'destructive', onPress: performDeleteAccount },
       ]
     );
   };
@@ -174,7 +172,7 @@ export function PlanGate() {
     const ok = await requestAccountDeletion(userId);
     if (!ok) {
       setDeletingAccount(false);
-      Alert.alert('Something went wrong', 'We could not delete your account. Please try again.');
+      Alert.alert(t('planGate.locked.somethingWrongTitle'), t('planGate.locked.somethingWrongBody'));
       return;
     }
     resetForDemo();
@@ -187,7 +185,7 @@ export function PlanGate() {
     return (
       <SafeAreaView className="flex-1 bg-surface items-center justify-center px-8">
         <Button onPress={acknowledge} className="w-full h-14">
-          <Text className="text-base font-bold text-primary-foreground">Continue</Text>
+          <Text className="text-base font-bold text-primary-foreground">{t('planGate.continue')}</Text>
         </Button>
       </SafeAreaView>
     );
@@ -201,32 +199,30 @@ export function PlanGate() {
           <Animated.View entering={FadeInDown.springify()}>
             <Text className="text-6xl text-center mb-6">🔒</Text>
             <Text className="mb-3 text-3xl font-black text-on-surface text-center">
-              {lapsedTrial ? 'Your free trial has ended' : 'Your subscription has ended'}
+              {lapsedTrial ? t('planGate.locked.trialEndedTitle') : t('planGate.locked.subscriptionEndedTitle')}
             </Text>
             <Text className="mb-8 text-base font-medium text-on-surface-variant text-center leading-6">
-              {planName} features are paused for now.
+              {t('planGate.locked.featuresPaused', { plan: planName })}
             </Text>
 
             <View className="rounded-2xl bg-surface-container p-4 flex-row items-start gap-3">
               <ShieldCheck size={18} color="#1D4ED8" style={{ marginTop: 1 }} />
               <Text className="flex-1 text-sm leading-5 text-on-surface-variant">
-                <Text className="font-bold text-on-surface">Nothing has been deleted.</Text> Your
-                goals, deposits, streak and history are all exactly where you left them, and they
-                come straight back when you subscribe.
+                <Text className="font-bold text-on-surface">{t('planGate.locked.nothingDeletedBold')}</Text>
+                {t('planGate.locked.nothingDeletedRest')}
               </Text>
             </View>
 
             {!isBillingConfigured() && (
               <View className="mt-6 rounded-2xl bg-warning-container p-4">
                 <Text className="text-sm text-warning">
-                  Checkout isn't configured in this build, so subscribing won't work here. You can
-                  keep using Piggy for now.
+                  {t('planGate.locked.checkoutNotConfigured')}
                 </Text>
               </View>
             )}
 
             <Text className="mt-8 mb-3 text-sm font-bold text-on-surface">
-              Pick a plan to carry on
+              {t('planGate.locked.pickPlan')}
             </Text>
             <View className="gap-3">
               {PLAN_ORDER.map((id) => {
@@ -235,7 +231,7 @@ export function PlanGate() {
                   <PlanChoice
                     key={id}
                     name={c.displayName}
-                    price={`${formatUSD(c.priceUSD)}/mo`}
+                    price={`${formatUSD(c.priceUSD)}${t('perMonth')}`}
                     busy={busy === id}
                     disabled={busy !== null || checking}
                     onPress={() => subscribe(id)}
@@ -259,7 +255,7 @@ export function PlanGate() {
                 <ActivityIndicator color="#1D4ED8" />
               ) : (
                 <Text className="text-sm font-semibold text-primary underline">
-                  I've already subscribed
+                  {t('planGate.locked.alreadySubscribed')}
                 </Text>
               )}
             </TouchableOpacity>
@@ -267,7 +263,7 @@ export function PlanGate() {
             {!enforced && (
               <Button onPress={acknowledge} className="mt-4 w-full h-14 flex-row gap-2">
                 <Text className="text-base font-bold text-primary-foreground">
-                  Continue without subscribing
+                  {t('planGate.locked.continueWithoutSubscribing')}
                 </Text>
                 <ArrowRight size={18} color="#ffffff" />
               </Button>
@@ -278,32 +274,33 @@ export function PlanGate() {
                 <View className="flex-row items-center justify-center gap-2 py-2">
                   <ActivityIndicator color="#DC2626" />
                   <Text className="text-sm font-medium text-on-surface-variant">
-                    Deleting your account…
+                    {t('planGate.locked.deletingAccount')}
                   </Text>
                 </View>
               ) : (
                 <View className="flex-row flex-wrap items-center justify-center gap-5">
                   <TouchableOpacity onPress={handleLogout} disabled={busy !== null || checking}>
                     <Text className="text-sm font-semibold text-on-surface-variant underline">
-                      Log out
+                      {t('planGate.locked.logOut')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() =>
                       safeOpenURL(
                         `mailto:${SUPPORT_EMAIL}`,
-                        `No email app is set up on this device. Reach us at ${SUPPORT_EMAIL}.`
+                        t('common:noEmailApp', { email: SUPPORT_EMAIL }),
+                        t('common:notAvailable')
                       )
                     }
                     disabled={busy !== null || checking}
                   >
                     <Text className="text-sm font-semibold text-on-surface-variant underline">
-                      Contact support
+                      {t('planGate.locked.contactSupport')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleDeleteAccount} disabled={busy !== null || checking}>
                     <Text className="text-sm font-semibold text-destructive underline">
-                      Delete account
+                      {t('planGate.locked.deleteAccount')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -322,22 +319,21 @@ export function PlanGate() {
         <Animated.View entering={FadeInDown.springify()} className="items-center">
           <Mascot expression="celebrating" size={120} />
           <Text className="mt-8 mb-2 text-3xl font-black text-on-surface text-center">
-            {daysLeft ?? 14} days of {planName},{'\n'}on us
+            {t('planGate.trialIntro.title', { days: daysLeft ?? 14, plan: planName })}
           </Text>
           <Text className="mb-8 text-base font-medium text-on-surface-variant text-center leading-6">
-            Everything is unlocked from today. We didn't ask for a card, so there's nothing to
-            cancel.
+            {t('planGate.trialIntro.body')}
           </Text>
         </Animated.View>
 
         <View className="gap-3">
-          <Perk text="Every feature Piggy has, including the AI coach" />
-          <Perk text="Unlimited goals, so you can plan more than one thing" />
-          <Perk text="We'll remind you before it ends — no surprises" />
+          <Perk text={t('planGate.trialIntro.perk1')} />
+          <Perk text={t('planGate.trialIntro.perk2')} />
+          <Perk text={t('planGate.trialIntro.perk3')} />
         </View>
 
         <Button onPress={acknowledge} className="mt-8 w-full h-14 flex-row gap-2">
-          <Text className="text-base font-bold text-primary-foreground">Let's go</Text>
+          <Text className="text-base font-bold text-primary-foreground">{t('planGate.trialIntro.cta')}</Text>
           <ArrowRight size={18} color="#ffffff" />
         </Button>
       </ScrollView>

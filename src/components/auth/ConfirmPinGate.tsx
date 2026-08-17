@@ -15,6 +15,8 @@ import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import * as Haptics from 'expo-haptics';
 import { useAuthLock } from '@/lib/authLock';
 import { PIN_LENGTH } from '@/lib/pin';
@@ -22,15 +24,16 @@ import { hasInternetConnection } from '@/lib/network';
 import { PinPad, PinDots } from './PinPad';
 import { Mascot } from '@/components/Mascot';
 
-function formatRemaining(ms: number): string {
+function formatRemaining(ms: number, t: TFunction<'auth'>): string {
   const s = Math.ceil(ms / 1000);
-  if (s < 60) return `${s}s`;
+  if (s < 60) return t('duration.seconds', { s });
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  return `${m}m ${rem.toString().padStart(2, '0')}s`;
+  return t('duration.minutes', { m, s: rem.toString().padStart(2, '0') });
 }
 
 export function ConfirmPinGate() {
+  const { t } = useTranslation('auth');
   const confirmExistingPin = useAuthLock((s) => s.confirmExistingPin);
   const resetToLogin = useAuthLock((s) => s.resetToLogin);
 
@@ -68,14 +71,14 @@ export function ConfirmPinGate() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     if (res.reason === 'locked') {
       setLockedMs(res.remainingMs ?? 0);
-      setError('Too many attempts. Try again later.');
+      setError(t('errors.tooManyAttempts'));
     } else if (res.reason === 'wrong_pin') {
       const left = res.attemptsRemaining ?? 0;
-      setError(left > 0 ? `Incorrect PIN. ${left} attempt${left === 1 ? '' : 's'} left.` : 'Incorrect PIN.');
+      setError(left > 0 ? t('errors.incorrectPinWithAttempts', { count: left }) : t('errors.incorrectPin'));
     } else if (res.reason === 'invalid_session') {
-      setError('Session expired. Please sign in again.');
+      setError(t('errors.sessionExpired'));
     } else if (res.reason === 'network_error') {
-      setError("Couldn't reach the server. Check your connection and try again.");
+      setError(t('errors.networkError'));
     }
     // 'force_relogin' is handled by the store (status → unauthenticated)
   };
@@ -90,19 +93,19 @@ export function ConfirmPinGate() {
 
   const handleForgotPin = () => {
     Alert.alert(
-      'Forgot your PIN?',
-      "You'll need to set a new PIN. Your saved goals and data are safe — nothing will be lost.",
+      t('confirmPin.forgotAlertTitle'),
+      t('confirmPin.forgotAlertBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Continue',
+          text: t('continue'),
           style: 'destructive',
           onPress: async () => {
             setForgotBusy(true);
             const online = await hasInternetConnection();
             if (!online) {
               setForgotBusy(false);
-              Alert.alert('No Internet Connection', 'Please check your connection and try again.');
+              Alert.alert(t('noInternetTitle'), t('noInternetBody'));
               return;
             }
             await resetToLogin();
@@ -117,9 +120,9 @@ export function ConfirmPinGate() {
       <View className="flex-1 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <View className="mb-4"><Mascot size={48} /></View>
-          <Text className="text-2xl font-black text-on-surface mb-1">Welcome back</Text>
+          <Text className="text-2xl font-black text-on-surface mb-1">{t('confirmPin.title')}</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
-            Enter your PIN to continue
+            {t('confirmPin.subtitle')}
           </Text>
 
           <PinDots length={PIN_LENGTH} filled={pin.length} shakeKey={shakeKey} />
@@ -127,7 +130,7 @@ export function ConfirmPinGate() {
           <View className="h-6 mt-4">
             {locked ? (
               <Text className="text-sm font-semibold text-destructive">
-                Locked — {formatRemaining(lockedMs)}
+                {t('lockedFor', { duration: formatRemaining(lockedMs, t) })}
               </Text>
             ) : error ? (
               <Text className="text-sm font-semibold text-destructive">{error}</Text>
@@ -137,7 +140,7 @@ export function ConfirmPinGate() {
           {busy ? (
             <View className="mt-6 items-center gap-3 py-16">
               <ActivityIndicator color="#1D4ED8" />
-              <Text className="text-sm font-medium text-on-surface-variant">Unlocking…</Text>
+              <Text className="text-sm font-medium text-on-surface-variant">{t('unlocking')}</Text>
             </View>
           ) : (
             <View className="mt-6">
@@ -147,7 +150,7 @@ export function ConfirmPinGate() {
 
           <Pressable onPress={handleForgotPin} className="mt-8 py-2" disabled={busy || forgotBusy}>
             <Text className="text-sm font-semibold text-primary underline">
-              {forgotBusy ? 'Checking connection…' : 'Forgot PIN?'}
+              {forgotBusy ? t('checkingConnection') : t('forgotPin')}
             </Text>
           </Pressable>
         </Animated.View>

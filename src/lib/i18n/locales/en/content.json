@@ -1,0 +1,210 @@
+{
+  "missions": {
+    "save-today": { "title": "Save {amount} today", "description": "Move a bit toward your goal — doesn't have to be much." },
+    "hit-daily-target": { "title": "Hit today's target", "description": "Save enough today to stay on pace for your goal." },
+    "log-expense": { "title": "Log an expense", "description": "Track one thing you spent today." },
+    "check-in": { "title": "Check in", "description": "Open the app and see where you stand." },
+    "skip-coffee": { "title": "Skip a coffee", "description": "Make it at home today." },
+    "no-spend-lunch": { "title": "No-spend lunch", "description": "Pack lunch instead of buying." },
+    "walk-instead": { "title": "Walk instead of ride", "description": "Save on transport today." },
+    "cook-at-home": { "title": "Cook dinner at home", "description": "Skip delivery tonight." },
+    "save-this-week": { "title": "Save {amount} this week", "description": "A weekly boost toward your goal." },
+    "first-goal": { "title": "Set up your first goal", "description": "Create a savings goal to get started." },
+    "log-five-expenses": { "title": "Log 5 expenses this week", "description": "Build the habit of tracking spending." },
+    "no-spend-weekend": { "title": "No-spend weekend", "description": "Keep non-essential spending at zero this weekend." },
+    "save-1-5x-target": { "title": "Save 1.5× today’s target", "description": "Get ahead of pace today." },
+    "log-three-expenses": { "title": "Log every expense today", "description": "Track at least 3 things you spent today." },
+    "expense-with-note": { "title": "Add a note to an expense", "description": "Give one of today’s expenses some context." },
+    "save-almost-bought": { "title": "Save what you almost bought", "description": "Held off on something you wanted? Move that amount to savings." },
+    "beat-last-week": { "title": "Beat last week's spending", "description": "Spend less this week than you did last week." },
+    "dine-out-detox": { "title": "Dine-out detox", "description": "Skip eating out this week." },
+    "cancel-subscription": { "title": "Cancel a subscription", "description": "Review and cancel one unused subscription." },
+    "streak-seven": { "title": "Hit a 7-day streak", "description": "Save toward your target 7 days in a row." },
+    "save-20-percent-over": { "title": "Save 20% over your weekly target", "description": "Push past your usual pace this week." },
+    "money-quiz": { "title": "Today's money quiz", "description": "Answer a 30-second question about money." },
+    "save-2x-target": { "title": "Save 2× today’s target", "description": "A serious push today." },
+    "two-deposits-today": { "title": "Two deposits today", "description": "Save twice today instead of once." },
+    "pantry-day": { "title": "Pantry day", "description": "Cook only from what you already have." },
+    "push-goal-ten-percent": { "title": "Push your goal to the next 10%", "description": "Cross into a new tenth of your goal this week." },
+    "streak-thirty": { "title": "Hit a 30-day streak", "description": "A full month of hitting your target." },
+    "review-contribution": { "title": "Review next month's contribution", "description": "Check whether your monthly amount still fits." },
+    "add-second-goal": { "title": "Add a second goal", "description": "Start saving toward something else too." },
+    "negotiate-bill": { "title": "Negotiate or downgrade a bill", "description": "Call one provider and ask for a better rate." }
+  },
+  "lessons": {
+    "emergency-fund": {
+      "topic": "Emergency fund",
+      "question": "What is an emergency fund mainly for?",
+      "options": ["Covering unexpected expenses", "Buying investments on a dip", "Earning the highest interest rate"],
+      "explanation": "It's cash set aside for surprises — a job loss, a medical bill, a car repair — kept easy to access rather than invested for growth."
+    },
+    "apy": {
+      "topic": "APY",
+      "question": "What does APY (Annual Percentage Yield) tell you?",
+      "options": ["Your monthly spending limit", "The real yearly return including compounding", "A one-time signup bonus"],
+      "explanation": "APY factors in compounding, so it reflects what you actually earn over a year — a more honest number than a flat interest rate."
+    },
+    "needs-vs-wants": {
+      "topic": "Needs vs wants",
+      "question": "Which of these is usually a \"need\" rather than a \"want\"?",
+      "options": ["Rent", "Streaming subscriptions", "Dining out"],
+      "explanation": "Needs keep you housed, fed, and functioning. Wants improve life but aren't essential — the distinction is the backbone of most budgets."
+    },
+    "50-30-20": {
+      "topic": "The 50/30/20 rule",
+      "question": "In the 50/30/20 budgeting rule, what does the 20% go toward?",
+      "options": ["Wants", "Needs", "Savings and debt payoff"],
+      "explanation": "The split is roughly 50% needs, 30% wants, 20% savings/debt — a simple starting framework, not a strict rule."
+    },
+    "compound-interest": {
+      "topic": "Compound interest",
+      "question": "Why does starting to save early matter so much?",
+      "options": ["Compound interest earns returns on your past returns too", "Banks pay more to new savers", "Prices only go up early in the year"],
+      "explanation": "Each period, interest is earned on your original amount AND everything it already earned — the growth accelerates the longer it runs."
+    },
+    "budgeting-basics": {
+      "topic": "Budgeting",
+      "question": "What is the main point of tracking every expense?",
+      "options": ["To feel guilty about spending", "To see where money actually goes", "To qualify for a loan"],
+      "explanation": "Most people underestimate small recurring spending until they track it — the goal is visibility, not judgment."
+    },
+    "credit-score": {
+      "topic": "Credit score",
+      "question": "Which habit most consistently helps a credit score?",
+      "options": ["Paying bills on time", "Opening many cards quickly", "Carrying a balance on purpose"],
+      "explanation": "Payment history is typically the single biggest factor — consistent on-time payments matter more than any single trick."
+    },
+    "diversification": {
+      "topic": "Diversification",
+      "question": "What problem does diversification mainly solve?",
+      "options": ["Guaranteeing a profit", "Reducing the impact of any one investment doing badly", "Avoiding taxes entirely"],
+      "explanation": "Spreading money across different assets means one bad performer doesn't sink the whole picture. It manages risk, not returns."
+    },
+    "inflation": {
+      "topic": "Inflation",
+      "question": "What does inflation do to cash sitting idle?",
+      "options": ["Nothing, cash value never changes", "Slowly reduces its purchasing power", "Increases its purchasing power"],
+      "explanation": "If prices rise faster than your cash earns interest, the same pile of money buys a little less each year."
+    },
+    "debt-snowball": {
+      "topic": "Paying off debt",
+      "question": "In the \"debt snowball\" method, which debt do you pay off first?",
+      "options": ["The smallest balance", "The highest interest rate", "Whichever is most recent"],
+      "explanation": "Snowball targets the smallest balance first for quick wins and momentum — a different debt method (avalanche) targets highest interest instead."
+    },
+    "opportunity-cost": {
+      "topic": "Opportunity cost",
+      "question": "What does \"opportunity cost\" mean when spending money?",
+      "options": ["The tax you pay on a purchase", "What you give up by not using that money elsewhere", "A store’s markup on an item"],
+      "explanation": "Every dollar spent one way is a dollar that can’t go toward something else — the real cost includes what you didn’t get to do instead."
+    },
+    "net-worth": {
+      "topic": "Net worth",
+      "question": "How is net worth calculated?",
+      "options": ["Monthly income minus expenses", "What you own minus what you owe", "Total savings account balance"],
+      "explanation": "Net worth is a snapshot: everything you own (assets) minus everything you owe (debts). Income is a flow; net worth is a total."
+    },
+    "automatic-savings": {
+      "topic": "Automating savings",
+      "question": "Why do automatic transfers to savings tend to work well?",
+      "options": ["They remove the need to decide every time", "They earn a legally guaranteed higher rate", "They are required by most banks"],
+      "explanation": "Automating \"pays yourself first\" before you can spend it — it turns saving into a default instead of a decision you have to keep making."
+    },
+    "high-yield-savings": {
+      "topic": "High-yield savings",
+      "question": "What mainly distinguishes a high-yield savings account from a regular one?",
+      "options": ["It has no withdrawal limits at all", "It pays a meaningfully higher interest rate", "It doubles as a checking account"],
+      "explanation": "The core difference is the interest rate — often several times a standard savings account — usually offered by online-first banks."
+    },
+    "index-funds": {
+      "topic": "Index funds",
+      "question": "What does an index fund do?",
+      "options": ["Picks a handful of \"winning\" stocks", "Tracks a broad market index as a whole", "Guarantees a fixed annual return"],
+      "explanation": "Rather than betting on individual companies, an index fund holds a broad slice of the market, spreading risk across many holdings at once."
+    }
+  },
+  "achievements": {
+    "a1": { "title": "First Step", "description": "Create your first savings goal" },
+    "a2": { "title": "Streak Starter", "description": "Save 3 days in a row" },
+    "a3": { "title": "Week Warrior", "description": "Complete a 7-day streak" },
+    "a4": { "title": "Mission Master", "description": "Complete 5 missions" },
+    "a5": { "title": "Quarter Way", "description": "Reach 25% of a goal" },
+    "a6": { "title": "Halfway Hero", "description": "Reach 50% of a goal" },
+    "a7": { "title": "Almost There", "description": "Reach 75% of a goal" },
+    "a8": { "title": "Goal Crusher", "description": "Complete a savings goal" },
+    "a9": { "title": "Budget Boss", "description": "Track expenses for 7 days" },
+    "a10": { "title": "Level Up", "description": "Reach Saver Level 3" },
+    "a11": { "title": "Consistency King", "description": "30-day streak" },
+    "a12": { "title": "Smart Saver", "description": "Complete the AI personality quiz" }
+  },
+  "goalTemplates": {
+    "holiday": "Holiday",
+    "concert": "Concert",
+    "car": "Car",
+    "emergency": "Emergency Fund",
+    "laptop": "Laptop",
+    "education": "Education",
+    "apartment": "Apartment",
+    "wedding": "Wedding",
+    "trip": "First Trip",
+    "purchase": "Big Purchase"
+  },
+  "countries": {
+    "US": "United States",
+    "GB": "United Kingdom",
+    "CA": "Canada",
+    "AU": "Australia",
+    "DE": "Germany",
+    "FR": "France",
+    "ES": "Spain",
+    "IT": "Italy",
+    "NL": "Netherlands",
+    "IE": "Ireland",
+    "PT": "Portugal",
+    "BR": "Brazil",
+    "MX": "Mexico",
+    "JP": "Japan",
+    "CN": "China",
+    "IN": "India",
+    "SG": "Singapore",
+    "CH": "Switzerland",
+    "SE": "Sweden",
+    "NO": "Norway",
+    "DK": "Denmark",
+    "PL": "Poland",
+    "AE": "United Arab Emirates",
+    "ZA": "South Africa",
+    "NZ": "New Zealand"
+  },
+  "currencies": {
+    "USD": "US Dollar",
+    "EUR": "Euro",
+    "GBP": "British Pound",
+    "CAD": "Canadian Dollar",
+    "AUD": "Australian Dollar",
+    "BRL": "Brazilian Real",
+    "MXN": "Mexican Peso",
+    "JPY": "Japanese Yen",
+    "CNY": "Chinese Yuan",
+    "INR": "Indian Rupee",
+    "SGD": "Singapore Dollar",
+    "CHF": "Swiss Franc",
+    "SEK": "Swedish Krona",
+    "NOK": "Norwegian Krone",
+    "DKK": "Danish Krone",
+    "PLN": "Polish Złoty",
+    "AED": "UAE Dirham",
+    "ZAR": "South African Rand",
+    "NZD": "New Zealand Dollar"
+  },
+  "expenseCategories": {
+    "food": "Food & Drinks",
+    "transport": "Transport",
+    "entertainment": "Entertainment",
+    "shopping": "Shopping",
+    "bills": "Bills",
+    "health": "Health",
+    "education": "Education",
+    "other": "Other"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "firstGoal": {
+    "title": "🎯 Zacznij swój pierwszy cel",
+    "body": "Ustaw cel oszczędnościowy, aby zacząć budować serię — liczy się nawet niewielka miesięczna kwota."
+  },
+  "checkin": {
+    "titleStreak": "🔥 Sprawdzenie serii",
+    "titlePlain": "💰 Codzienne sprawdzenie",
+    "bodyStreak": "Twoja {{streak}}-dniowa seria wisi na włosku! Zapisz dzisiejsze wydatki i dodaj {{remaining}} do swojego celu, aby ją podtrzymać.",
+    "bodyPlain": "Szybkie sprawdzenie — wydałeś dziś coś? Zapisz to, aby nie stracić tempa."
+  },
+  "weeklyReflection": {
+    "title": "📊 Tygodniowe podsumowanie",
+    "body_one": "Twój tydzień: zaoszczędzono {{saved}}, zapisano {{count}} wydatek. Dotknij, aby zobaczyć podsumowanie.",
+    "body_few": "Twój tydzień: zaoszczędzono {{saved}}, zapisano {{count}} wydatki. Dotknij, aby zobaczyć podsumowanie.",
+    "body_many": "Twój tydzień: zaoszczędzono {{saved}}, zapisano {{count}} wydatków. Dotknij, aby zobaczyć podsumowanie."
+  },
+  "trialEnding": {
+    "title": "⏳ Twój bezpłatny okres próbny kończy się za 2 dni",
+    "body": "Twój okres próbny planu {{plan}} kończy się za 2 dni. Sprawdź, co się zmieni — nic, co odłożyłeś, nigdzie nie zniknie."
+  },
+  "milestone": {
+    "goalCrushedTitle": "👑 Cel osiągnięty!",
+    "goalCrushedBody": "Właśnie osiągnąłeś {{name}} — zaoszczędzono {{amount}}.",
+    "progressTitle": "{{emoji}} {{percent}}% za Tobą!",
+    "progressBody": "Jesteś w {{percent}}% drogi do {{name}}! Tak trzymaj.",
+    "achievementUnlockedTitle": "🏆 Odblokowano odznakę"
+  },
+  "channels": {
+    "reminders": "Przypomnienia",
+    "digest": "Podsumowania i celebracje"
+  }
+}

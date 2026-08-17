@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/animation/BottomSheet';
 import { Button } from './button';
 import { X, ChevronDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useStore } from '@/lib/store';
+import { formatDate } from '@/lib/i18n/format';
+import { setCalendarLocale } from '@/lib/i18n/calendarLocale';
 
 interface CalendarModalProps {
   isVisible: boolean;
@@ -13,13 +17,11 @@ interface CalendarModalProps {
   initialDate?: string;
 }
 
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const QUICK_JUMPS: { label: string; months: number }[] = [
-  { label: '+6mo', months: 6 },
-  { label: '+1yr', months: 12 },
-  { label: '+2yr', months: 24 },
-  { label: '+5yr', months: 60 },
+const QUICK_JUMPS: { labelKey: string; months: number }[] = [
+  { labelKey: 'quickJump6mo', months: 6 },
+  { labelKey: 'quickJump1yr', months: 12 },
+  { labelKey: 'quickJump2yr', months: 24 },
+  { labelKey: 'quickJump5yr', months: 60 },
 ];
 
 const firstOfMonth = (dateString: string) => `${dateString.slice(0, 7)}-01`;
@@ -27,6 +29,13 @@ const firstOfMonth = (dateString: string) => `${dateString.slice(0, 7)}-01`;
 const toDateString = (year: number, monthIndex: number) => `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
 
 export const CalendarModal = ({ isVisible, onClose, onConfirm, initialDate }: CalendarModalProps) => {
+  const { t } = useTranslation('common');
+  const language = useStore((s) => s.profile.language);
+  useEffect(() => setCalendarLocale(language), [language]);
+  const monthLabels = useMemo(
+    () => Array.from({ length: 12 }, (_, i) => formatDate(new Date(2000, i, 1), language, { month: 'short' })),
+    [language]
+  );
   const todayString = useMemo(() => new Date().toISOString().split('T')[0], []);
   const [selectedDate, setSelectedDate] = useState(initialDate || todayString);
   const [viewDate, setViewDate] = useState(firstOfMonth(initialDate || todayString));
@@ -95,8 +104,8 @@ export const CalendarModal = ({ isVisible, onClose, onConfirm, initialDate }: Ca
     <BottomSheet visible={isVisible} onClose={handleClose}>
       <View className="p-5 border-b border-outline-variant flex-row justify-between items-center bg-surface">
         <View>
-          <Text className="text-xl font-bold text-on-surface">Target Date</Text>
-          <Text className="text-sm text-on-surface-variant">When do you want to reach your goal?</Text>
+          <Text className="text-xl font-bold text-on-surface">{t('calendarModal.title')}</Text>
+          <Text className="text-sm text-on-surface-variant">{t('calendarModal.subtitle')}</Text>
         </View>
         <Pressable
           onPress={handleClose}
@@ -110,11 +119,11 @@ export const CalendarModal = ({ isVisible, onClose, onConfirm, initialDate }: Ca
       <View className="flex-row flex-wrap gap-2 px-5 pt-4">
         {QUICK_JUMPS.map((jump) => (
           <Pressable
-            key={jump.label}
+            key={jump.labelKey}
             onPress={() => handleQuickJump(jump.months)}
             className="rounded-full bg-surface-container-high px-4 py-2 active:bg-surface-container-highest"
           >
-            <Text className="text-sm font-semibold text-primary">{jump.label}</Text>
+            <Text className="text-sm font-semibold text-primary">{t(`calendarModal.${jump.labelKey}`)}</Text>
           </Pressable>
         ))}
       </View>
@@ -144,7 +153,7 @@ export const CalendarModal = ({ isVisible, onClose, onConfirm, initialDate }: Ca
             </ScrollView>
 
             <View className="flex-row flex-wrap gap-2">
-              {MONTH_LABELS.map((label, index) => {
+              {monthLabels.map((label, index) => {
                 const isSelected = pickerYear === viewYear && index === viewMonthIndex;
                 return (
                   <Pressable
@@ -222,13 +231,13 @@ export const CalendarModal = ({ isVisible, onClose, onConfirm, initialDate }: Ca
         <Button
           variant="outline"
           className="flex-1 h-14"
-          label="Cancel"
+          label={t('cancel')}
           onPress={handleClose}
         />
         <Button
           variant="default"
           className="flex-1 h-14"
-          label="Confirm"
+          label={t('confirm')}
           onPress={handleConfirm}
         />
       </View>

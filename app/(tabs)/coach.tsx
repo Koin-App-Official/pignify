@@ -3,6 +3,7 @@ import { View, Text, KeyboardAvoidingView, Platform, TextInput, Alert, useWindow
 import { fetch as expoFetch } from 'expo/fetch';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Send, Sparkles } from 'lucide-react-native';
 import Animated, {
   Easing,
@@ -34,6 +35,8 @@ import { startAddonCheckout, requestSubscriptionSync } from '@/lib/billing';
 import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { tablesDB, DATABASE_ID } from '@/lib/appwrite';
 import { createLogger } from '@/lib/logger';
+import { formatDate } from '@/lib/i18n/format';
+import type { SupportedLanguage } from '@/lib/i18n/detect';
 
 const log = createLogger('coach');
 
@@ -48,8 +51,8 @@ interface Message {
  * the last message of each run shows a timestamp, per the chat-polish spec. */
 const GROUP_GAP_MS = 3 * 60 * 1000;
 
-function formatTimestamp(ms: number): string {
-  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+function formatTimestamp(ms: number, language: SupportedLanguage): string {
+  return formatDate(new Date(ms), language, { hour: 'numeric', minute: '2-digit' });
 }
 
 const COACH_ENDPOINT = 'https://n8n.piggnify.com/webhook/claude-coach';
@@ -94,25 +97,22 @@ function stripCelebrateMarker(text: string): { display: string; celebrated: bool
   return { display: text, celebrated: false };
 }
 
-const GREETINGS = [
-  'How can I help you today?',
-  'What’s on your mind?',
-  'What questions do you have?',
-  'Anything money-related you’d like to talk about?',
-  'What are we working on today?',
-  'What do you need help with?',
-  'Is there anything I can do for you?',
-];
-
 export default function AICoach() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'coach',
-      content: `Hi ${useStore.getState().profile.name || 'there'}! ${GREETINGS[Math.floor(Math.random() * GREETINGS.length)]}`,
-      timestamp: Date.now(),
-    },
-  ]);
+  const { t } = useTranslation('coach');
+  const { t: tPlans } = useTranslation('plans');
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const greetings = t('greetings', { returnObjects: true }) as string[];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    const name = useStore.getState().profile.name;
+    return [
+      {
+        id: '1',
+        role: 'coach',
+        content: name ? t('hiGreetingNamed', { name, greeting }) : t('hiGreetingAnonymous', { greeting }),
+        timestamp: Date.now(),
+      },
+    ];
+  });
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const coachRequestRef = useRef<AbortController | null>(null);
@@ -127,6 +127,7 @@ export default function AICoach() {
   const setServerAiMessageUsage = useStore((s) => s.setServerAiMessageUsage);
   const setAddonMessageBalance = useStore((s) => s.setAddonMessageBalance);
   const userID = useStore((s) => s.profile.userID);
+  const language = useStore((s) => s.profile.language);
   const messageLimit = typeof config.quotas.aiMessages === 'number' ? config.quotas.aiMessages : Infinity;
   const canBuyMore = config.extraMessagePriceUSD != null;
 
@@ -135,7 +136,7 @@ export default function AICoach() {
 
   const openGate = (key: GateKey) => {
     setGateKey(key);
-    setGate(gateInfo(key, plan));
+    setGate(gateInfo(key, plan, tPlans));
   };
   const closeGate = () => {
     setGate(null);
@@ -159,12 +160,12 @@ export default function AICoach() {
     const result = await startAddonCheckout(userID);
     if (result.status === 'unavailable') {
       Alert.alert(
-        'Checkout not configured',
-        'Stripe Checkout isn’t set up in this build. Simulate a successful purchase of 1 extra message?',
+        t('checkoutNotConfiguredTitle'),
+        t('checkoutNotConfiguredBody'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('cancel'), style: 'cancel' },
           {
-            text: 'Simulate purchase',
+            text: t('simulatePurchase'),
             onPress: () => setAddonMessageBalance(useStore.getState().addonMessageBalance + 1),
           },
         ]
@@ -233,6 +234,7 @@ export default function AICoach() {
       primaryGoal: primaryGoal
         ? { name: primaryGoal.name, savedAmount: primaryGoal.savedAmount, targetAmount: primaryGoal.targetAmount }
         : null,
+      language: profile.language,
     };
 
     setInput('');
@@ -250,7 +252,7 @@ export default function AICoach() {
         {
           id: Math.random().toString(36).substring(7),
           role: 'coach',
-          content: "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+          content: t('connectionError'),
           timestamp: Date.now(),
         },
       ]);
@@ -385,24 +387,24 @@ export default function AICoach() {
         <View className="bg-surface-container-low px-5 py-4 border-b border-surface-container flex-row items-center gap-3">
           <Mascot expression="idle" size={48} />
           <View className="flex-1">
-            <Text className="text-base font-heading text-on-surface">AI Coach</Text>
+            <Text className="text-base font-heading text-on-surface">{t('title')}</Text>
             <View className="flex-row items-center gap-1.5 mt-0.5">
               <View className="h-2 w-2 rounded-full bg-tertiary" />
-              <Text className="text-xs font-sans-semibold text-tertiary">Online • Ready to help</Text>
+              <Text className="text-xs font-sans-semibold text-tertiary">{t('onlineStatus')}</Text>
             </View>
           </View>
           {!has('aiCoach') ? (
             <PressableScale onPress={() => openGate('aiCoach')}>
               <View className="flex-row items-center gap-1 rounded-full bg-warning-container px-3 py-1.5">
                 <Sparkles size={12} color="#F59E0B" />
-                <Text className="text-xs font-sans-bold text-on-surface">Upgrade your plan</Text>
+                <Text className="text-xs font-sans-bold text-on-surface">{t('upgradeYourPlan')}</Text>
               </View>
             </PressableScale>
           ) : (
             <Text className="text-xs font-sans-bold text-on-surface">
               {aiMessages.unlimited
-                ? 'Unlimited'
-                : `${Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100))}% used this period`}
+                ? t('unlimited')
+                : t('pctUsedThisPeriod', { pct: Math.min(100, Math.round((aiMessages.used / aiMessages.limit!) * 100)) })}
             </Text>
           )}
         </View>
@@ -450,7 +452,7 @@ export default function AICoach() {
                         isUser ? 'text-right mr-1' : 'text-left ml-9'
                       }`}
                     >
-                      {formatTimestamp(m.timestamp)}
+                      {formatTimestamp(m.timestamp, language)}
                     </Text>
                   )}
                 </View>
@@ -470,7 +472,7 @@ export default function AICoach() {
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Ask your coach..."
+              placeholder={t('inputPlaceholder')}
               placeholderTextColor={PLACEHOLDER_COLOR}
               style={TEXT_INPUT_CENTERING}
               className="flex-1 h-12 bg-surface rounded-2xl px-4 text-sm font-medium text-on-surface"
@@ -498,7 +500,7 @@ export default function AICoach() {
         onUpgrade={goUpgrade}
         secondaryAction={
           gateKey === 'aiMessages' && canBuyMore
-            ? { label: 'Buy 1 more message · $2.99', onPress: buyMore }
+            ? { label: t('buyMoreMessage'), onPress: buyMore }
             : undefined
         }
       />

@@ -1,0 +1,56 @@
+{
+  "greetingMorning": "Dzień dobry",
+  "greetingAfternoon": "Dzień dobry",
+  "greetingEvening": "Dobry wieczór",
+  "analysisStartedTitle": "Analiza rozpoczęta",
+  "analysisStartedBody": "Przetwarzamy Twoje dane — sprawdź e-mail za chwilę.",
+  "analysisErrorTitle": "Coś poszło nie tak",
+  "analysisErrorBody": "Nie udało się rozpocząć analizy. Spróbuj ponownie.",
+  "welcomeBanner": {
+    "title": "Wszystko gotowe",
+    "body": "Twój plan Piggy już działa.",
+    "bodyGoalSuffix": "Czas zacząć oszczędzać na {{goalName}}."
+  },
+  "pastDueWarning": "⚠️ Ostatnia płatność nie powiodła się. Zaktualizuj kartę, aby zachować plan — dotknij, aby skontaktować się z pomocą.",
+  "incomeSkippedTip": "💡 Podaj swój miesięczny dochód, aby odblokować spersonalizowane analizy oszczędności.",
+  "emptyGoals": {
+    "title": "Utwórz swój pierwszy cel",
+    "newGoal": "Nowy cel"
+  },
+  "motivation": {
+    "lowProgress": "Świetny początek! Każdy grosz się liczy 🌱",
+    "midProgress": "Jesteś o {{progress}}% bliżej celu {{goalName}}! 💪",
+    "highProgress": "Bohater półmetka! Nie zwalniaj tempa 🚀",
+    "almostDone": "Już prawie! Twój cel jest w zasięgu ręki 👑"
+  },
+  "deepAnalysis": {
+    "analyzing": "Analizowanie…",
+    "title": "Szczegółowa analiza",
+    "upgradeToUnlock": "Ulepsz, aby odblokować",
+    "unlimited": "Bez limitu",
+    "remainingOfLimit": "{{remaining}} z {{limit}}"
+  },
+  "todaysSpending": "Dzisiejsze wydatki",
+  "expenseCount_one": "z {{count}} wydatku",
+  "expenseCount_few": "z {{count}} wydatków",
+  "expenseCount_many": "z {{count}} wydatków",
+  "savedToday": "Zaoszczędzone dziś",
+  "savedThisMonth": "Zaoszczędzone w tym miesiącu",
+  "quickAddExpense": "Dodaj wydatek",
+  "saverLevel": "Poziom oszczędzania {{level}}",
+  "xpProgress": "{{xp}}/100 XP",
+  "yourGoals": "Twoje cele",
+  "seeAll": "Zobacz wszystkie",
+  "daysLeft_one": "Pozostał {{count}} dzień",
+  "daysLeft_few": "Pozostały {{count}} dni",
+  "daysLeft_many": "Pozostało {{count}} dni",
+  "ofAmount": "z {{amount}}",
+  "addExpense": {
+    "title": "Dodaj wydatek",
+    "amountLabel": "Kwota ({{symbol}})",
+    "amountPlaceholder": "0",
+    "categoryLabel": "Kategoria",
+    "notePlaceholder": "Notatka (opcjonalnie)",
+    "save": "Zapisz wydatek"
+  }
+}

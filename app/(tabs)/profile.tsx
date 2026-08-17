@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Bell, CreditCard, RotateCcw, Pencil, Check, Settings as SettingsIcon } from 'lucide-react-native';
 
 import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
@@ -23,6 +24,8 @@ const CARD_SHADOW = {
 };
 
 export default function Profile() {
+  const { t } = useTranslation('profile');
+  const { t: tContent } = useTranslation('content');
   const router = useRouter();
   const profile = useStore((state) => state.profile);
   const goals = useStore((state) => state.goals);
@@ -47,11 +50,11 @@ export default function Profile() {
         // system dialog with no context converts worse and can't be re-shown if denied.
         const wantsToEnable = await new Promise<boolean>((resolve) => {
           Alert.alert(
-            'Stay on track',
-            'Piggy uses reminders to help you keep your streak and hit your savings goals. Enable notifications?',
+            t('notifications.softAskTitle'),
+            t('notifications.softAskBody'),
             [
-              { text: 'Not now', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Enable', onPress: () => resolve(true) },
+              { text: t('notifications.notNow'), style: 'cancel', onPress: () => resolve(false) },
+              { text: t('notifications.enable'), onPress: () => resolve(true) },
             ]
           );
         });
@@ -59,7 +62,7 @@ export default function Profile() {
 
         const granted = await requestNotificationPermission();
         if (!granted) {
-          Alert.alert('Notifications disabled', 'Enable notifications for Piggy in your device Settings to turn this on.');
+          Alert.alert(t('notifications.disabledTitle'), t('notifications.disabledBody'));
           return;
         }
       }
@@ -75,12 +78,12 @@ export default function Profile() {
 
   const handleReset = () => {
     Alert.alert(
-      'Reset Data',
-      'Are you sure you want to reset all data? This cannot be undone.',
+      t('reset.title'),
+      t('reset.body'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('reset.cancel'), style: 'cancel' },
         {
-          text: 'Reset',
+          text: t('reset.confirm'),
           style: 'destructive',
           onPress: async () => {
             resetForDemo();
@@ -137,7 +140,7 @@ export default function Profile() {
           ) : (
             <TouchableOpacity onPress={() => setEditingName(true)} className="flex-row items-center justify-center gap-2 mb-1">
               <Text className="text-2xl font-black text-on-primary-container">
-                {profile.name || 'Saver'}
+                {profile.name || t('defaultName')}
               </Text>
               <Pencil size={14} color="#1D4ED8" />
             </TouchableOpacity>
@@ -145,28 +148,28 @@ export default function Profile() {
 
           <View className="flex-row items-center gap-2 mb-2">
             <View className="bg-primary/20 rounded-full px-3 py-0.5">
-              <Text className="text-sm font-bold text-on-primary-container">Lv.{profile.level}</Text>
+              <Text className="text-sm font-bold text-on-primary-container">{t('levelLabel', { level: profile.level })}</Text>
             </View>
           </View>
 
           <Text className="text-sm font-medium text-on-primary-container/70 mb-5">
             {profile.personalityType
-              ? `${profile.personalityType.charAt(0).toUpperCase() + profile.personalityType.slice(1)} personality`
-              : 'Financial explorer'}
+              ? t('personalitySuffix', { type: profile.personalityType.charAt(0).toUpperCase() + profile.personalityType.slice(1) })
+              : t('financialExplorer')}
           </Text>
 
           <View className="w-full flex-row justify-between px-2">
             <View className="items-center">
               <Text className="text-xl font-black text-on-primary-container">{formatCurrency(totalSaved, profile.currency)}</Text>
-              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">Total Saved</Text>
+              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">{t('totalSaved')}</Text>
             </View>
             <View className="items-center">
               <Text className="text-xl font-black text-on-primary-container">{goals.length}</Text>
-              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">Goals</Text>
+              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">{t('goals')}</Text>
             </View>
             <View className="items-center">
               <Text className="text-xl font-black text-on-primary-container">{unlockedBadges}</Text>
-              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">Badges</Text>
+              <Text className="text-xs font-medium text-on-primary-container/60 mt-1">{t('badges')}</Text>
             </View>
           </View>
         </View>
@@ -177,10 +180,10 @@ export default function Profile() {
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-3">
             <CreditCard size={16} color="#64748B" />
-            <Text className="text-sm font-bold text-on-surface">Monthly Income</Text>
+            <Text className="text-sm font-bold text-on-surface">{t('monthlyIncome')}</Text>
           </View>
           <Text className="text-3xl font-black text-on-surface">
-            {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : 'Not provided'}
+            {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : t('notProvided')}
           </Text>
         </View>
         </FadeInStagger>
@@ -189,7 +192,7 @@ export default function Profile() {
         {Object.keys(expensesByCategory).length > 0 && (
           <FadeInStagger index={2} delayStep={60}>
           <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
-            <Text className="mb-4 text-base font-bold text-on-surface">Expense Breakdown</Text>
+            <Text className="mb-4 text-base font-bold text-on-surface">{t('expenseBreakdown')}</Text>
             <View className="gap-3">
               {Object.entries(expensesByCategory)
                 .sort(([, a], [, b]) => b - a)
@@ -199,7 +202,7 @@ export default function Profile() {
                     <View key={cat} className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-3">
                         <Text className="text-xl">{c?.icon || '📌'}</Text>
-                        <Text className="text-sm font-semibold text-on-surface">{c?.name || cat}</Text>
+                        <Text className="text-sm font-semibold text-on-surface">{c ? tContent(`expenseCategories.${c.id}`) : cat}</Text>
                       </View>
                       <Text className="text-sm font-bold text-on-surface">{formatCurrency(amount, profile.currency)}</Text>
                     </View>
@@ -215,19 +218,19 @@ export default function Profile() {
         <View className="mb-6 rounded-2xl bg-surface-container-low p-5" style={CARD_SHADOW}>
           <View className="flex-row items-center gap-2 mb-4">
             <Bell size={16} color="#64748B" />
-            <Text className="text-sm font-bold text-on-surface">Notifications</Text>
+            <Text className="text-sm font-bold text-on-surface">{t('notifications.title')}</Text>
           </View>
           <View className="gap-4">
             {(
               [
-                ['paydayReminder', 'Payday saving reminder'],
-                ['streakProtection', 'Streak protection alert'],
-                ['milestoneAlerts', 'Milestone celebrations'],
-                ['weeklyReflection', 'Weekly reflection'],
+                ['paydayReminder', 'notifications.paydayReminder'],
+                ['streakProtection', 'notifications.streakProtection'],
+                ['milestoneAlerts', 'notifications.milestoneAlerts'],
+                ['weeklyReflection', 'notifications.weeklyReflection'],
               ] as const
-            ).map(([key, label]) => (
+            ).map(([key, labelKey]) => (
               <View key={key} className="flex-row items-center justify-between">
-                <Text className="text-sm font-semibold text-on-surface">{label}</Text>
+                <Text className="text-sm font-semibold text-on-surface">{t(labelKey)}</Text>
                 <Switch
                   value={profile.notificationPrefs[key]}
                   onValueChange={() => toggleNotif(key)}
@@ -248,7 +251,7 @@ export default function Profile() {
           className="mb-12 w-full flex-row items-center justify-center gap-2 border-outline/50"
         >
           <RotateCcw size={14} color="#64748B" />
-          <Text className="text-sm font-bold text-on-surface-variant">Reset All Data (Demo)</Text>
+          <Text className="text-sm font-bold text-on-surface-variant">{t('reset.button')}</Text>
         </Button>
         </FadeInStagger>
       </ScrollView>

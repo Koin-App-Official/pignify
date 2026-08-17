@@ -9,10 +9,12 @@
  */
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
+import i18n from 'i18next';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { SecureKeys } from './secureStorage';
 import { decryptSessionWithKey } from './pin';
 import { createLogger } from './logger';
+import type { SupportedLanguage } from './i18n/detect';
 
 const log = createLogger('biometrics');
 
@@ -48,7 +50,7 @@ export async function isBiometricEnabled(): Promise<boolean> {
  * Enable biometric unlock by storing the PIN-derived key behind a biometric gate.
  * Requires a successful biometric prompt up front (proves the user can unlock).
  */
-export async function enableBiometric(key: Uint8Array): Promise<boolean> {
+export async function enableBiometric(key: Uint8Array, language: SupportedLanguage): Promise<boolean> {
   const [hasHardware, enrolled] = await Promise.all([
     LocalAuthentication.hasHardwareAsync(),
     LocalAuthentication.isEnrolledAsync(),
@@ -58,8 +60,9 @@ export async function enableBiometric(key: Uint8Array): Promise<boolean> {
     return false;
   }
 
+  const t = i18n.getFixedT(language, 'auth');
   const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Confirm to enable biometric unlock',
+    promptMessage: t('biometricPrompt.confirmEnable'),
     disableDeviceFallback: false,
   });
   if (!result.success) {
@@ -71,7 +74,7 @@ export async function enableBiometric(key: Uint8Array): Promise<boolean> {
     await SecureStore.setItemAsync(SecureKeys.BIOMETRIC_KEY, bytesToHex(key), {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
       requireAuthentication: true,
-      authenticationPrompt: 'Unlock Piggy',
+      authenticationPrompt: t('biometricPrompt.unlockApp'),
     });
     await SecureStore.setItemAsync(SecureKeys.BIOMETRIC_KEY + '.enabled', '1', {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
@@ -95,12 +98,12 @@ export async function disableBiometric(): Promise<void> {
  * session secret. Returns null on cancel/failure so the caller can fall back to
  * PIN entry.
  */
-export async function unlockWithBiometric(): Promise<string | null> {
+export async function unlockWithBiometric(language: SupportedLanguage): Promise<string | null> {
   if (!(await isBiometricEnabled())) return null;
   try {
     const keyHex = await SecureStore.getItemAsync(SecureKeys.BIOMETRIC_KEY, {
       requireAuthentication: true,
-      authenticationPrompt: 'Unlock Piggy',
+      authenticationPrompt: i18n.getFixedT(language, 'auth')('biometricPrompt.unlockApp'),
     });
     if (!keyHex) return null;
     return decryptSessionWithKey(hexToBytes(keyHex));

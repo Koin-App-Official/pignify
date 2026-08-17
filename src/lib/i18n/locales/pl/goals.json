@@ -1,0 +1,25 @@
+{
+  "yourGoals": "Twoje cele",
+  "empty": {
+    "title": "Nie masz jeszcze celów",
+    "body": "Utwórz swój pierwszy cel oszczędnościowy, aby zacząć!",
+    "cta": "Utwórz cel"
+  },
+  "detail": {
+    "back": "Wstecz",
+    "savedOfTarget": "{{saved}} z {{target}}",
+    "settingAside": "Odkładasz {{amount}}/mies. · Cel osiągnięty {{date}}",
+    "addSavingsPlaceholder": "Dodaj oszczędności...",
+    "save": "Zapisz",
+    "milestones": "Kamienie milowe",
+    "depositHistory": "Historia wpłat"
+  },
+  "primary": "Główny",
+  "review": {
+    "headline": "Wygląda dobrze!",
+    "sub": "Oto Twój plan oszczędzania w skrócie.",
+    "warningMultiGoal": "Uwzględniając wszystkie aktywne cele, to przekracza Twój miesięczny dochód. Możesz to zmienić w każdej chwili.",
+    "warningSingleGoal": "Ten cel wymaga odkładania więcej niż wynosi Twój miesięczny dochód. Możesz to zmienić w każdej chwili.",
+    "createGoal": "Utwórz cel 🎉"
+  }
+}

@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Home, Target, Zap, MessageCircle, User, type LucideIcon } from 'lucide-react-native';
 import { AppState, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useStore } from '@/lib/store';
 import { springPresets } from '@/lib/springPresets';
 import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
@@ -41,6 +42,7 @@ function AnimatedTabIcon({ focused, color, Icon }: { focused: boolean; color: st
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export default function TabLayout() {
+  const { t } = useTranslation('common');
   const refreshActiveMissions = useStore((state) => state.refreshActiveMissions);
   const checkAndUpdateStreak = useStore((state) => state.checkAndUpdateStreak);
   const refreshNotifications = useStore((state) => state.refreshNotifications);
@@ -122,35 +124,35 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={Home} />,
         }}
       />
       <Tabs.Screen
         name="goals"
         options={{
-          title: 'Goals',
+          title: t('tabs.goals'),
           tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={Target} />,
         }}
       />
       <Tabs.Screen
         name="missions"
         options={{
-          title: 'Missions',
+          title: t('tabs.missions'),
           tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={Zap} />,
         }}
       />
       <Tabs.Screen
         name="coach"
         options={{
-          title: 'Coach',
+          title: t('tabs.coach'),
           tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={MessageCircle} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, focused }) => <AnimatedTabIcon focused={focused} color={color} Icon={User} />,
         }}
       />

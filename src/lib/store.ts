@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,6 +26,8 @@ import {
 } from './missions';
 import { PIGGY_STORE_VERSION, migratePiggyState } from './storeMigrations';
 import { PLAN_RANK } from './entitlements';
+import { detectDeviceLanguage, type SupportedLanguage } from './i18n/detect';
+import { formatMoney } from './i18n/format';
 
 export interface Goal {
   id: string;
@@ -225,6 +228,15 @@ export interface UserProfile {
    * behavior), null = never lock on backgrounding.
    */
   autoLockMinutes: 0 | 1 | 5 | null;
+  /**
+   * App display language. Seeded from the device for brand-new profiles
+   * (`detectDeviceLanguage`, below) — existing installs are backfilled to
+   * 'en' by the v4→v5 migration instead, so an app update never silently
+   * changes a returning user's language (see implementations/I18N_PL.md's
+   * Decisions). Independent of `country`/`currency`: a Polish speaker in the
+   * UK wants `pl` copy with `GBP` amounts.
+   */
+  language: SupportedLanguage;
 }
 
 export const DEFAULT_PROFILE: UserProfile = {
@@ -265,6 +277,7 @@ export const DEFAULT_PROFILE: UserProfile = {
     weeklyReflection: true,
   },
   autoLockMinutes: 0,
+  language: detectDeviceLanguage(),
 };
 
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [
@@ -528,11 +541,11 @@ function buildAndRefreshSchedule(state: PiggyState) {
     hasActiveTarget: target > 0,
     targetMet,
     streak: profile.streak,
-    remainingLabel: formatCurrency(remaining, profile.currency),
+    remainingLabel: formatCurrency(remaining, profile.currency, profile.language),
     checkinIgnoredStreak: profile.checkinIgnoredStreak ?? 0,
     hasWeeklyActivity: savedThisWeek > 0 || expenseCountThisWeek > 0,
     preferredHour: getPreferredHour(profile.activityHourCounts),
-    savedThisWeekLabel: formatCurrency(savedThisWeek, profile.currency),
+    savedThisWeekLabel: formatCurrency(savedThisWeek, profile.currency, profile.language),
     expenseCountThisWeek,
     planStatus: profile.planStatus,
     // `trialEndsAt` first: it's the only one of the two the entitlements sync
@@ -541,6 +554,7 @@ function buildAndRefreshSchedule(state: PiggyState) {
     // trial-ending reminder would never be scheduled at all.
     currentPeriodEnd: profile.trialEndsAt ?? profile.currentPeriodEnd,
     planDisplayName: profile.plan,
+    language: profile.language,
   }).catch(() => {});
 }
 
@@ -644,10 +658,17 @@ export const useStore = create<PiggyState>()(
           const target = updates.targetAmount ?? before.targetAmount;
           const name = updates.name ?? before.name;
           if (target > 0) {
+            const tNotif = i18n.getFixedT(profile.language, 'notifications');
             const prevPct = before.savedAmount / target;
             const newPct = updates.savedAmount / target;
             if (prevPct < 1 && newPct >= 1) {
-              fireMilestoneNotification('👑 Goal crushed!', `You just hit ${name} — ${formatCurrency(updates.savedAmount, profile.currency)} saved.`).catch(() => {});
+              fireMilestoneNotification(
+                tNotif('milestone.goalCrushedTitle'),
+                tNotif('milestone.goalCrushedBody', {
+                  name,
+                  amount: formatCurrency(updates.savedAmount, profile.currency, profile.language),
+                })
+              ).catch(() => {});
             } else {
               const thresholds: [number, string][] = [
                 [0.75, '🚀'],
@@ -656,7 +677,11 @@ export const useStore = create<PiggyState>()(
               ];
               for (const [t, emoji] of thresholds) {
                 if (prevPct < t && newPct >= t) {
-                  fireMilestoneNotification(`${emoji} ${Math.round(t * 100)}% there!`, `You're ${Math.round(t * 100)}% of the way to ${name}! Keep going.`).catch(() => {});
+                  const percent = Math.round(t * 100);
+                  fireMilestoneNotification(
+                    tNotif('milestone.progressTitle', { emoji, percent }),
+                    tNotif('milestone.progressBody', { percent, name })
+                  ).catch(() => {});
                   break;
                 }
               }
@@ -826,7 +851,12 @@ export const useStore = create<PiggyState>()(
           ),
         }));
         if (achievement && !achievement.unlocked && profile.notificationPrefs.milestoneAlerts) {
-          fireMilestoneNotification('🏆 Achievement unlocked', achievement.title).catch(() => {});
+          const tNotif = i18n.getFixedT(profile.language, 'notifications');
+          const tContent = i18n.getFixedT(profile.language, 'content');
+          fireMilestoneNotification(
+            tNotif('milestone.achievementUnlockedTitle'),
+            tContent(`achievements.${achievement.id}.title`)
+          ).catch(() => {});
         }
       },
 
@@ -899,11 +929,22 @@ export const useStore = create<PiggyState>()(
 /**
  * Format a numeric amount with the correct currency symbol and position.
  * e.g. formatCurrency(1000, 'USD') → '$1,000'
- *      formatCurrency(1000, 'PLN') → '1,000 zł'
+ *      formatCurrency(1000, 'PLN') → '1 000 zł'
+ *
+ * `language` defaults to the current app language rather than requiring
+ * every call site to pass it — this function used to read the *device's*
+ * ambient locale via bare `toLocaleString()` (a pre-existing bug: an
+ * English-language user on a Polish phone saw Polish-grouped numbers), which
+ * this preserves the ergonomics of while fixing. The actual formatting is
+ * delegated to i18n/format.ts's pure formatMoney, which Phase 0
+ * (implementations/I18N_PL.md) found could not just reuse
+ * Intl.NumberFormat — it's independently broken for pl-PL below 10,000.
  */
-export function formatCurrency(amount: number, currencyCode: string): string {
+export function formatCurrency(amount: number, currencyCode: string, language?: SupportedLanguage): string {
   const currency = CURRENCIES.find((c) => c.code === currencyCode);
-  const symbol = currency?.symbol ?? currencyCode;
-  const formatted = amount.toLocaleString();
-  return currency?.symbolAfter ? `${formatted} ${symbol}` : `${symbol}${formatted}`;
+  return formatMoney(
+    amount,
+    { symbol: currency?.symbol ?? currencyCode, symbolAfter: currency?.symbolAfter ?? false },
+    language ?? useStore.getState().profile.language
+  );
 }

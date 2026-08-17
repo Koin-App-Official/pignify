@@ -8,6 +8,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "locales": {
+      "pl": "./languages/pl.json"
+    },
     "experiments": {
       "reactCompiler": true
     },
@@ -25,7 +28,8 @@
         "NSBonjourServices": [
           "_expo._tcp",
           "_metro._tcp"
-        ]
+        ],
+        "CFBundleLocalizations": ["en", "pl"]
       }
     },
     "android": {
@@ -55,7 +59,8 @@
           "faceIDPermission": "Allow Piggy to unlock the app with Face ID."
         }
       ],
-      "./plugins/withoutPushEntitlement"
+      "./plugins/withoutPushEntitlement",
+      "expo-localization"
     ]
   }
 }

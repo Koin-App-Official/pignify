@@ -8,6 +8,7 @@
  * Decision: when the user has NOT chosen what to keep, the downgrade is BLOCKED
  * until they select (status `awaiting_selection`). No silent auto-archive.
  */
+import type { TFunction } from 'i18next';
 import { getPlanConfig, isUnlimited, type QuotaResource } from './entitlements';
 import type { UserPlan } from './store';
 
@@ -70,10 +71,19 @@ export interface RetentionValidation {
  * Validate a user's keep-selection against the target plan limits. Used at the
  * period boundary just before applying the downgrade (records may have changed
  * since the request).
+ *
+ * `t` is optional so this stays callable (and testable under vitest, with no
+ * i18next instance available) without it — omitting it falls back to the
+ * original plain-English message. The UI caller (downgrade-selection.tsx)
+ * passes its `t` to get a translated one; this is a defensive/should-never-
+ * happen path (the UI itself prevents an over-limit selection), so the exact
+ * wording matters less than not silently breaking retention.test.ts's
+ * existing 2-arg calls.
  */
 export function validateRetentionSelection(
   targetPlan: UserPlan,
-  selection: RetentionSelection
+  selection: RetentionSelection,
+  t?: TFunction<'plans'>
 ): RetentionValidation {
   const errors: string[] = [];
   const checks: [keyof RetentionSelection, 'goals' | 'incomes' | 'devices'][] = [
@@ -87,7 +97,16 @@ export function validateRetentionSelection(
     if (limit === 'unlimited') continue;
     const count = selection[field].length;
     if (count > limit) {
-      errors.push(`Too many ${resource} selected to keep (${count}); ${targetPlan} allows ${limit}.`);
+      errors.push(
+        t
+          ? t('downgradeSelection.retentionTooMany', {
+              resource: t(`downgradeSelection.retentionResource.${resource}`),
+              count,
+              plan: targetPlan,
+              limit,
+            })
+          : `Too many ${resource} selected to keep (${count}); ${targetPlan} allows ${limit}.`
+      );
     }
   }
 

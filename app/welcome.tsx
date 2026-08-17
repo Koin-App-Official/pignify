@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
@@ -30,31 +31,19 @@ import { springPresets } from '@/lib/springPresets';
  * connection" reads as "this is a spreadsheet".
  */
 interface Slide {
-  headline: string;
-  sub: string;
+  id: 'goal' | 'noBank' | 'coach';
   expression: MascotExpression;
 }
 
 const SLIDES: Slide[] = [
-  {
-    headline: 'Every goal starts\nwith a number',
-    sub: "Tell Piggy what you're saving for. We'll turn it into a month-by-month plan you can actually keep.",
-    expression: 'idle',
-  },
-  {
-    headline: 'No bank login.\nEver.',
-    sub: 'Piggy never connects to your accounts. There’s nothing to link, and nothing for anyone to steal.',
-    expression: 'thinking',
-  },
-  {
-    headline: 'A coach\nin your pocket',
-    sub: 'Streaks, missions, and an AI coach that knows your plan — so month three feels as good as day one.',
-    expression: 'celebrating',
-  },
+  { id: 'goal', expression: 'idle' },
+  { id: 'noBank', expression: 'thinking' },
+  { id: 'coach', expression: 'celebrating' },
 ];
 
 export default function Welcome() {
   const router = useRouter();
+  const { t } = useTranslation('onboarding');
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
@@ -90,7 +79,7 @@ export default function Welcome() {
       <View className="h-12 flex-row items-center justify-end px-5">
         {!isLast && (
           <TouchableOpacity onPress={finish} className="px-3 py-2" accessibilityRole="button">
-            <Text className="text-sm font-semibold text-on-surface-variant">Skip</Text>
+            <Text className="text-sm font-semibold text-on-surface-variant">{t('welcome.skip')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -104,16 +93,16 @@ export default function Welcome() {
         className="flex-1"
       >
         {SLIDES.map((slide, i) => (
-          <View key={slide.headline} style={{ width }} className="flex-1 items-center justify-center px-8">
+          <View key={slide.id} style={{ width }} className="flex-1 items-center justify-center px-8">
             {/* Held at 'idle' until the slide is actually on screen — the
                 expression change is what drives the mascot's reaction, so
                 setting it up front would play the animation off-screen. */}
             <Mascot expression={i === index ? slide.expression : 'idle'} size={160} />
             <Text className="mt-10 text-4xl font-black text-on-surface text-center">
-              {slide.headline}
+              {t(`welcome.slides.${slide.id}.headline`)}
             </Text>
             <Text className="mt-4 text-base font-medium text-on-surface-variant text-center leading-6">
-              {slide.sub}
+              {t(`welcome.slides.${slide.id}.sub`)}
             </Text>
           </View>
         ))}
@@ -122,20 +111,20 @@ export default function Welcome() {
       <View className="px-5 pb-6 pt-4">
         <View className="mb-6 flex-row items-center justify-center gap-2">
           {SLIDES.map((slide, i) => (
-            <Dot key={slide.headline} active={i === index} />
+            <Dot key={slide.id} active={i === index} />
           ))}
         </View>
 
         <Button onPress={advance} className="w-full flex-row items-center justify-center gap-2 h-14">
           <Text className="text-base font-bold text-primary-foreground">
-            {isLast ? "Let's get started" : 'Next'}
+            {isLast ? t('welcome.getStarted') : t('welcome.next')}
           </Text>
           <ArrowRight size={18} color="#ffffff" />
         </Button>
 
         <TouchableOpacity onPress={requestLogin} className="mt-4 items-center py-2">
           <Text className="text-sm font-semibold text-on-surface-variant">
-            Already have an account? <Text className="text-primary underline">Sign in</Text>
+            {t('welcome.haveAccount')} <Text className="text-primary underline">{t('welcome.signIn')}</Text>
           </Text>
         </TouchableOpacity>
       </View>

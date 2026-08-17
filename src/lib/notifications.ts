@@ -1,11 +1,23 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import i18n from 'i18next';
+import type { SupportedLanguage } from './i18n/detect';
 
 /**
  * Local-only notification engine (no push/remote infra exists yet — see
  * implementation plan). Every scheduled category has a stable identifier so
  * `Notifications.scheduleNotificationAsync` can be called repeatedly and stay
  * idempotent (cancel-then-reschedule) rather than piling up duplicates.
+ *
+ * Content is translated at schedule time (not fire time — local notifications
+ * are pre-rendered strings, not re-evaluated by the OS), via `i18n.getFixedT`
+ * against the given `language`. Deliberately imports the raw `i18next`
+ * package rather than this app's `./i18n/index.ts` bootstrap — that wrapper
+ * imports `useStore` from store.ts (to subscribe to language changes), and
+ * store.ts imports this module, so importing the wrapper here would be
+ * circular. The raw package export is the same singleton instance either
+ * way, already initialized with every namespace by the time any of these
+ * functions run (they're only ever called after the app has mounted).
  */
 
 /** Time-sensitive nudges the user should act on today (daily check-in, trial ending). */
@@ -28,14 +40,19 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function initNotifications() {
+export async function initNotifications(language: SupportedLanguage) {
   if (Platform.OS === 'android') {
+    const t = i18n.getFixedT(language, 'notifications');
+    // Re-creating a channel with the same ID updates its existing name rather
+    // than duplicating it, so calling this again on a language change (see
+    // app/_layout.tsx) re-labels the channels already visible in Android
+    // Settings > App notifications, not just newly-scheduled notifications.
     await Notifications.setNotificationChannelAsync(CHANNEL_REMINDERS, {
-      name: 'Reminders',
+      name: t('channels.reminders'),
       importance: Notifications.AndroidImportance.HIGH,
     });
     await Notifications.setNotificationChannelAsync(CHANNEL_DIGEST, {
-      name: 'Digests & celebrations',
+      name: t('channels.digest'),
       importance: Notifications.AndroidImportance.DEFAULT,
     });
   }
@@ -96,12 +113,14 @@ export interface DailyCheckinParams {
   decayed: boolean;
   /** Learned hour (0-23) this user is typically active; falls back to `DEFAULT_HOUR` until there's enough data. */
   preferredHour: number;
+  language: SupportedLanguage;
 }
 
 export async function scheduleDailyCheckin(p: DailyCheckinParams) {
   await cancel(IDS.dailyCheckin);
   if (!p.enabled) return;
 
+  const t = i18n.getFixedT(p.language, 'notifications');
   const hour = clampToQuietHours(p.preferredHour);
 
   if (!p.hasActiveTarget) {
@@ -112,8 +131,8 @@ export async function scheduleDailyCheckin(p: DailyCheckinParams) {
     await Notifications.scheduleNotificationAsync({
       identifier: IDS.dailyCheckin,
       content: {
-        title: '🎯 Start your first goal',
-        body: 'Set a savings goal to start building a streak — even a small monthly amount counts.',
+        title: t('firstGoal.title'),
+        body: t('firstGoal.body'),
         data: { type: 'daily-checkin' },
       },
       trigger: {
@@ -130,11 +149,11 @@ export async function scheduleDailyCheckin(p: DailyCheckinParams) {
   // Decayed reminders skip every other day (even calendar dates) instead of nagging nightly.
   if (p.decayed && new Date().getDate() % 2 === 0) return;
 
-  const title = p.streak > 0 ? '🔥 Streak check-in' : '💰 Daily check-in';
+  const title = p.streak > 0 ? t('checkin.titleStreak') : t('checkin.titlePlain');
   const body =
     p.streak > 0
-      ? `Your ${p.streak}-day streak is on the line! Log today's spending and add ${p.remainingLabel} to your goal to keep it alive.`
-      : `Quick check-in — did you spend anything today? Log it to stay on track.`;
+      ? t('checkin.bodyStreak', { streak: p.streak, remaining: p.remainingLabel })
+      : t('checkin.bodyPlain');
 
   await Notifications.scheduleNotificationAsync({
     identifier: IDS.dailyCheckin,
@@ -155,15 +174,18 @@ export async function scheduleWeeklyReflection(params: {
   expenseCount: number;
   /** Learned hour (0-23) this user is typically active; falls back to `DEFAULT_HOUR` until there's enough data. */
   preferredHour: number;
+  language: SupportedLanguage;
 }) {
   await cancel(IDS.weeklyReflection);
   if (!params.enabled || !params.hasActivity) return;
 
+  const t = i18n.getFixedT(params.language, 'notifications');
+
   await Notifications.scheduleNotificationAsync({
     identifier: IDS.weeklyReflection,
     content: {
-      title: '📊 Weekly reflection',
-      body: `Your week: ${params.savedLabel} saved, ${params.expenseCount} expense${params.expenseCount === 1 ? '' : 's'} logged. Tap to see your recap.`,
+      title: t('weeklyReflection.title'),
+      body: t('weeklyReflection.body', { count: params.expenseCount, saved: params.savedLabel }),
       data: { type: 'weekly-reflection' },
     },
     trigger: {
@@ -182,6 +204,7 @@ export async function scheduleTrialEnding(params: {
   isTrialing: boolean;
   currentPeriodEnd: string | null;
   planDisplayName: string;
+  language: SupportedLanguage;
 }) {
   await cancel(IDS.trialEnding);
   if (!params.enabled || !params.isTrialing || !params.currentPeriodEnd) return;
@@ -197,13 +220,15 @@ export async function scheduleTrialEnding(params: {
   fireAt.setHours(10, 0, 0, 0);
   if (fireAt.getTime() <= Date.now()) return; // already inside the window (or past) — nothing to schedule
 
+  const t = i18n.getFixedT(params.language, 'notifications');
+
   await Notifications.scheduleNotificationAsync({
     identifier: IDS.trialEnding,
     content: {
-      title: '⏳ Your free trial ends in 2 days',
+      title: t('trialEnding.title'),
       // Deliberately no "payment method" language: this is a no-card trial, so
       // there is nothing on file and nothing to have already done.
-      body: `Your ${params.planDisplayName} trial wraps up in 2 days. Take a look at what changes — nothing you've saved goes anywhere.`,
+      body: t('trialEnding.body', { plan: params.planDisplayName }),
       data: { type: 'trial-ending' },
     },
     trigger: {
@@ -239,6 +264,7 @@ export interface RefreshScheduleParams {
   planStatus: string;
   currentPeriodEnd: string | null;
   planDisplayName: string;
+  language: SupportedLanguage;
 }
 
 /** Single entry point that (re)computes every scheduled (non-immediate) category from current app state. */
@@ -252,6 +278,7 @@ export async function refreshNotificationSchedule(p: RefreshScheduleParams) {
       remainingLabel: p.remainingLabel,
       decayed: p.checkinIgnoredStreak >= 3,
       preferredHour: p.preferredHour,
+      language: p.language,
     }),
     scheduleWeeklyReflection({
       enabled: p.weeklyReflectionEnabled,
@@ -259,12 +286,14 @@ export async function refreshNotificationSchedule(p: RefreshScheduleParams) {
       savedLabel: p.savedThisWeekLabel,
       expenseCount: p.expenseCountThisWeek,
       preferredHour: p.preferredHour,
+      language: p.language,
     }),
     scheduleTrialEnding({
       enabled: true, // trial-ending is billing-critical — not gated behind a notificationPrefs toggle
       isTrialing: p.planStatus === 'trialing',
       currentPeriodEnd: p.currentPeriodEnd,
       planDisplayName: p.planDisplayName,
+      language: p.language,
     }),
   ]);
 }

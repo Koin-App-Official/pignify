@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useMemo } from 'react';
 import { View, Text, Pressable, TouchableOpacity } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/animation/BottomSheet';
 import { Input } from './input';
 import { X, Check } from 'lucide-react-native';
@@ -52,6 +53,7 @@ const PickerListItem = React.memo(function PickerListItem({
 const ItemSeparator = () => <View className="h-px bg-outline-variant/40 mx-5" />;
 
 export const PickerModal = ({ isVisible, onClose, onSelect, items, selectedCode, title }: PickerModalProps) => {
+  const { t } = useTranslation('common');
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(
@@ -98,7 +100,7 @@ export const PickerModal = ({ isVisible, onClose, onSelect, items, selectedCode,
         <Input
           value={search}
           onChangeText={setSearch}
-          placeholder="Search..."
+          placeholder={t('search')}
           autoCapitalize="none"
         />
       </View>

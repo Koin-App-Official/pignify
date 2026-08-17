@@ -1,0 +1,21 @@
+{
+  "title": "Missions",
+  "subtitle": "Complete missions to earn XP and build habits",
+  "tier1": "Tier 1",
+  "tier2": "Tier 2",
+  "tier3": "Tier 3",
+  "missionsCompleted": "{{claimed}}/{{total}} missions completed",
+  "dailyMissions": "Daily Missions",
+  "weeklyMissions": "Weekly Missions",
+  "tabMissions": "Missions",
+  "tabBadges": "Badges",
+  "onYourHonour": "On your honour",
+  "progressCurrency": "{{current}} of {{target}} saved",
+  "progressCount": "{{current}} of {{target}}",
+  "rewardXp": "+{{reward}} XP",
+  "quiz": {
+    "claim": "Claim +{{reward}} XP",
+    "tryAgainLater": "Got it — try again later",
+    "notNow": "Not now"
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "welcome": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Let's get started",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "slides": {
+      "goal": {
+        "headline": "Every goal starts\nwith a number",
+        "sub": "Tell Piggy what you're saving for. We'll turn it into a month-by-month plan you can actually keep."
+      },
+      "noBank": {
+        "headline": "No bank login.\nEver.",
+        "sub": "Piggy never connects to your accounts. There's nothing to link, and nothing for anyone to steal."
+      },
+      "coach": {
+        "headline": "A coach\nin your pocket",
+        "sub": "Streaks, missions, and an AI coach that knows your plan — so month three feels as good as day one."
+      }
+    }
+  },
+  "contribution": {
+    "monthlyHeadline": "How much can you\nset aside each month?",
+    "monthlySub": "We'll work out when you'll hit your goal.",
+    "suggestionChip": "{{pct}}% · {{symbol}}{{amount}}",
+    "amountPlaceholder": "0.00",
+    "reachGoalBy": "At {{symbol}}{{amount}}/month you'll reach your goal by",
+    "pctOfIncome": "That's {{pct}}% of your monthly income.",
+    "cappedWarning": "At this rate it'll take over 10 years. Try raising your monthly amount or lowering your goal.",
+    "incomeWarning": "That's a big chunk of your income. Make sure it's comfortable — you can always adjust later.",
+    "switchToDeadline": "I have a fixed deadline instead",
+    "deadlineHeadline": "When do you want\nto achieve this?",
+    "deadlineSub": "Pick the date — we'll work out your monthly contribution.",
+    "selectDate": "Select a date",
+    "needToSetAside": "You'll need to set aside",
+    "amountPerMonth": "{{symbol}}{{amount}}/month",
+    "hitDeadlineBy": "to hit this by {{date}}.",
+    "deadlineIncomeWarning": "This date requires setting aside a large share of your income. We can adjust this later!",
+    "switchToMonthly": "Switch back to monthly set-aside",
+    "continue": "Continue"
+  },
+  "common": {
+    "next": "Next",
+    "continue": "Continue",
+    "notNow": "Not now",
+    "stepProgress": "Step {{current}} of {{total}}",
+    "resumeBanner": "Welcome back, {{firstName}} — picking up where you left off.",
+    "resumeBannerNoName": "Picking up where you left off."
+  },
+  "name": {
+    "headline": "Welcome to Piggy!\nWhat should we call you?",
+    "sub": "Let's make this personal.",
+    "placeholder": "Your first name",
+    "errorEmpty": "Hey, we'd love to know your name! 😊"
+  },
+  "ageGate": {
+    "blockedTitle": "Piggy is for adults 18+",
+    "blockedBody": "We're not able to create an account for you based on the date of birth you confirmed. This app isn't available to users under 18.",
+    "headline": "When were you born,\n{{firstName}}?",
+    "sub": "Piggy is only available to users 18 and older, so we need to confirm your age before we go any further.",
+    "privacyNote": "This is a legal age requirement, not profiling. We use your date of birth to confirm you're 18 — it's never used to target you or shared with anyone."
+  },
+  "localization": {
+    "headline": "Where are you based,\n{{firstName}}?",
+    "sub": "We'll use this to format currency and set helpful defaults.",
+    "countryLabel": "Country",
+    "currencyLabel": "Currency",
+    "selectCountry": "Select country",
+    "selectCurrency": "Select currency",
+    "currencyDisplay": "{{symbol}} — {{name}}",
+    "continue": "Looks right, let's go!",
+    "selectCountryTitle": "Select Country",
+    "selectCurrencyTitle": "Select Currency",
+    "languageLabel": "Language",
+    "selectLanguageTitle": "Select Language",
+    "languageEn": "English",
+    "languagePl": "Polski"
+  },
+  "goal": {
+    "headline": "What are we saving for?",
+    "sub": "Pick a goal or type your own below.",
+    "placeholder": "I want to...",
+    "errorEmpty": "Tell us what you're saving for! 🎯",
+    "chips": {
+      "vacation": "Vacation",
+      "newCar": "New Car",
+      "houseDeposit": "House Deposit",
+      "emergencyFund": "Emergency Fund",
+      "somethingElse": "Something Else"
+    }
+  },
+  "targetAmount": {
+    "headline": "How much do you need\nfor your {{goalName}}?",
+    "sub": "Don't worry, you can always adjust this later.",
+    "errorEmpty": "Please enter an amount greater than 0 💸"
+  },
+  "income": {
+    "headline": "To build your roadmap,\nwhat is your average\nmonthly income?",
+    "sub": "We use this only to calculate how much you need to set aside. Your data is encrypted and completely private.",
+    "skip": "I'd rather not say right now"
+  },
+  "blueprint": {
+    "headline": "Let's make this official!",
+    "sub": "Here's your personal savings blueprint.",
+    "rowName": "Name",
+    "rowGoal": "Goal",
+    "rowTarget": "Target",
+    "rowMonthlyIncome": "Monthly Income",
+    "notProvided": "Not provided",
+    "rowMonthlySetAside": "Monthly set-aside",
+    "rowGoalReached": "Goal reached",
+    "exceedsIncomeWarning": "This plan sets aside more than your income each month. We can adjust it anytime!",
+    "incomeSkippedNote": "Providing your income on the dashboard will unlock deep affordability insights tailored to your situation.",
+    "monthsAway_one": "You're only {{count}} month away from your dream. Let's make it happen.",
+    "monthsAway_other": "You're only {{count}} months away from your dream. Let's make it happen.",
+    "createAccount": "Create My Piggy Account"
+  },
+  "pushPermission": {
+    "headline": "Want a nudge when\nit counts, {{firstName}}?",
+    "sub": "Saving {{amount}} a month is easy to plan and easy to forget. A quick reminder is what keeps a streak alive.",
+    "streakTitle": "Streak protection",
+    "streakBody": "A heads-up when today's set-aside is still outstanding.",
+    "milestoneTitle": "Milestone celebrations",
+    "milestoneBody": "We'll tell you the moment your {{goalName}} hits 25%, 50%, 75%.",
+    "milestoneBodyFallback": "We'll tell you the moment your goal hits 25%, 50%, 75%.",
+    "weeklyTitle": "A weekly recap",
+    "weeklyBody": "One calm summary of how the week went. No spam, ever.",
+    "footerNote": "You can change any of this later in Settings.",
+    "keepMeOnTrack": "Keep me on track"
+  },
+  "account": {
+    "headline": "Your Piggy Plan is ready!",
+    "subEmailConfirmed": "Your email is confirmed — we just need to finish building your plan for your {{goalName}}.",
+    "subOtpSent": "Enter the 6-digit code we emailed to {{email}} to finish setting up your account.",
+    "subInitial": "Enter your email — we'll send a sign-in code to lock in your plan for your {{goalName}} by {{date}}.",
+    "emailPlaceholder": "you@example.com",
+    "emailError": "Please enter a valid email address 📧",
+    "codeLabel": "Sign-in code (this is not your app PIN)",
+    "resendCode": "Resend code",
+    "sendCode": "Send Code",
+    "verifyCreate": "Verify & Create Account",
+    "retry": "Retry",
+    "requestCodeError": "Oops! We couldn't send your code. Please check your connection and try again.",
+    "otpEnterCode": "Enter the 6-digit code from your email.",
+    "sessionSecretError": "Signed in, but we could not secure the session. Request a new code and try again.",
+    "codeIncorrect": "That code is incorrect or expired. Request a new code and try again.",
+    "provisionError": "We verified your email but couldn't finish setting up your account. Your code is still good — tap Retry."
+  },
+  "legal": {
+    "reassuranceTitle": "We're asking for your email. Not your bank.",
+    "reassuranceBody": "Piggy never connects to your accounts — there's nothing to link, and nothing for anyone to steal. Your plan is encrypted and private.",
+    "acceptTerms": "By creating an account you accept our terms",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "aiTransparency": "AI Transparency",
+    "services": "Services",
+    "aiFeatureAccess": "AI & Feature Access"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "quota": {
+    "incomeSourcesUnlimited": "Unlimited income sources",
+    "incomeSources_one": "{{count}} income source",
+    "incomeSources_other": "{{count}} income sources",
+    "goalsUnlimited": "Unlimited goals",
+    "goals_one": "{{count}} goal",
+    "goals_other": "{{count}} goals",
+    "devicesUnlimited": "Unlimited devices",
+    "devices_one": "{{count}} device",
+    "devices_other": "{{count}} devices",
+    "aiMessagesUnlimited": "Unlimited AI messages/mo",
+    "aiMessages_one": "{{count}} AI message/mo",
+    "aiMessages_other": "{{count}} AI messages/mo",
+    "aiMessagesExtra": " (then {{price}}/msg)",
+    "emailReportsUnlimited": "Unlimited email reports/mo",
+    "emailReports_one": "{{count}} email report/mo",
+    "emailReports_other": "{{count}} email reports/mo"
+  },
+  "feature": {
+    "exclusiveProtection": "Exclusive protection",
+    "deepAnalysis": "Deep spending analysis",
+    "referral": "Referral bonus",
+    "goalBonus": "Goal-achievement bonus",
+    "loyaltyDiscount": "Loyalty discount after 6 months",
+    "trialDays_one": "{{count}}-day free trial",
+    "trialDays_other": "{{count}}-day free trial"
+  },
+  "endOfBillingPeriod": "the end of your billing period",
+  "trial": {
+    "endedTitle": "Your free trial has ended",
+    "endedBody": "Your {{plan}} features are paused. Nothing has been deleted — your goals and history are all still here.",
+    "endsToday": "Your free trial ends today",
+    "daysLeft_one": "{{count}} day left of your free trial",
+    "daysLeft_other": "{{count}} days left of your free trial",
+    "activeBody": "You're on {{plan}} with everything unlocked, and we never asked for a card."
+  },
+  "planUpdatedTitle": "Plan updated",
+  "planUpdatedBody": "You're now on the {{plan}} plan. Enjoy your new features! 🎉",
+  "downgradeCanceledTitle": "Downgrade canceled",
+  "downgradeCanceledBody": "You'll stay on the {{plan}} plan.",
+  "checkoutNotConfiguredTitle": "Checkout not configured",
+  "checkoutNotConfiguredBody": "Stripe Checkout isn't set up in this build. Simulate a successful payment for {{plan}}?",
+  "cancel": "Cancel",
+  "simulatePayment": "Simulate payment",
+  "switchToTitle": "Switch to {{plan}}?",
+  "switchToBody": "This takes effect on {{date}}. Nothing is ever deleted — if this plan holds fewer goals than you have, you'll choose which stay active first.",
+  "keepCurrentPlan": "Keep current plan",
+  "continue": "Continue",
+  "header": "Choose your plan",
+  "confirmingPurchase": "Confirming your purchase…",
+  "pendingBanner": "Scheduled change: your plan switches to {{plan}} on {{date}}. Re-select your current plan below to cancel this.",
+  "perMonth": "/mo",
+  "status": {
+    "activeUntilCanceled": "Active until {{date}} (canceled)",
+    "trialEndedPaused": "Trial ended — features paused",
+    "currentTrialing": "Current plan (free trial)",
+    "pastDue": "Payment failed — update your card to avoid losing access",
+    "current": "Current plan",
+    "scheduledNextCycle": "Scheduled for next cycle"
+  },
+  "buttons": {
+    "yourCurrentPlan": "Your current plan",
+    "keepThisPlan": "Keep this plan",
+    "openingCheckout": "Opening checkout…",
+    "upgradeTo": "Upgrade to {{plan}}",
+    "switchTo": "Switch to {{plan}}"
+  },
+  "disclaimer": "Upgrades apply immediately. Downgrades take effect at the end of your current billing period, and your data is always kept safe.",
+  "gates": {
+    "aiCoach": {
+      "title": "Unlock the AI Coach",
+      "description": "Chat with your personal savings coach by upgrading your plan."
+    },
+    "aiMessages": {
+      "title": "You're out of AI messages",
+      "description": "You've used all of this month's AI messages. Upgrade for a bigger monthly allowance."
+    },
+    "goals": {
+      "title": "Goal limit reached",
+      "description": "Your current plan supports fewer goals. Upgrade to track more savings goals at once."
+    },
+    "incomes": {
+      "title": "Income limit reached",
+      "description": "Upgrade to add more income sources to your budget."
+    },
+    "devices": {
+      "title": "Device limit reached",
+      "description": "This plan allows fewer connected devices. Upgrade to use Piggy on more devices."
+    },
+    "emailReports": {
+      "title": "Email reports are a paid feature",
+      "description": "Upgrade your plan to request email reports of your progress."
+    },
+    "deepAnalysis": {
+      "title": "Deep spending analysis",
+      "description": "Get an AI-powered deep dive into your spending, delivered straight to your inbox, by upgrading your plan."
+    },
+    "deepAnalysisQuota": {
+      "title": "You're out of Deep Analyses",
+      "description": "You've used all of this period's deep analyses. Upgrade for a bigger allowance."
+    },
+    "referral": {
+      "title": "Referral rewards",
+      "description": "Invite friends and earn free months on the Family plan."
+    }
+  },
+  "upgradeModal": {
+    "defaultTitle": "Upgrade your plan",
+    "defaultDescription": "This feature is available on a higher plan. Upgrade to unlock it.",
+    "recommendedPlan": "Recommended plan",
+    "upgradeToPlan": "Upgrade to {{plan}}",
+    "upgradeToHigherPlan": "Upgrade to a higher plan",
+    "onTopPlan": "You're on the top plan",
+    "maybeLater": "Maybe later",
+    "perMonth": "/mo"
+  },
+  "downgradeSelection": {
+    "nothingToChoose": "Nothing to choose here — go back and try again.",
+    "chooseWhatToKeep": "Choose what to keep",
+    "keepBody_one": "{{plan}} keeps {{count}} active goal. You have {{total}}. Pick {{pickText}} to keep active — the rest come off your list, but nothing is ever deleted. They come straight back if you upgrade again.",
+    "keepBody_other": "{{plan}} keeps {{count}} active goals. You have {{total}}. Pick {{pickText}} to keep active — the rest come off your list, but nothing is ever deleted. They come straight back if you upgrade again.",
+    "pickOne": "the one",
+    "pickUpTo": "up to {{count}}",
+    "keepingCountOfLimit": "Keeping {{count}} of {{limit}}",
+    "confirm": "Confirm",
+    "genericErrorTitle": "Something went wrong",
+    "retentionTooMany": "Too many {{resource}} selected to keep ({{count}}); {{plan}} allows {{limit}}.",
+    "retentionResource": {
+      "goals": "goals",
+      "incomes": "income sources",
+      "devices": "devices"
+    }
+  },
+  "planGate": {
+    "continue": "Continue",
+    "locked": {
+      "trialEndedTitle": "Your free trial has ended",
+      "subscriptionEndedTitle": "Your subscription has ended",
+      "featuresPaused": "{{plan}} features are paused for now.",
+      "nothingDeletedBold": "Nothing has been deleted.",
+      "nothingDeletedRest": " Your goals, deposits, streak and history are all exactly where you left them, and they come straight back when you subscribe.",
+      "checkoutNotConfigured": "Checkout isn't configured in this build, so subscribing won't work here. You can keep using Piggy for now.",
+      "pickPlan": "Pick a plan to carry on",
+      "alreadySubscribed": "I've already subscribed",
+      "continueWithoutSubscribing": "Continue without subscribing",
+      "deletingAccount": "Deleting your account…",
+      "logOut": "Log out",
+      "contactSupport": "Contact support",
+      "deleteAccount": "Delete account",
+      "checkoutFailed": "We couldn't open checkout. Check your connection and try again, or email us at {{email}}.",
+      "noActiveSubscription": "We couldn't find an active subscription yet. If you've just paid, give it a moment and tap again.",
+      "logoutBody": "You can log back in anytime with your email.",
+      "deleteAccountTitle": "Delete account",
+      "deleteAccountBody": "This permanently deletes your account and all data from our servers. This cannot be undone.",
+      "deleteAction": "Delete",
+      "somethingWrongTitle": "Something went wrong",
+      "somethingWrongBody": "We could not delete your account. Please try again."
+    },
+    "trialIntro": {
+      "title": "{{days}} days of {{plan}},\non us",
+      "body": "Everything is unlocked from today. We didn't ask for a card, so there's nothing to cancel.",
+      "perk1": "Every feature Piggy has, including the AI coach",
+      "perk2": "Unlimited goals, so you can plan more than one thing",
+      "perk3": "We'll remind you before it ends — no surprises",
+      "cta": "Let's go"
+    }
+  }
+}

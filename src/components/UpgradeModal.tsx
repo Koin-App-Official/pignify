@@ -7,6 +7,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { X, Sparkles } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BottomSheet } from './animation/BottomSheet';
@@ -30,6 +31,7 @@ export function UpgradeModal({
   onUpgrade,
   secondaryAction,
 }: UpgradeModalProps) {
+  const { t } = useTranslation('plans');
   const requiredPlan = gate?.requiredPlan ?? null;
   const targetConfig = requiredPlan ? getPlanConfig(requiredPlan) : null;
 
@@ -68,11 +70,10 @@ export function UpgradeModal({
             <Sparkles size={28} color="#1D4ED8" />
           </View>
           <Text className="text-xl font-black text-on-surface text-center">
-            {gate?.title ?? 'Upgrade your plan'}
+            {gate?.title ?? t('upgradeModal.defaultTitle')}
           </Text>
           <Text className="mt-2 text-sm font-medium text-on-surface-variant text-center px-2">
-            {gate?.description ??
-              'This feature is available on a higher plan. Upgrade to unlock it.'}
+            {gate?.description ?? t('upgradeModal.defaultDescription')}
           </Text>
         </View>
 
@@ -80,7 +81,7 @@ export function UpgradeModal({
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4 flex-row items-center justify-between">
             <View>
               <Text className="text-xs font-semibold text-on-surface-variant">
-                Recommended plan
+                {t('upgradeModal.recommendedPlan')}
               </Text>
               <Text className="text-base font-black text-on-surface mt-0.5">
                 {targetConfig.displayName}
@@ -88,7 +89,7 @@ export function UpgradeModal({
             </View>
             <Text className="text-base font-black text-primary">
               {formatUSD(targetConfig.priceUSD)}
-              <Text className="text-xs font-semibold text-on-surface-variant">/mo</Text>
+              <Text className="text-xs font-semibold text-on-surface-variant">{t('upgradeModal.perMonth')}</Text>
             </Text>
           </View>
         )}
@@ -96,11 +97,15 @@ export function UpgradeModal({
         {requiredPlan ? (
           <Button
             onPress={handleUpgrade}
-            label={`Upgrade to ${targetConfig?.displayName ?? 'a higher plan'}`}
+            label={
+              targetConfig
+                ? t('upgradeModal.upgradeToPlan', { plan: targetConfig.displayName })
+                : t('upgradeModal.upgradeToHigherPlan')
+            }
             className="w-full"
           />
         ) : (
-          <Button onPress={handleClose} label="You're on the top plan" disabled className="w-full" />
+          <Button onPress={handleClose} label={t('upgradeModal.onTopPlan')} disabled className="w-full" />
         )}
 
         {secondaryAction && (
@@ -113,7 +118,7 @@ export function UpgradeModal({
         )}
 
         <Pressable onPress={handleClose} className="mt-3 mb-2 items-center py-2">
-          <Text className="text-sm font-semibold text-on-surface-variant">Maybe later</Text>
+          <Text className="text-sm font-semibold text-on-surface-variant">{t('upgradeModal.maybeLater')}</Text>
         </Pressable>
       </View>
     </BottomSheet>

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Redirect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Plus, Flame, TrendingUp, ChevronRight, Calendar, Sparkles } from 'lucide-react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ProgressRing } from '@/components/ProgressRing';
@@ -50,12 +51,15 @@ function makeCurrencyFormatter(symbol: string, symbolAfter: boolean) {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation(['dashboard', 'common']);
+  const { t: tPlans } = useTranslation('plans');
   const router = useRouter();
   const { openExpense } = useLocalSearchParams<{ openExpense?: string }>();
   // Fine-grained selectors instead of subscribing to the whole `profile`
   // object — this screen only touches these fields, so unrelated profile
   // changes (settings, plan sync, etc.) no longer re-render the dashboard.
   const userID = useStore((s) => s.profile.userID);
+  const language = useStore((s) => s.profile.language);
   const currency = useStore((s) => s.profile.currency);
   const expenses = useStore((s) => s.profile.expenses);
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
@@ -101,7 +105,7 @@ export default function Dashboard() {
   const [gate, setGate] = useState<GateInfo | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const openGate = (key: GateKey) => setGate(gateInfo(key, plan));
+  const openGate = (key: GateKey) => setGate(gateInfo(key, plan, tPlans));
   const closeGate = () => setGate(null);
   const goUpgrade = (target: UserPlan) => {
     setGate(null);
@@ -113,14 +117,14 @@ export default function Dashboard() {
     if (!deepAnalysis.allowed) return openGate('deepAnalysisQuota');
 
     setIsAnalyzing(true);
-    const result = await triggerDeepAnalysis(userID ?? '');
+    const result = await triggerDeepAnalysis(userID ?? '', language);
     setIsAnalyzing(false);
 
     if (result.status === 'success') {
       incrementDeepAnalysis();
-      Alert.alert('Analysis started', "We're crunching your numbers — check your email shortly.");
+      Alert.alert(t('analysisStartedTitle'), t('analysisStartedBody'));
     } else {
-      Alert.alert('Something went wrong', 'Could not start the analysis. Please try again.');
+      Alert.alert(t('analysisErrorTitle'), t('analysisErrorBody'));
     }
   };
 
@@ -189,9 +193,9 @@ export default function Dashboard() {
 
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return t('greetingMorning');
+    if (h < 17) return t('greetingAfternoon');
+    return t('greetingEvening');
   };
 
   return (
@@ -207,11 +211,11 @@ export default function Dashboard() {
               className="mb-4 rounded-2xl bg-primary-container p-4"
             >
               <Text className="text-sm font-bold text-on-primary-container">
-                You're all set{name ? `, ${name}` : ''}! 🎉
+                {t('welcomeBanner.title')}{name ? `, ${name}` : ''}! 🎉
               </Text>
               <Text className="mt-1 text-xs leading-5 text-on-primary-container">
-                Your Piggy Plan is live.
-                {primaryGoal ? ` Time to start saving for your ${primaryGoal.name}.` : ''}
+                {t('welcomeBanner.body')}
+                {primaryGoal ? ` ${t('welcomeBanner.bodyGoalSuffix', { goalName: primaryGoal.name })}` : ''}
               </Text>
             </TouchableOpacity>
           </FadeInStagger>
@@ -223,7 +227,8 @@ export default function Dashboard() {
               onPress={() =>
                 safeOpenURL(
                   `mailto:${SUPPORT_EMAIL}`,
-                  `No email app is set up on this device. Reach us at ${SUPPORT_EMAIL}.`
+                  t('common:noEmailApp', { email: SUPPORT_EMAIL }),
+                  t('common:notAvailable')
                 )
               }
               activeOpacity={0.85}
@@ -231,8 +236,7 @@ export default function Dashboard() {
               style={{ borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}
             >
               <Text className="text-sm font-semibold text-warning">
-                ⚠️ Your last payment failed. Update your card to keep your plan — tap to contact
-                support.
+                {t('pastDueWarning')}
               </Text>
             </TouchableOpacity>
           </FadeInStagger>
@@ -242,7 +246,7 @@ export default function Dashboard() {
           <FadeInStagger index={0} delayStep={60} replay={replay}>
             <View className="mb-4 rounded-2xl bg-warning-container p-4" style={{ borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}>
               <Text className="text-sm font-semibold text-warning">
-                💡 Add your monthly income to unlock personalised savings insights.
+                {t('incomeSkippedTip')}
               </Text>
             </View>
           </FadeInStagger>
@@ -294,11 +298,11 @@ export default function Dashboard() {
           ) : (
             <View className="mb-6 rounded-3xl bg-primary-container p-8 items-center">
               <Mascot size={48} />
-              <Text className="mb-2 mt-4 text-xl font-black text-on-primary-container">Create your first goal</Text>
+              <Text className="mb-2 mt-4 text-xl font-black text-on-primary-container">{t('emptyGoals.title')}</Text>
               <Button
                 onPress={() => router.push('/goals')}
                 className="flex-row items-center gap-2 mt-2"
-                label="New Goal"
+                label={t('emptyGoals.newGoal')}
               />
             </View>
           )}
@@ -311,12 +315,12 @@ export default function Dashboard() {
               <Mascot size={20} />
               <Text className="text-sm font-semibold text-on-tertiary-container text-center flex-1">
                 {progress < 25
-                  ? 'Great start! Every dollar counts 🌱'
+                  ? t('motivation.lowProgress')
                   : progress < 50
-                  ? `You're ${progress}% closer to your ${activeGoal.name}! 💪`
+                  ? t('motivation.midProgress', { progress, goalName: activeGoal.name })
                   : progress < 75
-                  ? 'Halfway hero! Keep this momentum going 🚀'
-                  : 'Almost there! Your goal is within reach 👑'}
+                  ? t('motivation.highProgress')
+                  : t('motivation.almostDone')}
               </Text>
             </View>
           </FadeInStagger>
@@ -335,15 +339,15 @@ export default function Dashboard() {
                 <Sparkles size={18} color="#1D4ED8" />
               </View>
               <Text className="text-sm font-black text-on-primary-container">
-                {isAnalyzing ? 'Analyzing…' : 'Deep Analysis'}
+                {isAnalyzing ? t('deepAnalysis.analyzing') : t('deepAnalysis.title')}
               </Text>
             </View>
             <Text className="text-xs font-bold text-on-primary-container/70">
               {!has('deepAnalysis')
-                ? 'Upgrade to unlock'
+                ? t('deepAnalysis.upgradeToUnlock')
                 : deepAnalysis.unlimited
-                ? 'Unlimited'
-                : `${deepAnalysis.remaining} of ${deepAnalysis.limit} left`}
+                ? t('deepAnalysis.unlimited')
+                : t('deepAnalysis.remainingOfLimit', { remaining: deepAnalysis.remaining, limit: deepAnalysis.limit })}
             </Text>
           </TouchableOpacity>
         </FadeInStagger>
@@ -351,15 +355,14 @@ export default function Dashboard() {
         {/* Today's Spending */}
         <FadeInStagger index={4} delayStep={60} replay={replay}>
           <View className="mb-5 rounded-2xl bg-surface-container-low p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 }}>
-            <Text className="mb-1.5 text-xs font-semibold text-on-surface-variant">Today's Spending</Text>
+            <Text className="mb-1.5 text-xs font-semibold text-on-surface-variant">{t('todaysSpending')}</Text>
             <AnimatedCurrency
               value={todaySpend}
               formatter={currencyFormatter}
               style={{ fontSize: 24, fontWeight: '900', color: '#0f172a', marginBottom: 4, padding: 0 }}
             />
             <Text className="text-xs text-on-surface-variant">
-              across {expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length}{' '}
-              expenses
+              {t('expenseCount', { count: expenses.filter((e) => e.date === new Date().toISOString().split('T')[0]).length })}
             </Text>
           </View>
         </FadeInStagger>
@@ -372,7 +375,7 @@ export default function Dashboard() {
                 <View className="h-7 w-7 rounded-xl bg-tertiary-container items-center justify-center">
                   <TrendingUp size={13} color="#22C55E" />
                 </View>
-                <Text className="text-xs font-semibold text-on-surface-variant">Saved Today</Text>
+                <Text className="text-xs font-semibold text-on-surface-variant">{t('savedToday')}</Text>
               </View>
               <AnimatedCurrency
                 value={savedToday}
@@ -385,7 +388,7 @@ export default function Dashboard() {
                 <View className="h-7 w-7 rounded-xl bg-tertiary-container items-center justify-center">
                   <Calendar size={13} color="#22C55E" />
                 </View>
-                <Text className="text-xs font-semibold text-on-surface-variant">Saved This Month</Text>
+                <Text className="text-xs font-semibold text-on-surface-variant">{t('savedThisMonth')}</Text>
               </View>
               <AnimatedCurrency
                 value={savedThisMonth}
@@ -402,7 +405,7 @@ export default function Dashboard() {
             onPress={() => setShowExpense(true)}
             variant="tonal"
             className="mb-5 w-full flex-row items-center justify-center h-14"
-            label="Quick Add Expense"
+            label={t('quickAddExpense')}
           />
         </FadeInStagger>
 
@@ -412,10 +415,10 @@ export default function Dashboard() {
             <View className="flex-row items-center justify-between mb-3">
               <View className="flex-row items-center gap-2">
                 <TrendingUp size={16} color="#22C55E" />
-                <Text className="text-sm font-bold text-on-surface">Saver Lv.{level}</Text>
+                <Text className="text-sm font-bold text-on-surface">{t('saverLevel', { level })}</Text>
               </View>
               <Text className="text-xs font-bold text-on-surface-variant">
-                {xp % 100}/100 XP
+                {t('xpProgress', { xp: xp % 100 })}
               </Text>
             </View>
             <AnimatedProgressBar progress={(xp % 100) / 100} />
@@ -427,9 +430,9 @@ export default function Dashboard() {
           <View className="mb-8">
             <FadeInStagger index={8} delayStep={60} replay={replay}>
               <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-lg font-bold text-on-surface">Your Goals</Text>
+                <Text className="text-lg font-bold text-on-surface">{t('yourGoals')}</Text>
                 <TouchableOpacity onPress={() => router.push('/goals')} className="flex-row items-center gap-0.5">
-                  <Text className="text-sm font-semibold text-primary">See all</Text>
+                  <Text className="text-sm font-semibold text-primary">{t('seeAll')}</Text>
                   <ChevronRight size={16} color="#1D4ED8" />
                 </TouchableOpacity>
               </View>
@@ -491,6 +494,7 @@ const GoalCarouselItem = memo(function GoalCarouselItem({
   currencyFormatter: (n: number) => string;
   currency: string;
 }) {
+  const { t } = useTranslation('dashboard');
   const pct = Math.round((goal.savedAmount / goal.targetAmount) * 100);
   const days = Math.max(0, Math.ceil((new Date(goal.deadline).getTime() - Date.now()) / 86400000));
   return (
@@ -507,10 +511,10 @@ const GoalCarouselItem = memo(function GoalCarouselItem({
           style={{ fontSize: 16, fontWeight: '600', color: '#22C55E', padding: 0 }}
         />
         <Text className="text-base font-semibold text-tertiary">
-          {' '}of {formatCurrency(goal.targetAmount, currency)}
+          {' '}{t('ofAmount', { amount: formatCurrency(goal.targetAmount, currency) })}
         </Text>
       </View>
-      <Text className="text-sm text-on-surface-variant mt-1">{days} days left</Text>
+      <Text className="text-sm text-on-surface-variant mt-1">{t('daysLeft', { count: days })}</Text>
     </View>
   );
 });

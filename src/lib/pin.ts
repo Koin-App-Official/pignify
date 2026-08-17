@@ -18,6 +18,7 @@
  * the pure-JS version was taking 5-10s on-device with no way to show real
  * progress, native execution brings that to well under a second.
  */
+import type { TFunction } from 'i18next';
 import { pbkdf2 as nativePbkdf2 } from 'react-native-quick-crypto';
 import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { gcm } from '@noble/ciphers/aes.js';
@@ -179,15 +180,20 @@ export async function isPinReused(pin: string, source: PinReuseSource): Promise<
 }
 
 // ── PIN strength ──────────────────────────────────────────────────────────────
-/** Reject trivial PINs banking-style. Returns an error message or null if ok. */
-export function validatePinStrength(pin: string): string | null {
-  if (!/^\d{6}$/.test(pin)) return 'PIN must be 6 digits.';
-  if (/^(\d)\1{5}$/.test(pin)) return 'Avoid repeating the same digit.';
+/**
+ * Reject trivial PINs banking-style. Returns an error message or null if ok.
+ * Takes the caller's `t` rather than importing i18next directly — this module
+ * has no other UI-layer dependency, and PinCreationFlow (the only caller) already
+ * has `t` in scope.
+ */
+export function validatePinStrength(pin: string, t: TFunction<'auth'>): string | null {
+  if (!/^\d{6}$/.test(pin)) return t('pinCreation.mustBe6Digits');
+  if (/^(\d)\1{5}$/.test(pin)) return t('pinCreation.avoidRepeating');
   const asc = '0123456789';
   const desc = '9876543210';
-  if (asc.includes(pin) || desc.includes(pin)) return 'Avoid sequential digits.';
+  if (asc.includes(pin) || desc.includes(pin)) return t('pinCreation.avoidSequential');
   if (['000000', '111111', '123456', '654321', '121212', '112233'].includes(pin))
-    return 'That PIN is too common.';
+    return t('pinCreation.tooCommon');
   return null;
 }
 

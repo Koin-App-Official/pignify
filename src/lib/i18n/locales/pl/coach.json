@@ -1,0 +1,25 @@
+{
+  "greetings": [
+    "Jak mogę Ci dziś pomóc?",
+    "Co masz na myśli?",
+    "Jakie masz pytania?",
+    "Chcesz porozmawiać o czymś związanym z pieniędzmi?",
+    "Nad czym dziś pracujemy?",
+    "Z czym potrzebujesz pomocy?",
+    "Czy mogę coś dla Ciebie zrobić?"
+  ],
+  "hiGreetingNamed": "Cześć {{name}}! {{greeting}}",
+  "hiGreetingAnonymous": "Cześć! {{greeting}}",
+  "connectionError": "Przepraszam, mam teraz problem z połączeniem. Spróbuj ponownie za chwilę.",
+  "checkoutNotConfiguredTitle": "Płatność nieskonfigurowana",
+  "checkoutNotConfiguredBody": "Stripe Checkout nie jest skonfigurowany w tej wersji aplikacji. Zasymulować udany zakup 1 dodatkowej wiadomości?",
+  "cancel": "Anuluj",
+  "simulatePurchase": "Zasymuluj zakup",
+  "title": "Trener AI",
+  "onlineStatus": "Online • Gotowy do pomocy",
+  "upgradeYourPlan": "Ulepsz swój plan",
+  "unlimited": "Bez limitu",
+  "pctUsedThisPeriod": "Wykorzystano {{pct}}% w tym okresie",
+  "inputPlaceholder": "Zapytaj swojego trenera...",
+  "buyMoreMessage": "Kup 1 dodatkową wiadomość · $2.99"
+}

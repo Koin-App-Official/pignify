@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
 import { CalendarModal } from '@/components/ui/calendar-modal';
 import { CURRENCIES } from '@/lib/store';
 import { deriveGoalDate, requiredContribution, suggestedContribution } from '@/lib/goalMath';
 import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
+import { formatDate, formatMonthYear } from '@/lib/i18n/format';
+import type { SupportedLanguage } from '@/lib/i18n/detect';
 
 export type PlanningMode = 'contribution' | 'deadline';
 
@@ -17,6 +20,7 @@ export interface ContributionResult {
 
 interface ContributionStepProps {
   currency: string;
+  language: SupportedLanguage;
   targetAmount: number;
   monthlyIncome: number | null;
   incomeSkipped: boolean;
@@ -44,10 +48,6 @@ interface ContributionStepProps {
 const SUGGESTION_PCTS = [0.1, 0.15, 0.2];
 const INCOME_WARNING_PCT = 35;
 
-function formatMonthYear(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-}
-
 function getCurrencySymbol(currencyCode: string): string {
   return CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
 }
@@ -61,6 +61,7 @@ function getCurrencySymbol(currencyCode: string): string {
  */
 export function ContributionStep({
   currency,
+  language,
   targetAmount,
   monthlyIncome,
   incomeSkipped,
@@ -74,6 +75,7 @@ export function ContributionStep({
   onContinue,
   hideFooter,
 }: ContributionStepProps) {
+  const { t } = useTranslation('onboarding');
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const currencySymbol = getCurrencySymbol(currency);
   const hasIncome = !incomeSkipped && !!monthlyIncome && monthlyIncome > 0;
@@ -117,12 +119,8 @@ export function ContributionStep({
     <View>
       {planningMode === 'contribution' ? (
         <>
-          <Text className="mb-2 text-3xl font-black text-on-surface">
-            How much can you{'\n'}set aside each month?
-          </Text>
-          <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-            We'll work out when you'll hit your goal.
-          </Text>
+          <Text className="mb-2 text-3xl font-black text-on-surface">{t('contribution.monthlyHeadline')}</Text>
+          <Text className="mb-6 text-sm font-medium text-on-surface-variant">{t('contribution.monthlySub')}</Text>
 
           {hasIncome && (
             <View className="flex-row flex-wrap gap-2 mb-4">
@@ -144,8 +142,7 @@ export function ContributionStep({
                         selected ? 'text-on-primary-container' : 'text-on-surface'
                       }`}
                     >
-                      {Math.round(pct * 100)}% · {currencySymbol}
-                      {amount}
+                      {t('contribution.suggestionChip', { pct: Math.round(pct * 100), symbol: currencySymbol, amount })}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -160,7 +157,7 @@ export function ContributionStep({
               value={contribution}
               onChangeText={(v) => onContributionChange(v.replace(/[^0-9.]/g, ''))}
               keyboardType="numeric"
-              placeholder="0.00"
+              placeholder={t('contribution.amountPlaceholder')}
               placeholderTextColor={PLACEHOLDER_COLOR}
               style={TEXT_INPUT_CENTERING}
               autoFocus
@@ -169,50 +166,41 @@ export function ContributionStep({
 
           {derived && (
             <Text className="mt-3 text-sm font-medium text-on-surface-variant">
-              At {currencySymbol}
-              {contributionNumber}/month you'll reach your goal by{' '}
-              <Text className="font-bold text-on-surface">{formatMonthYear(derived.date)}</Text>
+              {t('contribution.reachGoalBy', { symbol: currencySymbol, amount: contributionNumber })}{' '}
+              <Text className="font-bold text-on-surface">{formatMonthYear(derived.date, language)}</Text>
             </Text>
           )}
 
           {hasIncome && pctOfIncome !== null && (
             <Text className="mt-2 text-xs text-on-surface-variant">
-              That's {Math.round(pctOfIncome)}% of your monthly income.
+              {t('contribution.pctOfIncome', { pct: Math.round(pctOfIncome) })}
             </Text>
           )}
 
           {derived?.capped && (
             <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mt-3">
               <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
-              <Text className="flex-1 text-sm text-warning">
-                At this rate it'll take over 10 years. Try raising your monthly amount or lowering your goal.
-              </Text>
+              <Text className="flex-1 text-sm text-warning">{t('contribution.cappedWarning')}</Text>
             </View>
           )}
 
           {showIncomeWarning && (
             <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mt-3">
               <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
-              <Text className="flex-1 text-sm text-warning">
-                That's a big chunk of your income. Make sure it's comfortable — you can always adjust later.
-              </Text>
+              <Text className="flex-1 text-sm text-warning">{t('contribution.incomeWarning')}</Text>
             </View>
           )}
 
           {!hideFooter && (
             <TouchableOpacity onPress={() => onPlanningModeChange('deadline')} className="mt-4 items-center py-2">
-              <Text className="text-sm font-medium text-primary underline">I have a fixed deadline instead</Text>
+              <Text className="text-sm font-medium text-primary underline">{t('contribution.switchToDeadline')}</Text>
             </TouchableOpacity>
           )}
         </>
       ) : (
         <>
-          <Text className="mb-2 text-3xl font-black text-on-surface">
-            When do you want{'\n'}to achieve this?
-          </Text>
-          <Text className="mb-6 text-sm font-medium text-on-surface-variant">
-            Pick the date — we'll work out your monthly contribution.
-          </Text>
+          <Text className="mb-2 text-3xl font-black text-on-surface">{t('contribution.deadlineHeadline')}</Text>
+          <Text className="mb-6 text-sm font-medium text-on-surface-variant">{t('contribution.deadlineSub')}</Text>
 
           <TouchableOpacity
             onPress={() => setIsCalendarVisible(true)}
@@ -220,44 +208,37 @@ export function ContributionStep({
           >
             <Text className="text-base font-medium text-on-surface">
               {deadline
-                ? new Date(deadline).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : 'Select a date'}
+                ? formatDate(deadline, language, { year: 'numeric', month: 'long', day: 'numeric' })
+                : t('contribution.selectDate')}
             </Text>
           </TouchableOpacity>
 
           {deadline && requiredMonthly !== null && (
             <Text className="mt-3 text-sm font-medium text-on-surface-variant">
-              You'll need to set aside{' '}
+              {t('contribution.needToSetAside')}{' '}
               <Text className="font-bold text-on-surface">
-                {currencySymbol}
-                {requiredMonthly.toFixed(2)}/month
+                {t('contribution.amountPerMonth', { symbol: currencySymbol, amount: requiredMonthly.toFixed(2) })}
               </Text>{' '}
-              to hit this by {formatMonthYear(new Date(deadline).toISOString())}.
+              {t('contribution.hitDeadlineBy', { date: formatMonthYear(new Date(deadline).toISOString(), language) })}
             </Text>
           )}
 
           {hasIncome && pctOfIncome !== null && (
             <Text className="mt-2 text-xs text-on-surface-variant">
-              That's {Math.round(pctOfIncome)}% of your monthly income.
+              {t('contribution.pctOfIncome', { pct: Math.round(pctOfIncome) })}
             </Text>
           )}
 
           {showIncomeWarning && (
             <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mt-3">
               <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
-              <Text className="flex-1 text-sm text-warning">
-                This date requires setting aside a large share of your income. We can adjust this later!
-              </Text>
+              <Text className="flex-1 text-sm text-warning">{t('contribution.deadlineIncomeWarning')}</Text>
             </View>
           )}
 
           {!hideFooter && (
             <TouchableOpacity onPress={() => onPlanningModeChange('contribution')} className="mt-4 items-center py-2">
-              <Text className="text-sm font-medium text-primary underline">Switch back to monthly set-aside</Text>
+              <Text className="text-sm font-medium text-primary underline">{t('contribution.switchToMonthly')}</Text>
             </TouchableOpacity>
           )}
         </>
@@ -273,7 +254,7 @@ export function ContributionStep({
             disabled={!canContinue}
             className="flex-1 items-center justify-center flex-row gap-2"
           >
-            <Text className="text-sm font-bold text-primary-foreground">Continue</Text>
+            <Text className="text-sm font-bold text-primary-foreground">{t('contribution.continue')}</Text>
             <ArrowRight size={16} color="#ffffff" />
           </Button>
         </View>

@@ -1,0 +1,32 @@
+{
+  "defaultName": "Oszczędzający",
+  "levelLabel": "Poz.{{level}}",
+  "personalitySuffix": "Typ osobowości: {{type}}",
+  "financialExplorer": "Odkrywca finansowy",
+  "totalSaved": "Łącznie zaoszczędzone",
+  "goals": "Cele",
+  "badges": "Odznaki",
+  "monthlyIncome": "Miesięczny dochód",
+  "notProvided": "Nie podano",
+  "expenseBreakdown": "Podział wydatków",
+  "notifications": {
+    "title": "Powiadomienia",
+    "paydayReminder": "Przypomnienie o dniu wypłaty",
+    "streakProtection": "Alert ochrony serii",
+    "milestoneAlerts": "Świętowanie kamieni milowych",
+    "weeklyReflection": "Cotygodniowe podsumowanie",
+    "softAskTitle": "Zostań na kursie",
+    "softAskBody": "Piggy używa przypomnień, aby pomóc Ci utrzymać serię i osiągnąć cele oszczędnościowe. Włączyć powiadomienia?",
+    "notNow": "Nie teraz",
+    "enable": "Włącz",
+    "disabledTitle": "Powiadomienia wyłączone",
+    "disabledBody": "Włącz powiadomienia dla Piggy w ustawieniach urządzenia, aby to aktywować."
+  },
+  "reset": {
+    "title": "Resetuj dane",
+    "body": "Czy na pewno chcesz zresetować wszystkie dane? Tej operacji nie można cofnąć.",
+    "cancel": "Anuluj",
+    "confirm": "Resetuj",
+    "button": "Resetuj wszystkie dane (demo)"
+  }
+}

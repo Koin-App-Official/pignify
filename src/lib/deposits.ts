@@ -52,11 +52,12 @@ export function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-export function getWeekMondayString(): string {
+/** Defaults to the real current time; pass an explicit `referenceDate` to compute relative to some other day (e.g. an injected `today` in tests). */
+export function getWeekMondayString(referenceDate: Date = new Date()): string {
   // UTC throughout: mixing local getDay()/setDate() with a UTC toISOString()
   // serialization is the same bug class as addDaysString below — in any
   // timezone ahead of UTC it can silently roll the result back a day.
-  const d = new Date();
+  const d = new Date(referenceDate);
   const day = d.getUTCDay();
   d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
   return d.toISOString().split('T')[0];

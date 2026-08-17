@@ -1,0 +1,21 @@
+{
+  "title": "Misje",
+  "subtitle": "Wykonuj misje, aby zdobywać XP i budować nawyki",
+  "tier1": "Ranga 1",
+  "tier2": "Ranga 2",
+  "tier3": "Ranga 3",
+  "missionsCompleted": "Ukończono {{claimed}}/{{total}} misji",
+  "dailyMissions": "Misje dzienne",
+  "weeklyMissions": "Misje tygodniowe",
+  "tabMissions": "Misje",
+  "tabBadges": "Odznaki",
+  "onYourHonour": "Na słowo honoru",
+  "progressCurrency": "Zaoszczędzono {{current}} z {{target}}",
+  "progressCount": "{{current}} z {{target}}",
+  "rewardXp": "+{{reward}} XP",
+  "quiz": {
+    "claim": "Odbierz +{{reward}} XP",
+    "tryAgainLater": "Rozumiem — spróbuj ponownie później",
+    "notNow": "Nie teraz"
+  }
+}

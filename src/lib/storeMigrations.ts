@@ -9,7 +9,7 @@
 import { migrateGoalDepositDates } from './deposits';
 
 /** Bump alongside a new migration step below, and in store.ts's persist config. */
-export const PIGGY_STORE_VERSION = 4;
+export const PIGGY_STORE_VERSION = 5;
 
 /** Pre-#83 name of the entry tier, still present in every persisted blob. */
 const LEGACY_BEGINNER = 'free';
@@ -84,6 +84,20 @@ export function migratePiggyState(persisted: unknown, from: number): unknown {
         plan: profile.plan === LEGACY_BEGINNER ? 'beginner' : profile.plan,
         pendingPlan: profile.pendingPlan === LEGACY_BEGINNER ? 'beginner' : profile.pendingPlan,
       },
+    };
+  }
+
+  // v4 → v5: adds profile.language (#120, Polish i18n) — the SupportedLanguage
+  // ('en' | 'pl') driving react-i18next's active locale. Backfilled to 'en'
+  // rather than device-detected: an app update should never silently flip a
+  // returning user's language out from under them. Device detection only
+  // seeds DEFAULT_PROFILE for brand-new installs (store.ts), which never go
+  // through this migration path at all — see implementations/I18N_PL.md's
+  // Decisions.
+  if (from < 5) {
+    state = {
+      ...state,
+      profile: { ...state.profile, language: state.profile?.language ?? 'en' },
     };
   }
 

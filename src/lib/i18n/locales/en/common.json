@@ -1,0 +1,27 @@
+{
+  "noEmailApp": "No email app is set up on this device. Reach us at {{email}}.",
+  "notAvailable": "Not available",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "search": "Search...",
+  "tabs": {
+    "home": "Home",
+    "goals": "Goals",
+    "missions": "Missions",
+    "coach": "Coach",
+    "profile": "Profile"
+  },
+  "calendarModal": {
+    "title": "Target Date",
+    "subtitle": "When do you want to reach your goal?",
+    "quickJump6mo": "+6mo",
+    "quickJump1yr": "+1yr",
+    "quickJump2yr": "+2yr",
+    "quickJump5yr": "+5yr"
+  },
+  "dobConfirmModal": {
+    "title": "Is this correct?",
+    "body": "Once confirmed, this can't be changed.",
+    "edit": "Edit"
+  }
+}

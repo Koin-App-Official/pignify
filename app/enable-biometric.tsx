@@ -9,22 +9,26 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuthLock } from '@/lib/authLock';
+import { useStore } from '@/lib/store';
 import { PIN_LENGTH } from '@/lib/pin';
 import { enableBiometric } from '@/lib/biometrics';
 import { PinPad, PinDots } from '@/components/auth/PinPad';
 
-function formatRemaining(ms: number): string {
+function formatRemaining(ms: number, t: TFunction<'auth'>): string {
   const s = Math.ceil(ms / 1000);
-  if (s < 60) return `${s}s`;
+  if (s < 60) return t('duration.seconds', { s });
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  return `${m}m ${rem.toString().padStart(2, '0')}s`;
+  return t('duration.minutes', { m, s: rem.toString().padStart(2, '0') });
 }
 
 export default function EnableBiometric() {
+  const { t } = useTranslation(['settings', 'auth']);
   const router = useRouter();
   const tryUnlockPin = useAuthLock((s) => s.tryUnlockPin);
 
@@ -50,12 +54,14 @@ export default function EnableBiometric() {
     if (res.ok) {
       // tryUnlockPin already re-applied the session; enrolling is best-effort —
       // a declined/failed native prompt here just leaves biometrics off.
-      const enrolled = res.key ? await enableBiometric(res.key).catch(() => false) : false;
+      const enrolled = res.key
+        ? await enableBiometric(res.key, useStore.getState().profile.language).catch(() => false)
+        : false;
       setBusy(false);
       if (!enrolled) {
         setPin('');
         setShakeKey((k) => k + 1);
-        setError('Could not enable biometric unlock. Please try again.');
+        setError(t('enableBiometricFlow.enrollFailed'));
         return;
       }
       router.back();
@@ -67,15 +73,15 @@ export default function EnableBiometric() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     if (res.reason === 'locked') {
       setLockedMs(res.remainingMs ?? 0);
-      setError('Too many attempts. Try again later.');
+      setError(t('auth:errors.tooManyAttempts'));
     } else if (res.reason === 'wrong_pin') {
       const left = res.attemptsRemaining ?? 0;
-      setError(left > 0 ? `Incorrect PIN. ${left} attempt${left === 1 ? '' : 's'} left.` : 'Incorrect PIN.');
+      setError(left > 0 ? t('auth:errors.incorrectPinWithAttempts', { count: left }) : t('auth:errors.incorrectPin'));
     } else if (res.reason === 'invalid_session') {
-      setError('Session expired. Please sign in again.');
+      setError(t('auth:errors.sessionExpired'));
       router.back();
     } else if (res.reason === 'network_error') {
-      setError("Couldn't reach the server. Check your connection and try again.");
+      setError(t('auth:errors.networkError'));
     }
     // 'force_relogin' is handled by the store (status → unauthenticated), which
     // will unmount this whole modal since AuthGate swaps to LoginGate underneath.
@@ -97,9 +103,9 @@ export default function EnableBiometric() {
         </Pressable>
         <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <Text className="text-5xl mb-4">🔐</Text>
-          <Text className="text-2xl font-black text-on-surface mb-1">Confirm your PIN</Text>
+          <Text className="text-2xl font-black text-on-surface mb-1">{t('auth:changePin.confirmTitle')}</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
-            Enter your PIN to enable biometric unlock
+            {t('enableBiometricFlow.confirmPinSubtitle')}
           </Text>
 
           <PinDots length={PIN_LENGTH} filled={pin.length} shakeKey={shakeKey} />
@@ -107,7 +113,7 @@ export default function EnableBiometric() {
           <View className="h-6 mt-4">
             {locked ? (
               <Text className="text-sm font-semibold text-destructive">
-                Locked — {formatRemaining(lockedMs)}
+                {t('auth:lockedFor', { duration: formatRemaining(lockedMs, t) })}
               </Text>
             ) : error ? (
               <Text className="text-sm font-semibold text-destructive">{error}</Text>
