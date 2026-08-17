@@ -234,6 +234,7 @@ export default function AICoach() {
       primaryGoal: primaryGoal
         ? { name: primaryGoal.name, savedAmount: primaryGoal.savedAmount, targetAmount: primaryGoal.targetAmount }
         : null,
+      language: profile.language,
     };
 
     setInput('');

@@ -494,6 +494,7 @@ export default function Onboarding() {
         dateOfBirth,
         country,
         currency,
+        language,
         goalName,
         goal_name: goalName,
         targetAmount: Number(targetAmount),

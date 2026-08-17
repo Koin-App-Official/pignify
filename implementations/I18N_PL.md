@@ -424,21 +424,61 @@ their hardcoded display strings.
 
 The half of the app's language that JS bundles do not control.
 
-- [ ] Add `language` to the coach request payload ([coach.tsx:265](app/(tabs)/coach.tsx:265))
-- [ ] Update the `CLAUDE_coach_reply` n8n workflow's system prompt to reply in the requested language,
-      keeping the `<!--CELEBRATE-->` marker contract and the jailbreak guard intact
-- [ ] Verify streaming still parses correctly with Polish text — the NDJSON deltas are chunked by
-      byte, and Polish diacritics (ą ć ę ł ń ó ś ź ż) are multi-byte in UTF-8
-- [ ] Add `language` to the Deep Analysis payload ([deepAnalysis.ts:13](src/lib/deepAnalysis.ts:13)) and
-      its workflow prompt
-- [ ] Add `language` to the onboarding webhook payload ([onboarding.tsx:478](app/onboarding.tsx:478)) and
-      persist it on the Appwrite profile, so backend-originated messages match
-- [ ] Translate all notification copy in [src/lib/notifications.ts](src/lib/notifications.ts) — daily
-      check-in, weekly reflection, trial-ending, milestone, first-goal
-- [ ] Apply Polish plurals to the weekly reflection's expense count
-      ([notifications.ts:166](src/lib/notifications.ts:166))
-- [ ] **Reschedule pending notifications on language change.** They are rendered at schedule time,
-      so without this a user who switches to Polish keeps receiving English notifications for days
+- [x] Add `language` to the coach request payload ([coach.tsx](app/(tabs)/coach.tsx)) — added to the
+      existing `context` object (`context.language`), alongside `firstName`/`streak`/`level`
+- [x] Update the `CLAUDE_coach_reply` n8n workflow's system prompt to reply in the requested language,
+      keeping the `<!--CELEBRATE-->` marker contract and the jailbreak guard intact. All **three**
+      prompt-building Code nodes needed it, not just the main one — `Build Refusal Prompt` (jailbreak
+      decline) and `Build Quota Prompt` (out-of-messages / incomplete-account) build their own
+      `systemMessage` independently and would otherwise keep replying in English even to a Polish
+      user. Each reads `context.language` off the webhook body and prepends an explicit
+      "always reply in natural, native-sounding Polish — never English" instruction line; nothing
+      else in any of the three prompts changed. **Applied to the workflow's draft version only —
+      not yet published to production** (see note at the end of this phase)
+- [x] Verify streaming still parses correctly with Polish text. **Finding: already safe, no code
+      change needed.** The client uses `TextDecoder.decode(value, { stream: true })`, which is
+      specifically designed to buffer an incomplete multi-byte UTF-8 sequence across `read()` calls
+      rather than emit a corrupted partial character — the exact case the plan doc was worried
+      about. Everything downstream (`parseStreamEventLine`, `stripCelebrateMarker`) operates on the
+      already-decoded JS string (codepoints), not raw bytes, so there's nothing to fix
+- [x] Add `language` to the Deep Analysis payload ([deepAnalysis.ts](src/lib/deepAnalysis.ts)) —
+      `triggerDeepAnalysis` gained a required `language` param (no test coverage to preserve, single
+      call site), sent as a `&language=` query param alongside the existing `userId`.
+      **Workflow-side prompt update blocked**: the live workflow (`Stripe - Extra Financial Analysis
+      + Ai chat system`, matched by name/active-status since the client only has a bare webhook
+      UUID) has MCP access disabled at the workflow level — I can't inspect or edit it through this
+      connection. Needs the user (or someone with n8n UI access) to flip "Enable MCP access" on that
+      workflow's card/settings before this item can be finished
+- [x] Add `language` to the onboarding webhook payload ([onboarding.tsx](app/onboarding.tsx)) and
+      persist it on the Appwrite profile. Added a new optional `language` string attribute (size 5,
+      default `'en'`) to the Appwrite `users` collection, then updated `CLAUDE_onboarding`'s
+      `Normalize` node (reads `body.language`, defaults `'en'`) and `Create User Row` (writes it).
+      Deliberately onboarding-time-only, matching the existing architecture: a later in-app language
+      switch (Settings) stays a local `profile.language` change, same as every other profile field —
+      there's no "sync back to Appwrite on every settings change" mechanism for anything else either,
+      so this doesn't add one just for language. **Draft only, not yet published** (see note below)
+- [x] Translate all notification copy in [src/lib/notifications.ts](src/lib/notifications.ts) — daily
+      check-in, weekly reflection, trial-ending, milestone (goal-crushed/progress/achievement),
+      first-goal. New `notifications` namespace content, resolved via `i18n.getFixedT(language, ns)`
+      rather than `useTranslation()` — `notifications.ts` and the `store.ts` call sites that build
+      milestone copy aren't always inside a React render (store actions fire from a Zustand `set()`
+      callback), and local notifications are pre-rendered strings at schedule time, not re-evaluated
+      by the OS at fire time, so there's no hook to reach for either way. Imports the raw `i18next`
+      package (not this app's `./i18n/index.ts` wrapper, which imports `useStore` from store.ts —
+      importing it from notifications.ts, which store.ts imports, would be circular)
+- [x] Apply Polish plurals to the weekly reflection's expense count — `body_one`/`body_few`/`body_many`
+      (English `body_one`/`body_other`), same mechanism as every other pluralized string in this app
+- [x] **Reschedule pending notifications on language change.** `app/settings.tsx`'s language toggle now
+      calls `refreshNotifications()` immediately after `updateProfile({ language })`, so switching
+      languages re-renders every currently-scheduled local notification in the new language right
+      away instead of waiting for the next unrelated reschedule trigger (adding an expense, updating
+      a goal, etc.)
+
+**Not yet live:** two n8n workflow drafts (`CLAUDE_coach_reply`'s language-aware prompts,
+`CLAUDE_onboarding`'s language persistence) are saved but unpublished — production still runs the
+pre-Phase-6 versions until published. The Appwrite `users.language` attribute is already live (schema
+changes there don't have a separate publish step). Publishing the two workflow drafts needs an
+explicit decision from the user, since it takes effect on live traffic immediately with no dry-run.
 - [ ] Translate `fireMilestoneNotification` call sites in [store.ts:650](src/lib/store.ts:650), which
       pass composed English strings from the store layer
 

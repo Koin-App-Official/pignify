@@ -100,6 +100,7 @@ export default function Settings() {
   const { t } = useTranslation(['settings', 'common']);
   const profile = useStore((state) => state.profile);
   const updateProfile = useStore((state) => state.updateProfile);
+  const refreshNotifications = useStore((state) => state.refreshNotifications);
   const logout = useAuthLock((state) => state.logout);
 
   const planConfig = getPlanConfig(profile.plan);
@@ -279,7 +280,13 @@ export default function Settings() {
                     return (
                       <TouchableOpacity
                         key={code}
-                        onPress={() => updateProfile({ language: code })}
+                        onPress={() => {
+                          updateProfile({ language: code });
+                          // Local notifications are rendered at schedule time, not fire
+                          // time — without this, already-queued notifications would keep
+                          // showing the old language until the next unrelated reschedule.
+                          refreshNotifications();
+                        }}
                         className={`flex-1 items-center rounded-[14px] py-[9px] px-1 ${active ? 'bg-primary' : 'bg-surface-container'}`}
                       >
                         <Text

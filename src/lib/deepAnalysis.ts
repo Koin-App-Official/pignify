@@ -7,6 +7,7 @@
  */
 
 import { createLogger } from './logger';
+import type { SupportedLanguage } from './i18n/detect';
 
 const log = createLogger('deepAnalysis');
 
@@ -14,9 +15,12 @@ const DEEP_ANALYSIS_URL = 'https://n8n.piggnify.com/webhook/cfbc46c0-bc70-4b9b-b
 
 export type DeepAnalysisResult = { status: 'success' | 'error' };
 
-export async function triggerDeepAnalysis(userId: string): Promise<DeepAnalysisResult> {
+export async function triggerDeepAnalysis(
+  userId: string,
+  language: SupportedLanguage
+): Promise<DeepAnalysisResult> {
   try {
-    const url = `${DEEP_ANALYSIS_URL}?userId=${encodeURIComponent(userId)}`;
+    const url = `${DEEP_ANALYSIS_URL}?userId=${encodeURIComponent(userId)}&language=${encodeURIComponent(language)}`;
     const res = await fetch(url, { method: 'GET' });
     return { status: res.ok ? 'success' : 'error' };
   } catch (err) {

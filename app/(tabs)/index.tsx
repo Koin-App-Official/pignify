@@ -59,6 +59,7 @@ export default function Dashboard() {
   // object — this screen only touches these fields, so unrelated profile
   // changes (settings, plan sync, etc.) no longer re-render the dashboard.
   const userID = useStore((s) => s.profile.userID);
+  const language = useStore((s) => s.profile.language);
   const currency = useStore((s) => s.profile.currency);
   const expenses = useStore((s) => s.profile.expenses);
   const onboardingCompleted = useStore((s) => s.profile.onboardingCompleted);
@@ -116,7 +117,7 @@ export default function Dashboard() {
     if (!deepAnalysis.allowed) return openGate('deepAnalysisQuota');
 
     setIsAnalyzing(true);
-    const result = await triggerDeepAnalysis(userID ?? '');
+    const result = await triggerDeepAnalysis(userID ?? '', language);
     setIsAnalyzing(false);
 
     if (result.status === 'success') {

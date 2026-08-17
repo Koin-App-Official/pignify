@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -553,6 +554,7 @@ function buildAndRefreshSchedule(state: PiggyState) {
     // trial-ending reminder would never be scheduled at all.
     currentPeriodEnd: profile.trialEndsAt ?? profile.currentPeriodEnd,
     planDisplayName: profile.plan,
+    language: profile.language,
   }).catch(() => {});
 }
 
@@ -656,10 +658,17 @@ export const useStore = create<PiggyState>()(
           const target = updates.targetAmount ?? before.targetAmount;
           const name = updates.name ?? before.name;
           if (target > 0) {
+            const tNotif = i18n.getFixedT(profile.language, 'notifications');
             const prevPct = before.savedAmount / target;
             const newPct = updates.savedAmount / target;
             if (prevPct < 1 && newPct >= 1) {
-              fireMilestoneNotification('👑 Goal crushed!', `You just hit ${name} — ${formatCurrency(updates.savedAmount, profile.currency, profile.language)} saved.`).catch(() => {});
+              fireMilestoneNotification(
+                tNotif('milestone.goalCrushedTitle'),
+                tNotif('milestone.goalCrushedBody', {
+                  name,
+                  amount: formatCurrency(updates.savedAmount, profile.currency, profile.language),
+                })
+              ).catch(() => {});
             } else {
               const thresholds: [number, string][] = [
                 [0.75, '🚀'],
@@ -668,7 +677,11 @@ export const useStore = create<PiggyState>()(
               ];
               for (const [t, emoji] of thresholds) {
                 if (prevPct < t && newPct >= t) {
-                  fireMilestoneNotification(`${emoji} ${Math.round(t * 100)}% there!`, `You're ${Math.round(t * 100)}% of the way to ${name}! Keep going.`).catch(() => {});
+                  const percent = Math.round(t * 100);
+                  fireMilestoneNotification(
+                    tNotif('milestone.progressTitle', { emoji, percent }),
+                    tNotif('milestone.progressBody', { percent, name })
+                  ).catch(() => {});
                   break;
                 }
               }
@@ -838,7 +851,12 @@ export const useStore = create<PiggyState>()(
           ),
         }));
         if (achievement && !achievement.unlocked && profile.notificationPrefs.milestoneAlerts) {
-          fireMilestoneNotification('🏆 Achievement unlocked', achievement.title).catch(() => {});
+          const tNotif = i18n.getFixedT(profile.language, 'notifications');
+          const tContent = i18n.getFixedT(profile.language, 'content');
+          fireMilestoneNotification(
+            tNotif('milestone.achievementUnlockedTitle'),
+            tContent(`achievements.${achievement.id}.title`)
+          ).catch(() => {});
         }
       },
 
