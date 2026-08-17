@@ -10,7 +10,10 @@ import { initReactI18next } from 'react-i18next';
 import { shouldPolyfill } from '@formatjs/intl-pluralrules/should-polyfill.js';
 
 import { useStore } from '@/lib/store';
+import { createLogger } from '@/lib/logger';
 import { detectDeviceLanguage, SUPPORTED_LANGUAGES } from './detect';
+
+const log = createLogger('i18n');
 
 import enCommon from './locales/en/common.json';
 import enOnboarding from './locales/en/onboarding.json';
@@ -100,6 +103,18 @@ export function initI18n(): Promise<typeof i18n> {
         ns: Object.keys(resources.en),
         interpolation: { escapeValue: false },
         returnNull: false,
+        // A missing key must never silently ship as a raw "namespace:key.path"
+        // string to a real user (Phase 8, implementations/I18N_PL.md). In dev
+        // this throws — loud and immediate, right where the bad t() call is —
+        // rather than risk it being missed in a screenshot review. In
+        // production it only logs: the raw key is still a broken label, but
+        // crashing the app over a translation gap would be strictly worse.
+        saveMissing: true,
+        missingKeyHandler: (lngs, ns, key) => {
+          const message = `Missing translation key: ${ns}:${key} (${lngs.join(', ')})`;
+          if (__DEV__) throw new Error(`[i18n] ${message}`);
+          log.error(message);
+        },
       });
 
       // Keeps i18next in sync with the persisted profile: covers zustand's
