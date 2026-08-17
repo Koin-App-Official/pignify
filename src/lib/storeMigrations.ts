@@ -9,7 +9,7 @@
 import { migrateGoalDepositDates } from './deposits';
 
 /** Bump alongside a new migration step below, and in store.ts's persist config. */
-export const PIGGY_STORE_VERSION = 5;
+export const PIGGY_STORE_VERSION = 6;
 
 /** Pre-#83 name of the entry tier, still present in every persisted blob. */
 const LEGACY_BEGINNER = 'free';
@@ -98,6 +98,25 @@ export function migratePiggyState(persisted: unknown, from: number): unknown {
     state = {
       ...state,
       profile: { ...state.profile, language: state.profile?.language ?? 'en' },
+    };
+  }
+
+  // v5 → v6: drops `title`/`description` from persisted `achievements` (#122,
+  // i18n scale hardening — implementations/I18N_SCALE.md Phase 6). That copy
+  // has lived entirely in content.json's `achievements.<id>` since #120 —
+  // every real read already goes through `t(`content:achievements.${id}.title`)`
+  // (app/(tabs)/missions.tsx, store.ts's unlockAchievement notification) —
+  // so the persisted fields were already dead weight duplicating
+  // content.json, just not yet cleaned out of installed state. `id`/`icon`/
+  // `unlocked`/`unlockedAt` are the only fields anything actually reads off
+  // the persisted array.
+  if (from < 6) {
+    state = {
+      ...state,
+      achievements: (state.achievements ?? []).map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructuring to drop these two keys
+        ({ title, description, ...rest }: { title?: unknown; description?: unknown; [key: string]: unknown }) => rest
+      ),
     };
   }
 

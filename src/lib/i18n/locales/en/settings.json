@@ -1,8 +1,6 @@
 {
   "language": {
-    "sectionLabel": "Language",
-    "en": "English",
-    "pl": "Polski"
+    "sectionLabel": "Language"
   },
   "title": "Settings",
   "sections": {

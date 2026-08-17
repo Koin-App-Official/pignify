@@ -21,21 +21,19 @@
     }
   },
   "contribution": {
-    "monthlyHeadline": "Ile możesz\nodkładać co miesiąc?",
+    "monthlyHeadline": "Ile możesz odkładać co miesiąc?",
     "monthlySub": "Wyliczymy, kiedy osiągniesz cel.",
-    "suggestionChip": "{{pct}}% · {{symbol}}{{amount}}",
+    "suggestionChip": "{{pct}}% · {{amount}}",
     "amountPlaceholder": "0,00",
-    "reachGoalBy": "Przy {{symbol}}{{amount}}/mies. osiągniesz cel do",
+    "reachGoalBy": "Przy {{amount}}/mies. osiągniesz cel do",
     "pctOfIncome": "To {{pct}}% Twojego miesięcznego dochodu.",
     "cappedWarning": "W tym tempie zajmie to ponad 10 lat. Spróbuj zwiększyć miesięczną kwotę lub zmniejszyć cel.",
     "incomeWarning": "To spora część Twojego dochodu. Upewnij się, że to komfortowa kwota — zawsze możesz to później zmienić.",
     "switchToDeadline": "Mam już konkretny termin",
-    "deadlineHeadline": "Kiedy chcesz\nto osiągnąć?",
+    "deadlineHeadline": "Kiedy chcesz to osiągnąć?",
     "deadlineSub": "Wybierz datę — wyliczymy Twoją miesięczną wpłatę.",
     "selectDate": "Wybierz datę",
-    "needToSetAside": "Musisz odkładać",
-    "amountPerMonth": "{{symbol}}{{amount}}/mies.",
-    "hitDeadlineBy": "aby zdążyć do {{date}}.",
+    "needToSetAside": "Musisz odkładać <bold>{{amount}}/mies.</bold> aby zdążyć do {{date}}.",
     "deadlineIncomeWarning": "Ta data wymaga odkładania dużej części dochodu. Możesz to później dostosować!",
     "switchToMonthly": "Przełącz na miesięczne odkładanie",
     "continue": "Dalej"
@@ -49,7 +47,7 @@
     "resumeBannerNoName": "Wracamy tam, gdzie skończyliśmy."
   },
   "name": {
-    "headline": "Witaj w Piggy!\nJak mamy się do Ciebie zwracać?",
+    "headline": "Witaj w Piggy! Jak mamy się do Ciebie zwracać?",
     "sub": "Spersonalizujmy to.",
     "placeholder": "Twoje imię",
     "errorEmpty": "Hej, chcielibyśmy poznać Twoje imię! 😊"
@@ -57,12 +55,12 @@
   "ageGate": {
     "blockedTitle": "Piggy jest dla osób 18+",
     "blockedBody": "Nie możemy założyć dla Ciebie konta na podstawie potwierdzonej daty urodzenia. Ta aplikacja nie jest dostępna dla osób poniżej 18 roku życia.",
-    "headline": "Jaka jest Twoja data urodzenia,\n{{firstName}}?",
+    "headline": "Jaka jest Twoja data urodzenia, {{firstName}}?",
     "sub": "Piggy jest dostępne tylko dla osób od 18 roku życia, więc musimy potwierdzić Twój wiek, zanim przejdziemy dalej.",
     "privacyNote": "To wymóg prawny dotyczący wieku, a nie profilowanie. Używamy Twojej daty urodzenia wyłącznie do potwierdzenia, że masz 18 lat — nigdy nie jest wykorzystywana do targetowania ani udostępniana nikomu."
   },
   "localization": {
-    "headline": "Gdzie mieszkasz,\n{{firstName}}?",
+    "headline": "Gdzie mieszkasz, {{firstName}}?",
     "sub": "Użyjemy tego do formatowania waluty i ustawienia pomocnych wartości domyślnych.",
     "countryLabel": "Kraj",
     "currencyLabel": "Waluta",
@@ -73,9 +71,7 @@
     "selectCountryTitle": "Wybierz kraj",
     "selectCurrencyTitle": "Wybierz walutę",
     "languageLabel": "Język",
-    "selectLanguageTitle": "Wybierz język",
-    "languageEn": "Angielski",
-    "languagePl": "Polski"
+    "selectLanguageTitle": "Wybierz język"
   },
   "goal": {
     "headline": "Na co oszczędzamy?",
@@ -91,12 +87,12 @@
     }
   },
   "targetAmount": {
-    "headline": "Ile potrzebujesz\nna {{goalName}}?",
+    "headline": "Ile potrzebujesz na {{goalName}}?",
     "sub": "Nie martw się, zawsze możesz to później zmienić.",
     "errorEmpty": "Podaj kwotę większą niż 0 💸"
   },
   "income": {
-    "headline": "Aby zbudować Twój plan,\npodaj swój średni\nmiesięczny dochód",
+    "headline": "Aby zbudować Twój plan, podaj swój średni miesięczny dochód",
     "sub": "Używamy tego wyłącznie do obliczenia, ile musisz odkładać. Twoje dane są zaszyfrowane i całkowicie prywatne.",
     "skip": "Wolę teraz nie podawać"
   },
@@ -118,7 +114,7 @@
     "createAccount": "Utwórz moje konto Piggy"
   },
   "pushPermission": {
-    "headline": "Chcesz przypomnienia w kluczowych momentach,\n{{firstName}}?",
+    "headline": "Chcesz przypomnienia w kluczowych momentach, {{firstName}}?",
     "sub": "Odkładanie {{amount}} miesięcznie łatwo zaplanować, ale też łatwo o tym zapomnieć. Szybkie przypomnienie utrzymuje serię przy życiu.",
     "streakTitle": "Ochrona serii",
     "streakBody": "Przypomnienie, gdy dzisiejsza wpłata wciąż czeka.",

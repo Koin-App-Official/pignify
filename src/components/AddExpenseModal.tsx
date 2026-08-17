@@ -5,7 +5,7 @@ import { BottomSheet } from '@/components/animation/BottomSheet';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useStore, EXPENSE_CATEGORIES, CURRENCIES, Expense } from '@/lib/store';
+import { useStore, EXPENSE_CATEGORIES, Expense, getCurrencySymbol } from '@/lib/store';
 import { X } from 'lucide-react-native';
 
 
@@ -23,7 +23,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
   
   const addExpense = useStore(state => state.addExpense);
   const currency = useStore(state => state.profile.currency);
-  const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? currency;
+  const currencySymbol = getCurrencySymbol(currency);
 
   const handleSave = () => {
     if (!amount || !category) return;
@@ -53,7 +53,7 @@ export function AddExpenseModal({ open, onClose }: Props) {
 
         <ScrollView className="space-y-4" keyboardShouldPersistTaps="handled">
           <View className="mb-4">
-            <Text className="mb-2 text-sm text-on-surface-variant font-medium">{t('addExpense.amountLabel', { symbol: currencySymbol ?? currency })}</Text>
+            <Text className="mb-2 text-sm text-on-surface-variant font-medium">{t('addExpense.amountLabel', { symbol: currencySymbol })}</Text>
             <Input
               keyboardType="numeric"
               value={amount}

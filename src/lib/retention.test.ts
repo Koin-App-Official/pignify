@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
+import type { TFunction } from 'i18next';
 import { evaluateDowngradeRetention, validateRetentionSelection } from './retention';
+import { createTestT } from './i18n/testInstance';
+
+let tPlans: TFunction<'plans'>;
+beforeAll(async () => {
+  tPlans = await createTestT('plans');
+});
 
 describe('evaluateDowngradeRetention', () => {
   it('requires no selection when everything already fits the target plan', () => {
@@ -33,39 +40,55 @@ describe('evaluateDowngradeRetention', () => {
 
 describe('validateRetentionSelection', () => {
   it('accepts a selection within every resource limit', () => {
-    const result = validateRetentionSelection('beginner', {
-      keepGoalIds: ['g1'],
-      keepIncomeIds: ['i1'],
-      keepDeviceIds: ['d1'],
-    });
+    const result = validateRetentionSelection(
+      'beginner',
+      {
+        keepGoalIds: ['g1'],
+        keepIncomeIds: ['i1'],
+        keepDeviceIds: ['d1'],
+      },
+      tPlans
+    );
     expect(result).toEqual({ valid: true, errors: [] });
   });
 
   it('rejects a selection that keeps more goals than the target allows', () => {
-    const result = validateRetentionSelection('beginner', {
-      keepGoalIds: ['g1', 'g2'],
-      keepIncomeIds: [],
-      keepDeviceIds: [],
-    });
+    const result = validateRetentionSelection(
+      'beginner',
+      {
+        keepGoalIds: ['g1', 'g2'],
+        keepIncomeIds: [],
+        keepDeviceIds: [],
+      },
+      tPlans
+    );
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('goals'))).toBe(true);
   });
 
   it('places no ceiling on an unlimited resource', () => {
-    const result = validateRetentionSelection('family', {
-      keepGoalIds: Array.from({ length: 20 }, (_, i) => `g${i}`),
-      keepIncomeIds: [],
-      keepDeviceIds: [],
-    });
+    const result = validateRetentionSelection(
+      'family',
+      {
+        keepGoalIds: Array.from({ length: 20 }, (_, i) => `g${i}`),
+        keepIncomeIds: [],
+        keepDeviceIds: [],
+      },
+      tPlans
+    );
     expect(result.valid).toBe(true);
   });
 
   it('reports every violated resource at once', () => {
-    const result = validateRetentionSelection('beginner', {
-      keepGoalIds: ['g1', 'g2'],
-      keepIncomeIds: ['i1', 'i2'],
-      keepDeviceIds: [],
-    });
+    const result = validateRetentionSelection(
+      'beginner',
+      {
+        keepGoalIds: ['g1', 'g2'],
+        keepIncomeIds: ['i1', 'i2'],
+        keepDeviceIds: [],
+      },
+      tPlans
+    );
     expect(result.valid).toBe(false);
     expect(result.errors).toHaveLength(2);
   });

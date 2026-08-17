@@ -12,7 +12,7 @@ import { Check, X } from 'lucide-react-native';
 import { BottomSheet } from './animation/BottomSheet';
 import { PressableScale } from './animation/PressableScale';
 import { Button } from './ui/button';
-import type { Lesson } from '@/lib/lessons';
+import { LESSON_OPTION_KEYS, type Lesson, type LessonOptionKey } from '@/lib/lessons';
 
 interface LessonQuizModalProps {
   visible: boolean;
@@ -26,7 +26,7 @@ interface LessonQuizModalProps {
 export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: LessonQuizModalProps) {
   const { t } = useTranslation('missions');
   const { t: tContent } = useTranslation('content');
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<LessonOptionKey | null>(null);
 
   // Reset per-lesson selection state whenever a new lesson is shown, not just
   // on close — the sheet is reused across days, and a stale `selected` from
@@ -38,8 +38,14 @@ export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: L
   if (!lesson) return null;
 
   const revealed = selected !== null;
-  const isCorrect = selected === lesson.correctIndex;
-  const options = tContent(`lessons.${lesson.id}.options`, { returnObjects: true }) as [string, string, string];
+  const isCorrect = selected === lesson.correctKey;
+  // Rendered in the fixed LESSON_OPTION_KEYS order, not however the
+  // translated object's keys happen to iterate — a JSON edit that reorders
+  // `a`/`b`/`c` in content.json must not change which row a user taps.
+  const options = tContent(`lessons.${lesson.id}.options`, { returnObjects: true }) as Record<
+    LessonOptionKey,
+    string
+  >;
 
   const handleClose = () => {
     setSelected(null);
@@ -58,16 +64,17 @@ export function LessonQuizModal({ visible, lesson, reward, onClose, onClaim }: L
         <Text className="mb-5 text-lg font-black text-on-surface">{tContent(`lessons.${lesson.id}.question`)}</Text>
 
         <View className="gap-2 mb-4">
-          {options.map((option, index) => {
-            const isSelected = selected === index;
-            const isAnswer = index === lesson.correctIndex;
+          {LESSON_OPTION_KEYS.map((key) => {
+            const option = options[key];
+            const isSelected = selected === key;
+            const isAnswer = key === lesson.correctKey;
 
             let rowStyle = 'border border-outline-variant bg-surface';
             if (revealed && isAnswer) rowStyle = 'border-2 border-tertiary bg-tertiary-container';
             else if (revealed && isSelected) rowStyle = 'border-2 border-destructive bg-destructive/10';
 
             return (
-              <PressableScale key={option} onPress={() => !revealed && setSelected(index)} disabled={revealed}>
+              <PressableScale key={key} onPress={() => !revealed && setSelected(key)} disabled={revealed}>
                 <View className={`flex-row items-center gap-3 rounded-2xl px-4 py-3 ${rowStyle}`}>
                   <Text className={`flex-1 text-sm font-semibold ${revealed && isAnswer ? 'text-on-surface' : 'text-on-surface'}`}>
                     {option}

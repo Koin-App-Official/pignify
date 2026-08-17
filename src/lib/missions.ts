@@ -105,10 +105,14 @@ export interface MissionDef {
   cadence: MissionCadence;
   tier: MissionTier;
   reward: number;
-  /** May contain a literal `{amount}` placeholder, resolved by `renderMissionCopy`. */
-  title: string;
-  description: string;
-  /** Present only on missions with a currency-denominated target. */
+  /**
+   * Present only on missions with a currency-denominated target. Copy
+   * (title/description) is not stored here — it lives entirely in
+   * `content.json`'s `missions.<slug>` (Phase 6, implementations/I18N_SCALE.md),
+   * `renderMissionCopy`'s job below, so it exists in exactly one place across
+   * every locale instead of an English original here plus a translation.
+   * `title` may contain a literal `{amount}` placeholder, resolved there too.
+   */
   amount?: (ctx: MissionContext) => number;
   verify: MissionVerifier;
   /** Gates whether this def is even offered — distinct from `verify` (whether it's DONE). */
@@ -299,8 +303,6 @@ const SAVE_TODAY: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 5,
-  title: 'Save {amount} today',
-  description: "Move a bit toward your goal — doesn't have to be much.",
   amount: (ctx) => dailyAmount(ctx, 0.5),
   eligible: hasActiveGoal,
   verify: (ctx) => ctx.depositsToday >= dailyAmount(ctx, 0.5),
@@ -313,8 +315,6 @@ const HIT_DAILY_TARGET: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 8,
-  title: "Hit today's target",
-  description: 'Save enough today to stay on pace for your goal.',
   amount: (ctx) => roundHuman(ctx.dailyTarget),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsToday >= ctx.dailyTarget,
@@ -327,8 +327,6 @@ const LOG_EXPENSE: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 4,
-  title: 'Log an expense',
-  description: 'Track one thing you spent today.',
   verify: (ctx) => ctx.expensesToday.length >= 1,
 };
 
@@ -338,8 +336,6 @@ const CHECK_IN: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 3,
-  title: 'Check in',
-  description: 'Open the app and see where you stand.',
   verify: (ctx) => ctx.profile.lastActiveDate === ctx.today,
 };
 
@@ -349,8 +345,6 @@ const SKIP_COFFEE: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 5,
-  title: 'Skip a coffee',
-  description: 'Make it at home today.',
   verify: 'manual',
 };
 
@@ -360,8 +354,6 @@ const NO_SPEND_LUNCH: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 8,
-  title: 'No-spend lunch',
-  description: 'Pack lunch instead of buying.',
   verify: 'manual',
 };
 
@@ -371,8 +363,6 @@ const WALK_INSTEAD: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 3,
-  title: 'Walk instead of ride',
-  description: 'Save on transport today.',
   verify: 'manual',
 };
 
@@ -382,8 +372,6 @@ const COOK_AT_HOME: MissionDef = {
   cadence: 'daily',
   tier: 1,
   reward: 6,
-  title: 'Cook dinner at home',
-  description: 'Skip delivery tonight.',
   verify: 'manual',
 };
 
@@ -393,8 +381,6 @@ const SAVE_THIS_WEEK: MissionDef = {
   cadence: 'weekly',
   tier: 1,
   reward: 20,
-  title: 'Save {amount} this week',
-  description: 'A weekly boost toward your goal.',
   amount: (ctx) => weeklyAmount(ctx, 1),
   eligible: hasActiveGoal,
   verify: (ctx) => ctx.depositsThisWeek >= weeklyAmount(ctx, 1),
@@ -407,8 +393,6 @@ const FIRST_GOAL: MissionDef = {
   cadence: 'weekly',
   tier: 1,
   reward: 25,
-  title: 'Set up your first goal',
-  description: 'Create a savings goal to get started.',
   eligible: hasNoGoals,
   verify: (ctx) => ctx.goals.length >= 1,
 };
@@ -419,8 +403,6 @@ const LOG_FIVE_EXPENSES: MissionDef = {
   cadence: 'weekly',
   tier: 1,
   reward: 15,
-  title: 'Log 5 expenses this week',
-  description: 'Build the habit of tracking spending.',
   verify: (ctx) => ctx.expensesThisWeek.length >= 5,
   progress: (ctx) => ({ current: ctx.expensesThisWeek.length, target: 5, isCurrency: false }),
 };
@@ -431,8 +413,6 @@ const NO_SPEND_WEEKEND: MissionDef = {
   cadence: 'weekly',
   tier: 1,
   reward: 18,
-  title: 'No-spend weekend',
-  description: 'Keep non-essential spending at zero this weekend.',
   verify: 'manual',
 };
 
@@ -446,8 +426,6 @@ const SAVE_1_5X_TARGET: MissionDef = {
   cadence: 'daily',
   tier: 2,
   reward: 12,
-  title: 'Save 1.5× today’s target',
-  description: 'Get ahead of pace today.',
   amount: (ctx) => roundHuman(ctx.dailyTarget * 1.5),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsToday >= ctx.dailyTarget * 1.5,
@@ -460,8 +438,6 @@ const LOG_THREE_EXPENSES: MissionDef = {
   cadence: 'daily',
   tier: 2,
   reward: 8,
-  title: 'Log every expense today',
-  description: 'Track at least 3 things you spent today.',
   verify: (ctx) => ctx.expensesToday.length >= 3,
   progress: (ctx) => ({ current: ctx.expensesToday.length, target: 3, isCurrency: false }),
 };
@@ -472,8 +448,6 @@ const EXPENSE_WITH_NOTE: MissionDef = {
   cadence: 'daily',
   tier: 2,
   reward: 5,
-  title: 'Add a note to an expense',
-  description: 'Give one of today’s expenses some context.',
   verify: (ctx) => hasExpenseWithNote(ctx.expensesToday),
 };
 
@@ -483,8 +457,6 @@ const SAVE_ALMOST_BOUGHT: MissionDef = {
   cadence: 'daily',
   tier: 2,
   reward: 8,
-  title: 'Save what you almost bought',
-  description: 'Held off on something you wanted? Move that amount to savings.',
   eligible: hasActiveGoal,
   verify: 'manual',
 };
@@ -495,8 +467,6 @@ const BEAT_LAST_WEEK: MissionDef = {
   cadence: 'weekly',
   tier: 2,
   reward: 25,
-  title: "Beat last week's spending",
-  description: 'Spend less this week than you did last week.',
   eligible: hasLastWeekExpenses,
   verify: (ctx) => sumExpenseAmounts(ctx.expensesThisWeek) < sumExpenseAmounts(ctx.expensesLastWeek),
 };
@@ -507,8 +477,6 @@ const DINE_OUT_DETOX: MissionDef = {
   cadence: 'weekly',
   tier: 2,
   reward: 25,
-  title: 'Dine-out detox',
-  description: 'Skip eating out this week.',
   verify: 'manual',
 };
 
@@ -524,8 +492,6 @@ const CANCEL_SUBSCRIPTION: MissionDef = {
   cadence: 'weekly',
   tier: 2,
   reward: 15,
-  title: 'Cancel a subscription',
-  description: 'Review and cancel one unused subscription.',
   verify: 'manual',
 };
 
@@ -535,8 +501,6 @@ const STREAK_SEVEN: MissionDef = {
   cadence: 'weekly',
   tier: 2,
   reward: 30,
-  title: 'Hit a 7-day streak',
-  description: 'Save toward your target 7 days in a row.',
   verify: (ctx) => ctx.profile.streak >= 7,
   progress: (ctx) => ({ current: ctx.profile.streak, target: 7, isCurrency: false }),
 };
@@ -547,8 +511,6 @@ const SAVE_20_PERCENT_OVER: MissionDef = {
   cadence: 'weekly',
   tier: 2,
   reward: 25,
-  title: 'Save 20% over your weekly target',
-  description: 'Push past your usual pace this week.',
   amount: (ctx) => roundHuman(ctx.dailyTarget * 7 * 1.2),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsThisWeek >= ctx.dailyTarget * 7 * 1.2,
@@ -561,8 +523,6 @@ const MONEY_QUIZ: MissionDef = {
   cadence: 'daily',
   tier: 2,
   reward: 8,
-  title: "Today's money quiz",
-  description: 'Answer a 30-second question about money.',
   // Both read the SAME day-fixed lesson (lessonForDate is not
   // completion-aware — see its doc comment). If eligible/verify each
   // recomputed "today's lesson" from the live lessonsCompleted list, the
@@ -595,8 +555,6 @@ const SAVE_2X_TARGET: MissionDef = {
   cadence: 'daily',
   tier: 3,
   reward: 15, // was 18 — see calibration note above
-  title: 'Save 2× today’s target',
-  description: 'A serious push today.',
   amount: (ctx) => roundHuman(ctx.dailyTarget * 2),
   eligible: hasDailyTarget,
   verify: (ctx) => ctx.depositsToday >= ctx.dailyTarget * 2,
@@ -609,8 +567,6 @@ const TWO_DEPOSITS_TODAY: MissionDef = {
   cadence: 'daily',
   tier: 3,
   reward: 12, // was 15 — see calibration note above
-  title: 'Two deposits today',
-  description: 'Save twice today instead of once.',
   eligible: hasActiveGoal,
   verify: (ctx) => countDepositsForDate(ctx.goals, ctx.today) >= 2,
   progress: (ctx) => ({ current: countDepositsForDate(ctx.goals, ctx.today), target: 2, isCurrency: false }),
@@ -622,8 +578,6 @@ const PANTRY_DAY: MissionDef = {
   cadence: 'daily',
   tier: 3,
   reward: 12,
-  title: 'Pantry day',
-  description: 'Cook only from what you already have.',
   verify: 'manual',
 };
 
@@ -633,8 +587,6 @@ const PUSH_GOAL_TEN_PERCENT: MissionDef = {
   cadence: 'weekly',
   tier: 3,
   reward: 28, // was 40 — see calibration note above; no progress bar (band-crossing is a comparison, not a running total)
-  title: 'Push your goal to the next 10%',
-  description: 'Cross into a new tenth of your goal this week.',
   eligible: hasActiveGoal,
   verify: crossedTenPercentBandThisWeek,
 };
@@ -645,8 +597,6 @@ const STREAK_THIRTY: MissionDef = {
   cadence: 'weekly',
   tier: 3,
   reward: 35, // was 50 — see calibration note above
-  title: 'Hit a 30-day streak',
-  description: 'A full month of hitting your target.',
   verify: (ctx) => ctx.profile.streak >= 30,
   progress: (ctx) => ({ current: ctx.profile.streak, target: 30, isCurrency: false }),
 };
@@ -662,8 +612,6 @@ const REVIEW_CONTRIBUTION: MissionDef = {
   cadence: 'weekly',
   tier: 3,
   reward: 20,
-  title: "Review next month's contribution",
-  description: 'Check whether your monthly amount still fits.',
   verify: 'manual',
 };
 
@@ -673,8 +621,6 @@ const ADD_SECOND_GOAL: MissionDef = {
   cadence: 'weekly',
   tier: 3,
   reward: 30,
-  title: 'Add a second goal',
-  description: 'Start saving toward something else too.',
   eligible: hasExactlyOneActiveGoal,
   verify: (ctx) => activeGoals(ctx).length >= 2,
   progress: (ctx) => ({ current: activeGoals(ctx).length, target: 2, isCurrency: false }),
@@ -686,8 +632,6 @@ const NEGOTIATE_BILL: MissionDef = {
   cadence: 'weekly',
   tier: 3,
   reward: 25,
-  title: 'Negotiate or downgrade a bill',
-  description: 'Call one provider and ask for a better rate.',
   verify: 'manual',
 };
 
@@ -845,23 +789,23 @@ export interface MissionCopy {
 
 /**
  * Resolve a def's `{amount}` placeholder via an injected formatter (e.g.
- * `formatCurrency`). `t`, when given, resolves the translated copy from the
- * `content` namespace (key: `missions.<slug>.title`/`.description`, slug
- * being the def id with dots replaced — i18next's default key separator is
- * `.`, which would otherwise mis-parse an id like `save-1.5x-target`).
- * Falls back to the catalog's own English `title`/`description` when `t` is
- * omitted, matching every existing 3-arg call site (incl. tests).
+ * `formatCurrency`). Resolves the translated copy from the `content`
+ * namespace (key: `missions.<slug>.title`/`.description`, slug being the def
+ * id with dots replaced — i18next's default key separator is `.`, which
+ * would otherwise mis-parse an id like `save-1.5x-target`). `t` is required
+ * (Phase 6, implementations/I18N_SCALE.md) — the catalog itself no longer
+ * carries an English fallback, so there's nothing to fall back to.
  */
 export function renderMissionCopy(
   def: MissionDef,
   ctx: MissionContext,
   formatAmount: (n: number) => string,
-  t?: TFunction<'content'>
+  t: TFunction<'content'>
 ): MissionCopy {
   const amount = def.amount ? def.amount(ctx) : null;
   const slug = def.id.replace(/\./g, '-');
-  const rawTitle = t ? t(`missions.${slug}.title`) : def.title;
-  const description = t ? t(`missions.${slug}.description`) : def.description;
+  const rawTitle = t(`missions.${slug}.title`);
+  const description = t(`missions.${slug}.description`);
   const title = amount != null ? rawTitle.replace('{amount}', formatAmount(amount)) : rawTitle;
   return { title, description, amount };
 }

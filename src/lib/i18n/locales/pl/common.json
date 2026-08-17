@@ -23,5 +23,9 @@
     "title": "Czy to się zgadza?",
     "body": "Po potwierdzeniu nie będzie można tego zmienić.",
     "edit": "Edytuj"
+  },
+  "language": {
+    "en": "English",
+    "pl": "Polski"
   }
 }

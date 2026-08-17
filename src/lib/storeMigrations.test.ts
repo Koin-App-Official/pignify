@@ -120,7 +120,13 @@ describe('migratePiggyState — v0 (pre-#63) → current', () => {
   });
 
   it('preserves top-level fields outside profile/goals/missions', () => {
-    expect(migrated.achievements).toEqual(V0_PAYLOAD.achievements);
+    // v5 → v6 (see below) strips title/description from every persisted
+    // achievement — expected here too, since this migration runs the full
+    // v0 → current chain.
+    expect(migrated.achievements).toEqual([
+      { id: 'a1', icon: '🎯', unlocked: true, unlockedAt: '2026-06-01T10:00:00.000Z' },
+      { id: 'a4', icon: '🏆', unlocked: false },
+    ]);
     expect(migrated.coachMessagesUsed).toBe(2);
     expect(migrated.lastDailyReset).toBe('2026-08-14');
   });
@@ -223,7 +229,7 @@ describe('migratePiggyState — edge cases', () => {
   it('PIGGY_STORE_VERSION matches the highest migration step', () => {
     // Sanity guard: if a step is added above without bumping this, zustand
     // would never invoke migrate for it on a fresh install already at the old version.
-    expect(PIGGY_STORE_VERSION).toBe(5);
+    expect(PIGGY_STORE_VERSION).toBe(6);
   });
 });
 
@@ -282,5 +288,31 @@ describe('migratePiggyState — v4 → v5 (language backfill)', () => {
     // after the goal/mission/lesson/plan steps have rewritten the state object.
     const migrated = migratePiggyState(V0_PAYLOAD, 0) as any;
     expect(migrated.profile.language).toBe('en');
+  });
+});
+
+describe('migratePiggyState — v5 → v6 (drop persisted achievement copy)', () => {
+  const achievements = [
+    { id: 'a1', title: 'First Step', description: 'Create your first savings goal', icon: '🎯', unlocked: true, unlockedAt: '2026-06-01T10:00:00.000Z' },
+    { id: 'a4', title: 'Mission Master', description: 'Complete 5 missions', icon: '🏆', unlocked: false },
+  ];
+
+  it('strips title/description but keeps id/icon/unlocked/unlockedAt', () => {
+    const migrated = migratePiggyState({ achievements }, 5) as any;
+    expect(migrated.achievements).toEqual([
+      { id: 'a1', icon: '🎯', unlocked: true, unlockedAt: '2026-06-01T10:00:00.000Z' },
+      { id: 'a4', icon: '🏆', unlocked: false },
+    ]);
+  });
+
+  it('does not throw on a payload with no achievements array', () => {
+    expect(() => migratePiggyState({ profile: {} }, 5)).not.toThrow();
+    const migrated = migratePiggyState({ profile: {} }, 5) as any;
+    expect(migrated.achievements).toEqual([]);
+  });
+
+  it('carries the strip through a full v0 payload', () => {
+    const migrated = migratePiggyState(V0_PAYLOAD, 0) as any;
+    expect(migrated.achievements.every((a: any) => !('title' in a) && !('description' in a))).toBe(true);
   });
 });

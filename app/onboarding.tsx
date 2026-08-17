@@ -16,14 +16,14 @@ import { useTranslation } from 'react-i18next';
 import { springPresets } from '@/lib/springPresets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useStore, COUNTRIES, CURRENCIES, Goal } from '@/lib/store';
+import { useStore, COUNTRIES, CURRENCIES, Goal, formatCurrency, getCurrencySymbol } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
 import { requestEmailOtp, verifyEmailOtp, SessionSecretUnavailableError } from '@/lib/auth';
 import { ArrowRight, ArrowLeft, ChevronDown, AlertTriangle, ShieldCheck } from 'lucide-react-native';
-import { formatCurrency } from '@/lib/store';
 import { PickerModal, PickerItem } from '@/components/ui/picker-modal';
 import { DobWheelPicker } from '@/components/ui/dob-picker';
 import { DobConfirmModal } from '@/components/ui/dob-confirm-modal';
+import { CurrencyAmountInput } from '@/components/ui/currency-amount-input';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
 import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
@@ -170,14 +170,6 @@ enum OnboardingStep {
 const TOTAL_STEPS = OnboardingStep.AccountFinalization + 1;
 
 const ONBOARDING_WEBHOOK_TIMEOUT_MS = 15_000;
-
-function formatTargetDate(isoDate: string, language: SupportedLanguage): string {
-  return formatMonthYear(isoDate, language);
-}
-
-function getCurrencySymbol(currencyCode: string): string {
-  return CURRENCIES.find((c) => c.code === currencyCode)?.symbol ?? currencyCode;
-}
 
 function computeAge(isoDate: string): number {
   const dob = new Date(isoDate);
@@ -370,7 +362,7 @@ export default function Onboarding() {
   const currencySymbol = getCurrencySymbol(currency);
   const countryName = country ? tContent(`countries.${country}`) : '';
   const currencyName = currency ? tContent(`currencies.${currency}`) : '';
-  const languageName = language === 'pl' ? t('localization.languagePl') : t('localization.languageEn');
+  const languageName = t(`common:language.${language}`);
 
   const handleCountrySelect = (item: PickerItem) => {
     setCountry(item.code);
@@ -1126,22 +1118,16 @@ export default function Onboarding() {
                 {t('targetAmount.sub')}
               </Text>
 
-              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
-                <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
-                <TextInput
-                  className="flex-1 text-xl font-bold text-on-surface"
-                  value={targetAmount}
-                  onChangeText={(v) => {
-                    setTargetAmount(v.replace(/[^0-9.]/g, ''));
-                    if (targetAmountError) setTargetAmountError('');
-                  }}
-                  keyboardType="numeric"
-                  placeholder={t("contribution.amountPlaceholder")}
-                  placeholderTextColor={PLACEHOLDER_COLOR}
-                  style={TEXT_INPUT_CENTERING}
-                  autoFocus
-                />
-              </View>
+              <CurrencyAmountInput
+                currencyCode={currency}
+                value={targetAmount}
+                onChangeText={(v) => {
+                  setTargetAmount(v);
+                  if (targetAmountError) setTargetAmountError('');
+                }}
+                placeholder={t("contribution.amountPlaceholder")}
+                autoFocus
+              />
               {targetAmountError ? (
                 <Text className="mt-2 text-xs text-destructive">{targetAmountError}</Text>
               ) : null}
@@ -1159,19 +1145,13 @@ export default function Onboarding() {
                 {t('income.sub')}
               </Text>
 
-              <View className="flex-row items-center rounded-2xl bg-surface-container-low border border-outline-variant px-4 h-14">
-                <Text className="text-xl font-bold text-on-surface-variant mr-2">{currencySymbol}</Text>
-                <TextInput
-                  className="flex-1 text-xl font-bold text-on-surface"
-                  value={monthlyIncome}
-                  onChangeText={(v) => setMonthlyIncome(v.replace(/[^0-9.]/g, ''))}
-                  keyboardType="numeric"
-                  placeholder={t("contribution.amountPlaceholder")}
-                  placeholderTextColor={PLACEHOLDER_COLOR}
-                  style={TEXT_INPUT_CENTERING}
-                  autoFocus
-                />
-              </View>
+              <CurrencyAmountInput
+                currencyCode={currency}
+                value={monthlyIncome}
+                onChangeText={setMonthlyIncome}
+                placeholder={t("contribution.amountPlaceholder")}
+                autoFocus
+              />
             </Animated.View>
           )}
 
@@ -1228,7 +1208,7 @@ export default function Onboarding() {
                   value={formatCurrency(monthlyContribution, currency)}
                   highlight
                 />
-                <Row label={t('blueprint.rowGoalReached')} value={formatTargetDate(targetDate, language)} />
+                <Row label={t('blueprint.rowGoalReached')} value={formatMonthYear(targetDate, language)} />
               </View>
 
               {savingsExceedsIncome && (
@@ -1310,7 +1290,7 @@ export default function Onboarding() {
                   ? t('account.subEmailConfirmed', { goalName })
                   : otpSent
                     ? t('account.subOtpSent', { email })
-                    : t('account.subInitial', { goalName, date: formatTargetDate(targetDate, language) })}
+                    : t('account.subInitial', { goalName, date: formatMonthYear(targetDate, language) })}
               </Text>
 
               <Input
@@ -1408,7 +1388,7 @@ export default function Onboarding() {
           onSelect={(item) => updateProfile({ language: item.code as SupportedLanguage })}
           items={SUPPORTED_LANGUAGES.map((code) => ({
             code,
-            name: code === 'pl' ? t('localization.languagePl') : t('localization.languageEn'),
+            name: t(`common:language.${code}`),
           }))}
           selectedCode={language}
           title={t('localization.selectLanguageTitle')}
