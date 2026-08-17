@@ -36,7 +36,7 @@
   "expenseCount_many": "z {{count}} wydatków",
   "savedToday": "Zaoszczędzone dziś",
   "savedThisMonth": "Zaoszczędzone w tym miesiącu",
-  "quickAddExpense": "Szybko dodaj wydatek",
+  "quickAddExpense": "Dodaj wydatek",
   "saverLevel": "Poziom oszczędzania {{level}}",
   "xpProgress": "{{xp}}/100 XP",
   "yourGoals": "Twoje cele",
