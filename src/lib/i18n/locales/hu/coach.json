@@ -1,0 +1,25 @@
+{
+  "greetings": [
+    "Miben segíthetek ma?",
+    "Mi jár a fejedben?",
+    "Milyen kérdéseid vannak?",
+    "Van valami pénzügyi téma, amiről beszélnél?",
+    "Min dolgozunk ma?",
+    "Miben segíthetek?",
+    "Tehetek valamit érted?"
+  ],
+  "hiGreetingNamed": "Szia, {{name}}! {{greeting}}",
+  "hiGreetingAnonymous": "Szia! {{greeting}}",
+  "connectionError": "Sajnos most nehézségeim vannak a kapcsolódással. Próbáld újra egy kicsit később.",
+  "checkoutNotConfiguredTitle": "A fizetés nincs beállítva",
+  "checkoutNotConfiguredBody": "A Stripe Checkout nincs beállítva ebben a verzióban. Szimuláljunk egy sikeres vásárlást 1 extra üzenetről?",
+  "cancel": "Mégse",
+  "simulatePurchase": "Vásárlás szimulálása",
+  "title": "AI edző",
+  "onlineStatus": "Online • Készen áll a segítségre",
+  "upgradeYourPlan": "Csomag frissítése",
+  "unlimited": "Korlátlan",
+  "pctUsedThisPeriod": "{{pct}}% felhasználva ebben az időszakban",
+  "inputPlaceholder": "Kérdezd az edződet...",
+  "buyMoreMessage": "1 extra üzenet vásárlása · $2.99"
+}

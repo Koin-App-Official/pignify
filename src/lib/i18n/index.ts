@@ -35,6 +35,19 @@ import plPlans from './locales/pl/plans.json';
 import plNotifications from './locales/pl/notifications.json';
 import plContent from './locales/pl/content.json';
 
+import huCommon from './locales/hu/common.json';
+import huOnboarding from './locales/hu/onboarding.json';
+import huDashboard from './locales/hu/dashboard.json';
+import huGoals from './locales/hu/goals.json';
+import huMissions from './locales/hu/missions.json';
+import huCoach from './locales/hu/coach.json';
+import huProfile from './locales/hu/profile.json';
+import huSettings from './locales/hu/settings.json';
+import huAuth from './locales/hu/auth.json';
+import huPlans from './locales/hu/plans.json';
+import huNotifications from './locales/hu/notifications.json';
+import huContent from './locales/hu/content.json';
+
 /**
  * `en`'s namespace set is the one source of truth for what a locale must
  * cover — every other locale's resource bundle is checked against
@@ -80,6 +93,20 @@ const resources = {
     notifications: plNotifications,
     content: plContent,
   },
+  hu: {
+    common: huCommon,
+    onboarding: huOnboarding,
+    dashboard: huDashboard,
+    goals: huGoals,
+    missions: huMissions,
+    coach: huCoach,
+    profile: huProfile,
+    settings: huSettings,
+    auth: huAuth,
+    plans: huPlans,
+    notifications: huNotifications,
+    content: huContent,
+  },
 } as const satisfies Record<SupportedLanguage, Record<Namespace, unknown>>;
 
 /**
@@ -92,6 +119,7 @@ const resources = {
 const PLURAL_LOCALE_DATA: Record<SupportedLanguage, () => Promise<unknown>> = {
   en: () => import('@formatjs/intl-pluralrules/locale-data/en.js'),
   pl: () => import('@formatjs/intl-pluralrules/locale-data/pl.js'),
+  hu: () => import('@formatjs/intl-pluralrules/locale-data/hu.js'),
 };
 
 let initPromise: Promise<typeof i18n> | null = null;

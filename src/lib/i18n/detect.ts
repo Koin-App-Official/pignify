@@ -4,9 +4,9 @@
  * is intentionally independent of the existing localization step's picks
  * (see implementations/I18N_PL.md).
  */
-export type SupportedLanguage = 'en' | 'pl';
+export type SupportedLanguage = 'en' | 'pl' | 'hu';
 
-export const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'pl'];
+export const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'pl', 'hu'];
 
 /**
  * Matches a raw device language code against `SUPPORTED_LANGUAGES` — a

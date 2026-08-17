@@ -1,0 +1,32 @@
+{
+  "defaultName": "Megtakarító",
+  "levelLabel": "{{level}}. szint",
+  "personalitySuffix": "{{type}} személyiség",
+  "financialExplorer": "Pénzügyi felfedező",
+  "totalSaved": "Összesen megtakarítva",
+  "goals": "Célok",
+  "badges": "Jelvények",
+  "monthlyIncome": "Havi jövedelem",
+  "notProvided": "Nincs megadva",
+  "expenseBreakdown": "Kiadások megoszlása",
+  "notifications": {
+    "title": "Értesítések",
+    "paydayReminder": "Fizetésnapi megtakarítási emlékeztető",
+    "streakProtection": "Sorozatvédő figyelmeztetés",
+    "milestoneAlerts": "Mérföldkő-ünneplések",
+    "weeklyReflection": "Heti összefoglaló",
+    "softAskTitle": "Maradj a helyes úton",
+    "softAskBody": "A Piggy emlékeztetőket használ, hogy segítsen megtartani a sorozatodat és elérni a megtakarítási céljaidat. Bekapcsolod az értesítéseket?",
+    "notNow": "Most nem",
+    "enable": "Bekapcsolás",
+    "disabledTitle": "Az értesítések ki vannak kapcsolva",
+    "disabledBody": "Kapcsold be a Piggy értesítéseit az eszközöd beállításaiban ennek aktiválásához."
+  },
+  "reset": {
+    "title": "Adatok visszaállítása",
+    "body": "Biztosan visszaállítod az összes adatot? Ez nem vonható vissza.",
+    "cancel": "Mégse",
+    "confirm": "Visszaállítás",
+    "button": "Összes adat visszaállítása (Demo)"
+  }
+}

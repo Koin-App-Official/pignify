@@ -14,11 +14,13 @@ import type { SupportedLanguage } from './detect';
 const LOCALE_TAG: Record<SupportedLanguage, string> = {
   en: 'en-US',
   pl: 'pl-PL',
+  hu: 'hu-HU',
 };
 
 const TODAY_LABEL: Record<SupportedLanguage, string> = {
   en: 'Today',
   pl: 'Dziś',
+  hu: 'Ma',
 };
 
 function monthNames(tag: string, style: 'long' | 'short'): string[] {

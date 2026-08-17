@@ -85,6 +85,7 @@ export const COUNTRIES = [
   { code: 'AE', currency: 'AED' },
   { code: 'ZA', currency: 'ZAR' },
   { code: 'NZ', currency: 'NZD' },
+  { code: 'HU', currency: 'HUF' },
 ];
 
 // `name` dropped for the same reason — see `content.json`'s `currencies.<code>`.
@@ -109,6 +110,7 @@ export const CURRENCIES = [
   { code: 'AED', symbol: 'د.إ',  symbolAfter: false },
   { code: 'ZAR', symbol: 'R',    symbolAfter: false },
   { code: 'NZD', symbol: 'NZ$',  symbolAfter: false },
+  { code: 'HUF', symbol: 'Ft',   symbolAfter: true  },
 ];
 
 /**

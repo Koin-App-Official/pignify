@@ -21,17 +21,24 @@ import type { SupportedLanguage } from './detect';
 const LOCALE_TAG: Record<SupportedLanguage, string> = {
   en: 'en-US',
   pl: 'pl-PL',
+  hu: 'hu-HU',
 };
 
-/** Thousands separator per language. pl-PL's is U+00A0 (NBSP), not a plain space — see Phase 0. */
+/**
+ * Thousands separator per language. pl-PL's and hu-HU's are both U+00A0
+ * (NBSP), not a plain space — see Phase 0 (pl) and implementations/I18N_HU.md
+ * Phase 2 (hu, verified via Intl.NumberFormat('hu-HU').formatToParts()).
+ */
 const GROUP_SEPARATOR: Record<SupportedLanguage, string> = {
   en: ',',
   pl: ' ',
+  hu: ' ',
 };
 
 const DECIMAL_SEPARATOR: Record<SupportedLanguage, string> = {
   en: '.',
   pl: ',',
+  hu: ',',
 };
 
 function groupThousands(digits: string, separator: string): string {
