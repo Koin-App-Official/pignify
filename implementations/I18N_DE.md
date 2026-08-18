@@ -40,12 +40,13 @@ I read the current state of every guardrail file directly (`detect.ts`, `format.
 
 **Files:** `src/lib/i18n/format.ts`, `src/lib/i18n/calendarLocale.ts`
 
-- [ ] `format.ts`: add `de: 'de-DE'` to `LOCALE_TAG`
-- [ ] `format.ts`: add `de: '.'` to `GROUP_SEPARATOR` — a real period, verified via `Intl.NumberFormat('de-DE').formatToParts()`; first locale in this table that isn't `,`/NBSP-space
-- [ ] `format.ts`: add `de: ','` to `DECIMAL_SEPARATOR`
-- [ ] `calendarLocale.ts`: add `de: 'de-DE'` to `LOCALE_TAG`
-- [ ] `calendarLocale.ts`: add `de: 'Heute'` to `TODAY_LABEL` ("today" in German)
-- [ ] **Hermes verification (not compiler-enforced — do this for real once the app runs with `de` selected):** confirm `formatNumber`/`formatMoney` group correctly at the `.` separator on-device, and that `formatDate`/`formatMonthYear` render the day-before-month order (`"16. August 2026"`) correctly on the actual Hermes build, not just Node's ICU
+- [x] `format.ts`: add `de: 'de-DE'` to `LOCALE_TAG`
+- [x] `format.ts`: add `de: '.'` to `GROUP_SEPARATOR` — a real period, verified via `Intl.NumberFormat('de-DE').formatToParts()`; first locale in this table that isn't `,`/NBSP-space
+- [x] `format.ts`: add `de: ','` to `DECIMAL_SEPARATOR`
+- [x] `calendarLocale.ts`: add `de: 'de-DE'` to `LOCALE_TAG`
+- [x] `calendarLocale.ts`: add `de: 'Heute'` to `TODAY_LABEL` ("today" in German)
+- [x] `npm run typecheck` confirms these 4 fixes clear their errors — only Phase 3/5's `index.ts`/`plurals.test.ts` errors remain, exactly as predicted
+- [ ] **Hermes verification (not compiler-enforced — do this for real once the app runs with `de` selected):** confirm `formatNumber`/`formatMoney` group correctly at the `.` separator on-device, and that `formatDate`/`formatMonthYear` render the day-before-month order (`"16. August 2026"`) correctly on the actual Hermes build, not just Node's ICU — deferred to Phase 9
 
 ---
 
