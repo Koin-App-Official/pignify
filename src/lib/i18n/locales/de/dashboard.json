@@ -1,54 +1,54 @@
 {
-  "greetingMorning": "Good morning",
-  "greetingAfternoon": "Good afternoon",
-  "greetingEvening": "Good evening",
-  "analysisStartedTitle": "Analysis started",
-  "analysisStartedBody": "We're crunching your numbers — check your email shortly.",
-  "analysisErrorTitle": "Something went wrong",
-  "analysisErrorBody": "Could not start the analysis. Please try again.",
+  "greetingMorning": "Guten Morgen",
+  "greetingAfternoon": "Guten Tag",
+  "greetingEvening": "Guten Abend",
+  "analysisStartedTitle": "Analyse gestartet",
+  "analysisStartedBody": "Wir werten deine Zahlen aus — schau in Kürze in dein E-Mail-Postfach.",
+  "analysisErrorTitle": "Etwas ist schiefgelaufen",
+  "analysisErrorBody": "Die Analyse konnte nicht gestartet werden. Bitte versuche es erneut.",
   "welcomeBanner": {
-    "title": "You're all set",
-    "body": "Your Piggy Plan is live.",
-    "bodyGoalSuffix": "Time to start saving for your {{goalName}}."
+    "title": "Alles bereit",
+    "body": "Dein Piggy-Plan ist aktiv.",
+    "bodyGoalSuffix": "Zeit, für dein Ziel {{goalName}} zu sparen."
   },
-  "pastDueWarning": "⚠️ Your last payment failed. Update your card to keep your plan — tap to contact support.",
-  "incomeSkippedTip": "💡 Add your monthly income to unlock personalised savings insights.",
+  "pastDueWarning": "⚠️ Deine letzte Zahlung ist fehlgeschlagen. Aktualisiere deine Karte, um deinen Plan zu behalten — tippe, um den Support zu kontaktieren.",
+  "incomeSkippedTip": "💡 Füge dein monatliches Einkommen hinzu, um personalisierte Spar-Insights freizuschalten.",
   "emptyGoals": {
-    "title": "Create your first goal",
-    "newGoal": "New Goal"
+    "title": "Erstelle dein erstes Ziel",
+    "newGoal": "Neues Ziel"
   },
   "motivation": {
-    "lowProgress": "Great start! Every dollar counts 🌱",
-    "midProgress": "You're {{progress}}% closer to your {{goalName}}! 💪",
-    "highProgress": "Halfway hero! Keep this momentum going 🚀",
-    "almostDone": "Almost there! Your goal is within reach 👑"
+    "lowProgress": "Guter Start! Jeder Cent zählt 🌱",
+    "midProgress": "Du bist {{progress}}% näher an deinem Ziel {{goalName}}! 💪",
+    "highProgress": "Halbzeit-Held! Halt den Schwung 🚀",
+    "almostDone": "Fast geschafft! Dein Ziel ist zum Greifen nah 👑"
   },
   "deepAnalysis": {
-    "analyzing": "Analyzing…",
-    "title": "Deep Analysis",
-    "upgradeToUnlock": "Upgrade to unlock",
-    "unlimited": "Unlimited",
-    "remainingOfLimit": "{{remaining}} of {{limit}} left"
+    "analyzing": "Wird analysiert…",
+    "title": "Detailanalyse",
+    "upgradeToUnlock": "Zum Freischalten upgraden",
+    "unlimited": "Unbegrenzt",
+    "remainingOfLimit": "{{remaining}} von {{limit}} übrig"
   },
-  "todaysSpending": "Today's Spending",
-  "expenseCount_one": "across {{count}} expense",
-  "expenseCount_other": "across {{count}} expenses",
-  "savedToday": "Saved Today",
-  "savedThisMonth": "Saved This Month",
-  "quickAddExpense": "Quick Add Expense",
-  "saverLevel": "Saver Lv.{{level}}",
+  "todaysSpending": "Heutige Ausgaben",
+  "expenseCount_one": "aus {{count}} Ausgabe",
+  "expenseCount_other": "aus {{count}} Ausgaben",
+  "savedToday": "Heute gespart",
+  "savedThisMonth": "Diesen Monat gespart",
+  "quickAddExpense": "Ausgabe schnell hinzufügen",
+  "saverLevel": "Sparer-Lv.{{level}}",
   "xpProgress": "{{xp}}/100 XP",
-  "yourGoals": "Your Goals",
-  "seeAll": "See all",
-  "daysLeft_one": "{{count}} day left",
-  "daysLeft_other": "{{count}} days left",
-  "ofAmount": "of {{amount}}",
+  "yourGoals": "Deine Ziele",
+  "seeAll": "Alle anzeigen",
+  "daysLeft_one": "noch {{count}} Tag",
+  "daysLeft_other": "noch {{count}} Tage",
+  "ofAmount": "von {{amount}}",
   "addExpense": {
-    "title": "Add Expense",
-    "amountLabel": "Amount ({{symbol}})",
+    "title": "Ausgabe hinzufügen",
+    "amountLabel": "Betrag ({{symbol}})",
     "amountPlaceholder": "0",
-    "categoryLabel": "Category",
-    "notePlaceholder": "Note (optional)",
-    "save": "Save Expense"
+    "categoryLabel": "Kategorie",
+    "notePlaceholder": "Notiz (optional)",
+    "save": "Ausgabe speichern"
   }
 }

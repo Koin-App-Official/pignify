@@ -1,32 +1,33 @@
 {
-  "noEmailApp": "No email app is set up on this device. Reach us at {{email}}.",
-  "notAvailable": "Not available",
-  "cancel": "Cancel",
-  "confirm": "Confirm",
-  "search": "Search...",
+  "noEmailApp": "Auf diesem Gerät ist keine E-Mail-App eingerichtet. Erreiche uns unter {{email}}.",
+  "notAvailable": "Nicht verfügbar",
+  "cancel": "Abbrechen",
+  "confirm": "Bestätigen",
+  "search": "Suchen...",
   "tabs": {
-    "home": "Home",
-    "goals": "Goals",
-    "missions": "Missions",
+    "home": "Start",
+    "goals": "Ziele",
+    "missions": "Missionen",
     "coach": "Coach",
-    "profile": "Profile"
+    "profile": "Profil"
   },
   "calendarModal": {
-    "title": "Target Date",
-    "subtitle": "When do you want to reach your goal?",
-    "quickJump6mo": "+6mo",
-    "quickJump1yr": "+1yr",
-    "quickJump2yr": "+2yr",
-    "quickJump5yr": "+5yr"
+    "title": "Zieldatum",
+    "subtitle": "Wann möchtest du dein Ziel erreichen?",
+    "quickJump6mo": "+6 Mon.",
+    "quickJump1yr": "+1 Jahr",
+    "quickJump2yr": "+2 Jahre",
+    "quickJump5yr": "+5 Jahre"
   },
   "dobConfirmModal": {
-    "title": "Is this correct?",
-    "body": "Once confirmed, this can't be changed.",
-    "edit": "Edit"
+    "title": "Ist das richtig?",
+    "body": "Nach der Bestätigung kann dies nicht mehr geändert werden.",
+    "edit": "Bearbeiten"
   },
   "language": {
     "en": "English",
     "pl": "Polski",
-    "hu": "Magyar"
+    "hu": "Magyar",
+    "de": "Deutsch"
   }
 }

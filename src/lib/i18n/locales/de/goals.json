@@ -1,25 +1,25 @@
 {
-  "yourGoals": "Your Goals",
+  "yourGoals": "Deine Ziele",
   "empty": {
-    "title": "No goals yet",
-    "body": "Create your first savings goal to get started!",
-    "cta": "Create Goal"
+    "title": "Noch keine Ziele",
+    "body": "Erstelle dein erstes Sparziel, um loszulegen!",
+    "cta": "Ziel erstellen"
   },
   "detail": {
-    "back": "Back",
-    "savedOfTarget": "{{saved}} of {{target}}",
-    "settingAside": "Setting aside {{amount}}/month · Goal reached {{date}}",
-    "addSavingsPlaceholder": "Add savings...",
-    "save": "Save",
-    "milestones": "Milestones",
-    "depositHistory": "Deposit History"
+    "back": "Zurück",
+    "savedOfTarget": "{{saved}} von {{target}}",
+    "settingAside": "{{amount}}/Monat zurückgelegt · Ziel erreicht am {{date}}",
+    "addSavingsPlaceholder": "Ersparnisse hinzufügen...",
+    "save": "Speichern",
+    "milestones": "Meilensteine",
+    "depositHistory": "Einzahlungsverlauf"
   },
-  "primary": "Primary",
+  "primary": "Primär",
   "review": {
-    "headline": "Looks good!",
-    "sub": "Here's your savings plan at a glance.",
-    "warningMultiGoal": "Across all your active goals, this pushes your total monthly set-aside above your income. You can adjust anytime.",
-    "warningSingleGoal": "This target requires setting aside more than your monthly income. You can adjust it anytime.",
-    "createGoal": "Create Goal 🎉"
+    "headline": "Sieht gut aus!",
+    "sub": "Hier ist dein Sparplan auf einen Blick.",
+    "warningMultiGoal": "Über all deine aktiven Ziele hinweg übersteigt dies deine monatliche Gesamtrücklage dein Einkommen. Du kannst das jederzeit anpassen.",
+    "warningSingleGoal": "Dieses Ziel erfordert, mehr zurückzulegen als dein monatliches Einkommen. Du kannst es jederzeit anpassen.",
+    "createGoal": "Ziel erstellen 🎉"
   }
 }
