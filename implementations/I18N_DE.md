@@ -105,10 +105,11 @@ Stubbed with placeholder content now, to be filled in with real translations in 
 
 **Files:** `app.json`, new `languages/de.json`
 
-- [ ] Add `"de": "./languages/de.json"` to `expo.locales`
-- [ ] Add `"de"` to `expo.ios.infoPlist.CFBundleLocalizations`
-- [ ] Create `languages/de.json` with the Face ID permission string translated (mirrors `languages/hu.json`'s single `ios.NSFaceIDUsageDescription` key), e.g. `"Erlaube Piggy, die App per Face ID zu entsperren."`
-- [ ] `android/`/`ios/` are gitignored, native-generated (Expo prebuild) — no manual native-project edits needed
+- [x] Added `"de": "./languages/de.json"` to `expo.locales`
+- [x] Added `"de"` to `expo.ios.infoPlist.CFBundleLocalizations`
+- [x] Created `languages/de.json` with the Face ID permission string translated: `"Erlaube Piggy, die App per Face ID zu entsperren."`
+- [x] `android/`/`ios/` are gitignored, native-generated (Expo prebuild) — no manual native-project edits needed
+- [x] Both JSON files validated as syntactically correct; `npm run typecheck` still clean
 
 ---
 
