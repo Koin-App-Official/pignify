@@ -29,4 +29,6 @@ export const springPresets = {
 export const timingPresets = {
   /** Modal/sheet open & programmatic close — smooth ease-in-out, no overshoot. */
   sheet: { duration: 280, easing: Easing.inOut(Easing.cubic) } satisfies WithTimingConfig,
+  /** Segmented-control pill slide — quick ease-out, no overshoot. */
+  segment: { duration: 200, easing: Easing.out(Easing.cubic) } satisfies WithTimingConfig,
 } as const;
