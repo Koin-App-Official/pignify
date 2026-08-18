@@ -94,9 +94,10 @@ Stubbed with placeholder content now, to be filled in with real translations in 
 
 **Files:** `src/lib/i18n/contentParity.test.ts`
 
-- [ ] **No `catalogs.ts` changes needed** — Germany/EUR already exist as catalog entries; German's `content.json` (from Phase 4) just needs to translate the existing `countries.DE`/`currencies.EUR` ids like any other catalog entry
-- [ ] Import `deContent` and add `de: deContent` to the hardcoded `Object.entries({ en: enContent, pl: plContent, hu: huContent })` lesson `correctKey` check (line ~108) — the one guardrail in the #122 recipe not derived automatically from `SUPPORTED_LANGUAGES`
-- [ ] Run `npm test -- contentParity.test.ts src/lib/i18n/locales.test.ts` and confirm bidirectional catalog↔translation parity for every catalog including `de`
+- [x] **No `catalogs.ts` changes needed** — Germany/EUR already existed as catalog entries; German's `content.json` (from Phase 4) translated the existing `countries.DE`/`currencies.EUR` ids like any other catalog entry
+- [x] Imported `deContent` and added `de: deContent` to the hardcoded `Object.entries({ en: enContent, pl: plContent, hu: huContent, de: deContent })` lesson `correctKey` check — the one guardrail in the #122 recipe not derived automatically from `SUPPORTED_LANGUAGES`
+- [x] `npm run typecheck` — still fully clean
+- [x] `npx vitest run src/lib/i18n/contentParity.test.ts src/lib/i18n/locales.test.ts` — 84/84 passing, confirming bidirectional catalog↔translation parity for every catalog including `de`
 
 ---
 
