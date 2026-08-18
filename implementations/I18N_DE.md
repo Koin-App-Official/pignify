@@ -54,11 +54,13 @@ I read the current state of every guardrail file directly (`detect.ts`, `format.
 
 **Files:** `src/lib/i18n/index.ts`
 
-- [ ] Import all 12 German namespace JSON files (created in Phase 4) alongside the existing `en`/`pl`/`hu` imports
-- [ ] Add the `de` block to `resources`, matching the `en`/`pl`/`hu` shape exactly (the `satisfies Record<SupportedLanguage, Record<Namespace, unknown>>` annotation makes an incomplete block a compile error)
-- [ ] Add `de: () => import('@formatjs/intl-pluralrules/locale-data/de.js')` to `PLURAL_LOCALE_DATA`
+- [x] Import all 12 German namespace JSON files alongside the existing `en`/`pl`/`hu` imports — **stubbed as verbatim copies of `en/*.json`** for now, to be replaced with real translations in Phase 4
+- [x] Add the `de` block to `resources`, matching the `en`/`pl`/`hu` shape exactly (the `satisfies Record<SupportedLanguage, Record<Namespace, unknown>>` annotation makes an incomplete block a compile error)
+- [x] Add `de: () => import('@formatjs/intl-pluralrules/locale-data/de.js')` to `PLURAL_LOCALE_DATA`
+- [x] `npm run typecheck` — only Phase 5's `plurals.test.ts` error remains, exactly as predicted
+- [x] `npx vitest run src/lib/i18n/locales.test.ts` — 66/66 passing; the stubbed `de` directory (verbatim `en` copy) is correctly registered and key-complete
 
-Can be stubbed with placeholder content first and filled in once Phase 4's real translations exist, or done last — either order works since it's all compiler-checked.
+Stubbed with placeholder content now, to be filled in with real translations in Phase 4.
 
 ---
 

@@ -1,0 +1,25 @@
+{
+  "greetings": [
+    "How can I help you today?",
+    "What's on your mind?",
+    "What questions do you have?",
+    "Anything money-related you'd like to talk about?",
+    "What are we working on today?",
+    "What do you need help with?",
+    "Is there anything I can do for you?"
+  ],
+  "hiGreetingNamed": "Hi {{name}}! {{greeting}}",
+  "hiGreetingAnonymous": "Hi there! {{greeting}}",
+  "connectionError": "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+  "checkoutNotConfiguredTitle": "Checkout not configured",
+  "checkoutNotConfiguredBody": "Stripe Checkout isn't set up in this build. Simulate a successful purchase of 1 extra message?",
+  "cancel": "Cancel",
+  "simulatePurchase": "Simulate purchase",
+  "title": "AI Coach",
+  "onlineStatus": "Online • Ready to help",
+  "upgradeYourPlan": "Upgrade your plan",
+  "unlimited": "Unlimited",
+  "pctUsedThisPeriod": "{{pct}}% used this period",
+  "inputPlaceholder": "Ask your coach...",
+  "buyMoreMessage": "Buy 1 more message · $2.99"
+}

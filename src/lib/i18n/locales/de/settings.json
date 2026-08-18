@@ -1,0 +1,65 @@
+{
+  "language": {
+    "sectionLabel": "Language"
+  },
+  "title": "Settings",
+  "sections": {
+    "subscription": "Subscription",
+    "security": "Security",
+    "account": "Account",
+    "supportAndAbout": "Support & About"
+  },
+  "planLabel": "{{plan}} plan",
+  "planStatus": {
+    "canceled": "Canceled — active until period end",
+    "expired": "Free trial ended",
+    "trialing": "Free trial",
+    "pastDue": "Payment failed — update your card",
+    "switchingTo": "Switching to {{plan}} next cycle",
+    "priceMonthly": "{{price}}/mo"
+  },
+  "manage": "Manage",
+  "changePin": "Change PIN",
+  "cancel": "Cancel",
+  "biometric": {
+    "faceId": "Face ID",
+    "irisUnlock": "Iris unlock",
+    "fingerprintUnlock": "Fingerprint unlock",
+    "turnOffTitle": "Turn off {{label}}?",
+    "turnOffBody": "You'll unlock with your PIN instead.",
+    "turnOff": "Turn off"
+  },
+  "autoLock": {
+    "label": "Auto-lock",
+    "immediately": "Immediately",
+    "oneMin": "1 min",
+    "fiveMin": "5 min",
+    "never": "Never"
+  },
+  "logOut": "Log out",
+  "logOutConfirmBody": "You can log back in anytime with your email.",
+  "deleteAccount": "Delete account",
+  "enableBiometricFlow": {
+    "confirmPinSubtitle": "Enter your PIN to enable biometric unlock",
+    "enrollFailed": "Could not enable biometric unlock. Please try again."
+  },
+  "deleteAccountFlow": {
+    "confirmPinSubtitle": "Enter your PIN to continue deleting your account",
+    "warningTitle": "Delete your account",
+    "warningBody": "This permanently erases your profile, goals, and subscription from our servers. This cannot be undone.",
+    "deleting": "Deleting your account…",
+    "confirmAlertBody": "This permanently deletes your account and all data from our servers. This cannot be undone.",
+    "delete": "Delete",
+    "errorTitle": "Something went wrong",
+    "errorBody": "We could not delete your account. Please try again."
+  },
+  "support": {
+    "privacyPolicy": "Privacy Policy",
+    "privacyPolicyError": "Could not open the Privacy Policy link.",
+    "termsOfService": "Terms of Service",
+    "termsOfServiceError": "Could not open the Terms of Service link.",
+    "contactSupport": "Contact Support",
+    "notConfigured": "Support links not configured yet."
+  },
+  "versionLabel": "Piggy v{{version}}"
+}

@@ -1,0 +1,32 @@
+{
+  "firstGoal": {
+    "title": "🎯 Start your first goal",
+    "body": "Set a savings goal to start building a streak — even a small monthly amount counts."
+  },
+  "checkin": {
+    "titleStreak": "🔥 Streak check-in",
+    "titlePlain": "💰 Daily check-in",
+    "bodyStreak": "Your {{streak}}-day streak is on the line! Log today's spending and add {{remaining}} to your goal to keep it alive.",
+    "bodyPlain": "Quick check-in — did you spend anything today? Log it to stay on track."
+  },
+  "weeklyReflection": {
+    "title": "📊 Weekly reflection",
+    "body_one": "Your week: {{saved}} saved, {{count}} expense logged. Tap to see your recap.",
+    "body_other": "Your week: {{saved}} saved, {{count}} expenses logged. Tap to see your recap."
+  },
+  "trialEnding": {
+    "title": "⏳ Your free trial ends in 2 days",
+    "body": "Your {{plan}} trial wraps up in 2 days. Take a look at what changes — nothing you've saved goes anywhere."
+  },
+  "milestone": {
+    "goalCrushedTitle": "👑 Goal crushed!",
+    "goalCrushedBody": "You just hit {{name}} — {{amount}} saved.",
+    "progressTitle": "{{emoji}} {{percent}}% there!",
+    "progressBody": "You're {{percent}}% of the way to {{name}}! Keep going.",
+    "achievementUnlockedTitle": "🏆 Achievement unlocked"
+  },
+  "channels": {
+    "reminders": "Reminders",
+    "digest": "Digests & celebrations"
+  }
+}

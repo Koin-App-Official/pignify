@@ -1,0 +1,25 @@
+{
+  "yourGoals": "Your Goals",
+  "empty": {
+    "title": "No goals yet",
+    "body": "Create your first savings goal to get started!",
+    "cta": "Create Goal"
+  },
+  "detail": {
+    "back": "Back",
+    "savedOfTarget": "{{saved}} of {{target}}",
+    "settingAside": "Setting aside {{amount}}/month · Goal reached {{date}}",
+    "addSavingsPlaceholder": "Add savings...",
+    "save": "Save",
+    "milestones": "Milestones",
+    "depositHistory": "Deposit History"
+  },
+  "primary": "Primary",
+  "review": {
+    "headline": "Looks good!",
+    "sub": "Here's your savings plan at a glance.",
+    "warningMultiGoal": "Across all your active goals, this pushes your total monthly set-aside above your income. You can adjust anytime.",
+    "warningSingleGoal": "This target requires setting aside more than your monthly income. You can adjust it anytime.",
+    "createGoal": "Create Goal 🎉"
+  }
+}
