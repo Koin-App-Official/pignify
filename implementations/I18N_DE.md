@@ -126,8 +126,8 @@ Stubbed with placeholder content now, to be filled in with real translations in 
 
 ## Phase 9 — Full verification and review
 
-- [ ] `npm run typecheck && npm test && npm run check:bundle-size` — all clean (budget: 8,000,000 bytes iOS; Hungarian added +0.43 MB, expect a similar bump from German's ~12 new JSON files)
-- [ ] Manual Simulator/on-device smoke test: confirm the Metro/Hermes runtime loads the German plural-rules locale data at boot with no errors, and that the language picker in Settings and onboarding both offer German and switch the UI correctly
+- [x] `npm run typecheck && npm test && npm run check:bundle-size` — all clean: 0 typecheck errors, 356/356 tests passing, bundle 6.25 MB / 7.63 MB (+0.47 MB vs baseline, in line with Hungarian's +0.43 MB)
+- [ ] **Manual Simulator/on-device smoke test** — left to the user to run directly: confirm the Metro/Hermes runtime loads the German plural-rules locale data at boot with no errors, and that the language picker in Settings and onboarding both offer German and switch the UI correctly
 - [ ] On-device review pass for text length/line wrap — German compound words and capitalized nouns are a real risk for buttons/chips/labels, check these especially
 - [ ] Native-speaker copy review — treat all German copy from Phase 4 as a first draft pending this review, same as Polish (`441f342`, `371a910`) and Hungarian
 - [ ] Fix anything the review surfaces, re-run verification
