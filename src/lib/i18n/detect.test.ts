@@ -19,11 +19,13 @@ describe('matchSupportedLanguage', () => {
   it('matches a bare supported language code', () => {
     expect(matchSupportedLanguage('pl')).toBe('pl');
     expect(matchSupportedLanguage('en')).toBe('en');
+    expect(matchSupportedLanguage('hu')).toBe('hu');
   });
 
   it('strips a region suffix before matching', () => {
     expect(matchSupportedLanguage('pl-PL')).toBe('pl');
     expect(matchSupportedLanguage('en-US')).toBe('en');
+    expect(matchSupportedLanguage('hu-HU')).toBe('hu');
   });
 
   it('falls back to en for an unsupported language code', () => {

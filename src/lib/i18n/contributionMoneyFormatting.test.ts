@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import i18next from 'i18next';
 import enOnboarding from './locales/en/onboarding.json';
 import plOnboarding from './locales/pl/onboarding.json';
+import huOnboarding from './locales/hu/onboarding.json';
 import { formatMoney } from './format';
 
 const NBSP = ' ';
@@ -28,6 +29,7 @@ beforeAll(async () => {
     resources: {
       en: { onboarding: enOnboarding },
       pl: { onboarding: plOnboarding },
+      hu: { onboarding: huOnboarding },
     },
     ns: ['onboarding'],
     defaultNS: 'onboarding',
@@ -55,6 +57,23 @@ describe('pl + PLN money interpolation at the 3 fixed ContributionStep sites', (
     const amount = formatMoney(1234.56, PLN, 'pl');
     const result = i18next.t('onboarding:contribution.needToSetAside', { amount, date: 'TEST_DATE', lng: 'pl' });
     expect(result).toBe(`Musisz odkładać <bold>1${NBSP}234,56 zł/mies.</bold> aby zdążyć do TEST_DATE.`);
+  });
+
+  it('hu + HUF: symbol after the amount, NBSP-grouped, comma decimal separator', () => {
+    const HUF = { symbol: 'Ft', symbolAfter: true } as const;
+    expect(
+      i18next.t('onboarding:contribution.suggestionChip', { pct: 10, amount: formatMoney(1000, HUF, 'hu'), lng: 'hu' })
+    ).toBe(`10% · 1${NBSP}000 Ft`);
+    expect(
+      i18next.t('onboarding:contribution.reachGoalBy', { amount: formatMoney(1000, HUF, 'hu'), lng: 'hu' })
+    ).toBe(`1${NBSP}000 Ft/hó mellett ekkorra éred el a célodat:`);
+    expect(
+      i18next.t('onboarding:contribution.needToSetAside', {
+        amount: formatMoney(1234.56, HUF, 'hu'),
+        date: 'TEST_DATE',
+        lng: 'hu',
+      })
+    ).toBe(`<bold>1${NBSP}234,56 Ft/hó</bold> összeget kell félretenned, hogy elérd ezt eddig: TEST_DATE.`);
   });
 
   it('regression guard: the same 3 sites for en + USD still read naturally', () => {

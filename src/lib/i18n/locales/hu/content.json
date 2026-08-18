@@ -1,0 +1,212 @@
+{
+  "missions": {
+    "save-today": { "title": "Tegyél félre {amount} ma", "description": "Lépj közelebb a célodhoz — nem kell soknak lennie." },
+    "hit-daily-target": { "title": "Érd el a mai célt", "description": "Tegyél félre ma annyit, hogy tartsd a tempót a célod eléréséhez." },
+    "log-expense": { "title": "Rögzíts egy kiadást", "description": "Kövess nyomon egy dolgot, amire ma költöttél." },
+    "check-in": { "title": "Nézz be", "description": "Nyisd meg az appot, és nézd meg, hol tartasz." },
+    "skip-coffee": { "title": "Hagyd ki a kávét", "description": "Készítsd el ma otthon." },
+    "no-spend-lunch": { "title": "Ebéd költés nélkül", "description": "Vigyél magaddal ebédet ahelyett, hogy vennél." },
+    "walk-instead": { "title": "Gyalogolj utazás helyett", "description": "Spórolj ma a közlekedésen." },
+    "cook-at-home": { "title": "Főzz otthon vacsorát", "description": "Hagyd ki ma a kiszállítást." },
+    "save-this-week": { "title": "Tegyél félre {amount} ezen a héten", "description": "Egy heti lökés a célod felé." },
+    "first-goal": { "title": "Állítsd be az első célodat", "description": "Hozz létre egy megtakarítási célt a kezdéshez." },
+    "log-five-expenses": { "title": "Rögzíts 5 kiadást ezen a héten", "description": "Építsd ki a kiadáskövetés szokását." },
+    "no-spend-weekend": { "title": "Költés nélküli hétvége", "description": "Ezen a hétvégén tartsd nullán a nem szükséges kiadásokat." },
+    "save-1-5x-target": { "title": "Tegyél félre a mai cél 1,5×-ösét", "description": "Előzd meg ma a saját tempódat." },
+    "log-three-expenses": { "title": "Rögzíts minden mai kiadást", "description": "Kövess nyomon legalább 3 dolgot, amire ma költöttél." },
+    "expense-with-note": { "title": "Adj hozzá egy megjegyzést egy kiadáshoz", "description": "Adj kontextust az egyik mai kiadásodhoz." },
+    "save-almost-bought": { "title": "Tedd félre, amit majdnem megvettél", "description": "Lemondtál valamiről, amit szerettél volna? Tedd félre azt az összeget." },
+    "beat-last-week": { "title": "Múld felül a múlt heti kiadásaidat", "description": "Költs kevesebbet ezen a héten, mint a múlt héten." },
+    "dine-out-detox": { "title": "Étteremmentes hét", "description": "Hagyd ki ezen a héten az étteremben evést." },
+    "cancel-subscription": { "title": "Mondj le egy előfizetést", "description": "Nézz át és mondj le egy nem használt előfizetést." },
+    "streak-seven": { "title": "Érj el egy 7 napos sorozatot", "description": "Tegyél félre a célod felé 7 egymást követő napon." },
+    "save-20-percent-over": { "title": "Tegyél félre 20%-kal többet a heti célnál", "description": "Lépd túl ezen a héten a szokásos tempódat." },
+    "money-quiz": { "title": "A mai pénzügyi kvíz", "description": "Válaszolj egy 30 másodperces pénzügyi kérdésre." },
+    "save-2x-target": { "title": "Tegyél félre a mai cél 2×-esét", "description": "Egy komoly lökés mára." },
+    "two-deposits-today": { "title": "Két befizetés ma", "description": "Tegyél félre ma kétszer, egyszer helyett." },
+    "pantry-day": { "title": "Kamranap", "description": "Csak abból főzz, ami már megvan." },
+    "push-goal-ten-percent": { "title": "Told a célodat a következő 10%-ra", "description": "Lépj át ezen a héten a célod új tizedébe." },
+    "streak-thirty": { "title": "Érj el egy 30 napos sorozatot", "description": "Egy teljes hónap, amikor eléred a célodat." },
+    "review-contribution": { "title": "Vizsgáld felül a következő havi hozzájárulást", "description": "Nézd meg, hogy a havi összeged még mindig megfelelő-e." },
+    "add-second-goal": { "title": "Adj hozzá egy második célt", "description": "Kezdj el gyűjteni valami másra is." },
+    "negotiate-bill": { "title": "Tárgyalj le vagy csökkents egy számlát", "description": "Hívj fel egy szolgáltatót, és kérj jobb árat." }
+  },
+  "lessons": {
+    "emergency-fund": {
+      "topic": "Vészhelyzeti alap",
+      "question": "Mire szolgál elsősorban egy vészhelyzeti alap?",
+      "options": { "a": "Váratlan kiadások fedezésére", "b": "Befektetések vásárlására áresés esetén", "c": "A legmagasabb kamat megszerzésére" },
+      "explanation": "Ez a váratlan helyzetekre — munkahelyvesztés, orvosi számla, autójavítás — félretett készpénz, amit könnyen elérhetően tartunk, nem pedig befektetünk növekedés reményében."
+    },
+    "apy": {
+      "topic": "Effektív éves kamat",
+      "question": "Mit mutat meg az effektív éves kamat (kamatos kamattal számolva)?",
+      "options": { "a": "A havi költési limitedet", "b": "A tényleges éves hozamot, a kamatos kamattal együtt", "c": "Egy egyszeri regisztrációs bónuszt" },
+      "explanation": "Az effektív éves kamat figyelembe veszi a kamatos kamatot, így azt mutatja, mit keresel valójában egy év alatt — ez egy őszintébb szám, mint egy sima kamatláb."
+    },
+    "needs-vs-wants": {
+      "topic": "Szükségletek és vágyak",
+      "question": "Az alábbiak közül mi számít inkább „szükségletnek”, mint „vágynak”?",
+      "options": { "a": "Lakbér", "b": "Streaming-előfizetések", "c": "Étteremben evés" },
+      "explanation": "A szükségletek biztosítják, hogy legyen fedél a fejed felett, ehess és működj. A vágyak jobbá teszik az életet, de nem elengedhetetlenek — ez a különbség a legtöbb költségvetés alapja."
+    },
+    "50-30-20": {
+      "topic": "Az 50/30/20 szabály",
+      "question": "Az 50/30/20 költségvetési szabályban mire megy a 20%?",
+      "options": { "a": "Vágyakra", "b": "Szükségletekre", "c": "Megtakarításra és adósságtörlesztésre" },
+      "explanation": "A felosztás nagyjából 50% szükséglet, 30% vágy, 20% megtakarítás/adósság — ez egy egyszerű kiindulópont, nem szigorú szabály."
+    },
+    "compound-interest": {
+      "topic": "Kamatos kamat",
+      "question": "Miért számít ennyire a korai megtakarítás elkezdése?",
+      "options": { "a": "A kamatos kamat a korábbi hozamaid után is hozamot termel", "b": "A bankok többet fizetnek az új ügyfeleknek", "c": "Az árak csak az év elején emelkednek" },
+      "explanation": "Minden időszakban kamat képződik az eredeti összegeden ÉS mindenen, amit az már korábban termelt — a növekedés annál gyorsabb, minél tovább tart."
+    },
+    "budgeting-basics": {
+      "topic": "Költségvetés-készítés",
+      "question": "Mi az elsődleges célja minden kiadás rögzítésének?",
+      "options": { "a": "Hogy bűntudatod legyen a költés miatt", "b": "Hogy lásd, valójában hova megy a pénzed", "c": "Hogy jogosult legyél hitelre" },
+      "explanation": "A legtöbb ember alábecsüli a kisebb, ismétlődő kiadásait, amíg nem kezdi el rögzíteni őket — a cél az átláthatóság, nem az ítélkezés."
+    },
+    "credit-score": {
+      "topic": "Hitelpontszám",
+      "question": "Melyik szokás segíti leginkább a hitelpontszámot?",
+      "options": { "a": "A számlák időben fizetése", "b": "Sok kártya gyors megnyitása", "c": "Szándékos egyenleg fenntartása" },
+      "explanation": "A fizetési előzmények általában a legfontosabb egyedi tényező — a következetes, időben történő fizetés fontosabb, mint bármelyik trükk."
+    },
+    "diversification": {
+      "topic": "Diverzifikáció",
+      "question": "Milyen problémát old meg elsősorban a diverzifikáció?",
+      "options": { "a": "Garantálja a nyereséget", "b": "Csökkenti egy-egy rosszul teljesítő befektetés hatását", "c": "Teljesen elkerüli az adózást" },
+      "explanation": "A pénz szétosztása különböző eszközök között azt jelenti, hogy egy rosszul teljesítő elem nem süllyeszti el az egész portfóliót. Ez kockázatkezelés, nem hozamnövelés."
+    },
+    "inflation": {
+      "topic": "Infláció",
+      "question": "Mit tesz az infláció a tétlenül heverő készpénzzel?",
+      "options": { "a": "Semmit, a készpénz értéke soha nem változik", "b": "Lassan csökkenti a vásárlóerejét", "c": "Növeli a vásárlóerejét" },
+      "explanation": "Ha az árak gyorsabban emelkednek, mint amennyi kamatot a készpénzed termel, ugyanaz a pénzösszeg évről évre kicsit kevesebbet ér."
+    },
+    "debt-snowball": {
+      "topic": "Adósság törlesztése",
+      "question": "A „hógolyó” (debt snowball) módszernél melyik adósságot törleszted először?",
+      "options": { "a": "A legkisebb egyenlegűt", "b": "A legmagasabb kamatozásút", "c": "Amelyik a legújabb" },
+      "explanation": "A hógolyó módszer először a legkisebb egyenleget célozza meg a gyors sikerekért és a lendületért — egy másik módszer (lavina) helyette a legmagasabb kamatot célozza."
+    },
+    "opportunity-cost": {
+      "topic": "Alternatív költség",
+      "question": "Mit jelent az „alternatív költség” pénzköltéskor?",
+      "options": { "a": "A vásárlás után fizetett adót", "b": "Amiről lemondasz azzal, hogy a pénzt nem máshol használod fel", "c": "Egy bolt árrését egy terméken" },
+      "explanation": "Minden elköltött forint, amit egy dologra fordítasz, egy olyan forint, ami nem mehet valami másra — a valódi költség magában foglalja azt is, amit emiatt nem tehettél meg."
+    },
+    "net-worth": {
+      "topic": "Nettó vagyon",
+      "question": "Hogyan számítják ki a nettó vagyont?",
+      "options": { "a": "Havi jövedelem mínusz kiadások", "b": "Amid van, mínusz amivel tartozol", "c": "A megtakarítási számlád teljes egyenlege" },
+      "explanation": "A nettó vagyon egy pillanatkép: minden, amid van (eszközök), mínusz minden, amivel tartozol (tartozások). A jövedelem egy folyamat; a nettó vagyon egy összeg egy adott pillanatban."
+    },
+    "automatic-savings": {
+      "topic": "Megtakarítás automatizálása",
+      "question": "Miért működnek jól általában az automatikus megtakarítási átutalások?",
+      "options": { "a": "Megszüntetik, hogy minden alkalommal döntened kelljen", "b": "Jogilag garantált magasabb kamatot fizetnek", "c": "A legtöbb bank megköveteli őket" },
+      "explanation": "Az automatizálás azt jelenti, hogy „előbb magadnak fizetsz”, mielőtt elköltenéd a pénzt — a megtakarítást alapértelmezetté teszi ahelyett, hogy folyamatosan döntened kellene róla."
+    },
+    "high-yield-savings": {
+      "topic": "Magas kamatozású megtakarítási számla",
+      "question": "Mi különbözteti meg leginkább a magas kamatozású megtakarítási számlát egy hagyományostól?",
+      "options": { "a": "Egyáltalán nincs kivételi korlátja", "b": "Érdemben magasabb kamatot fizet", "c": "Egyben folyószámlaként is működik" },
+      "explanation": "A fő különbség a kamatláb — gyakran többszöröse egy hagyományos megtakarítási számláénak —, amit általában online bankok kínálnak."
+    },
+    "index-funds": {
+      "topic": "Indexalapok",
+      "question": "Mit csinál egy indexalap?",
+      "options": { "a": "Kiválaszt néhány „nyerő” részvényt", "b": "Egy széles piaci indexet követ le teljes egészében", "c": "Garantál egy fix éves hozamot" },
+      "explanation": "Ahelyett, hogy egyedi cégekre fogadna, egy indexalap a piac széles szeletét tartja, egyszerre sok elemre szétosztva a kockázatot."
+    }
+  },
+  "achievements": {
+    "a1": { "title": "Első lépés", "description": "Hozd létre az első megtakarítási célodat" },
+    "a2": { "title": "Sorozatkezdő", "description": "Takaríts meg 3 egymást követő napon" },
+    "a3": { "title": "Heti harcos", "description": "Teljesíts egy 7 napos sorozatot" },
+    "a4": { "title": "Küldetésmester", "description": "Teljesíts 5 küldetést" },
+    "a5": { "title": "Negyedúton", "description": "Érj el egy cél 25%-át" },
+    "a6": { "title": "Félúti hős", "description": "Érj el egy cél 50%-át" },
+    "a7": { "title": "Már majdnem ott", "description": "Érj el egy cél 75%-át" },
+    "a8": { "title": "Célteljesítő", "description": "Teljesíts egy megtakarítási célt" },
+    "a9": { "title": "Költségvetés-főnök", "description": "Kövesd nyomon a kiadásaidat 7 napig" },
+    "a10": { "title": "Szintlépés", "description": "Érd el a 3. megtakarítói szintet" },
+    "a11": { "title": "Kitartás királya", "description": "30 napos sorozat" },
+    "a12": { "title": "Okos megtakarító", "description": "Teljesítsd az AI személyiségkvízt" }
+  },
+  "goalTemplates": {
+    "holiday": "Nyaralás",
+    "concert": "Koncert",
+    "car": "Autó",
+    "emergency": "Vészhelyzeti alap",
+    "laptop": "Laptop",
+    "education": "Oktatás",
+    "apartment": "Lakás",
+    "wedding": "Esküvő",
+    "trip": "Első utazás",
+    "purchase": "Nagyobb vásárlás"
+  },
+  "countries": {
+    "US": "Egyesült Államok",
+    "GB": "Egyesült Királyság",
+    "CA": "Kanada",
+    "AU": "Ausztrália",
+    "DE": "Németország",
+    "FR": "Franciaország",
+    "ES": "Spanyolország",
+    "IT": "Olaszország",
+    "NL": "Hollandia",
+    "IE": "Írország",
+    "PT": "Portugália",
+    "BR": "Brazília",
+    "MX": "Mexikó",
+    "JP": "Japán",
+    "CN": "Kína",
+    "IN": "India",
+    "SG": "Szingapúr",
+    "CH": "Svájc",
+    "SE": "Svédország",
+    "NO": "Norvégia",
+    "DK": "Dánia",
+    "PL": "Lengyelország",
+    "AE": "Egyesült Arab Emírségek",
+    "ZA": "Dél-afrikai Köztársaság",
+    "NZ": "Új-Zéland",
+    "HU": "Magyarország"
+  },
+  "currencies": {
+    "USD": "Amerikai dollár",
+    "EUR": "Euró",
+    "GBP": "Brit font",
+    "CAD": "Kanadai dollár",
+    "AUD": "Ausztrál dollár",
+    "BRL": "Brazil real",
+    "MXN": "Mexikói peso",
+    "JPY": "Japán jen",
+    "CNY": "Kínai jüan",
+    "INR": "Indiai rúpia",
+    "SGD": "Szingapúri dollár",
+    "CHF": "Svájci frank",
+    "SEK": "Svéd korona",
+    "NOK": "Norvég korona",
+    "DKK": "Dán korona",
+    "PLN": "Lengyel zloty",
+    "AED": "Emírségi dirham",
+    "ZAR": "Dél-afrikai rand",
+    "NZD": "Új-zélandi dollár",
+    "HUF": "Magyar forint"
+  },
+  "expenseCategories": {
+    "food": "Étel és ital",
+    "transport": "Közlekedés",
+    "entertainment": "Szórakozás",
+    "shopping": "Vásárlás",
+    "bills": "Számlák",
+    "health": "Egészség",
+    "education": "Oktatás",
+    "other": "Egyéb"
+  }
+}

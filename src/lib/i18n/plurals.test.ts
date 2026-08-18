@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import i18next from 'i18next';
 import enAuth from './locales/en/auth.json';
 import plAuth from './locales/pl/auth.json';
+import huAuth from './locales/hu/auth.json';
 import type { SupportedLanguage } from './detect';
 
 /**
@@ -35,6 +36,18 @@ const CASES: Record<SupportedLanguage, Array<[count: number, expectedFragment: s
     [101, 'prób'], // many (ends in 1 but i != 1, and 101 % 100 = 1 -> many per CLDR pl)
     [112, 'prób'], // many (ends in 12-14 band)
   ],
+  // CLDR hu has just {one, other} (one: n=1; other: everything else) — and
+  // Hungarian keeps the noun singular after a numeral, so unlike pl's three
+  // visibly different suffix forms, hu's _one/_other copy is deliberately
+  // near-identical text (see hu/auth.json). The fixture still exercises the
+  // real i18next/Intl.PluralRules resolution end to end, same as every other
+  // locale here — it just doesn't happen to change the wording much.
+  hu: [
+    [1, 'próbálkozásod van'], // one
+    [2, 'próbálkozásod van'], // other
+    [5, 'próbálkozásod van'], // other
+    [22, 'próbálkozásod van'], // other
+  ],
 };
 
 beforeAll(async () => {
@@ -44,6 +57,7 @@ beforeAll(async () => {
     resources: {
       en: { auth: enAuth },
       pl: { auth: plAuth },
+      hu: { auth: huAuth },
     },
     ns: ['auth'],
     defaultNS: 'auth',

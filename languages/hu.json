@@ -1,0 +1,5 @@
+{
+  "ios": {
+    "NSFaceIDUsageDescription": "Engedélyezd a Piggy számára, hogy Face ID-val oldja fel az alkalmazást."
+  }
+}

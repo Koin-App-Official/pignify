@@ -1,0 +1,169 @@
+{
+  "quota": {
+    "incomeSourcesUnlimited": "Korlátlan jövedelemforrás",
+    "incomeSources_one": "{{count}} jövedelemforrás",
+    "incomeSources_other": "{{count}} jövedelemforrás",
+    "goalsUnlimited": "Korlátlan cél",
+    "goals_one": "{{count}} cél",
+    "goals_other": "{{count}} cél",
+    "devicesUnlimited": "Korlátlan eszköz",
+    "devices_one": "{{count}} eszköz",
+    "devices_other": "{{count}} eszköz",
+    "aiMessagesUnlimited": "Korlátlan AI-üzenet/hó",
+    "aiMessages_one": "{{count}} AI-üzenet/hó",
+    "aiMessages_other": "{{count}} AI-üzenet/hó",
+    "aiMessagesExtra": " (utána {{price}}/üzenet)",
+    "emailReportsUnlimited": "Korlátlan e-mail riport/hó",
+    "emailReports_one": "{{count}} e-mail riport/hó",
+    "emailReports_other": "{{count}} e-mail riport/hó"
+  },
+  "feature": {
+    "exclusiveProtection": "Exkluzív védelem",
+    "deepAnalysis": "Részletes kiadáselemzés",
+    "referral": "Ajánlási bónusz",
+    "goalBonus": "Célteljesítési bónusz",
+    "loyaltyDiscount": "Hűségkedvezmény 6 hónap után",
+    "trialDays_one": "{{count}} napos ingyenes próbaidőszak",
+    "trialDays_other": "{{count}} napos ingyenes próbaidőszak"
+  },
+  "endOfBillingPeriod": "a jelenlegi számlázási időszak vége",
+  "trial": {
+    "endedTitle": "Az ingyenes próbaidőszakod véget ért",
+    "endedBody": "A(z) {{plan}} funkciói szüneteltetve vannak. Semmi sem törlődött — a céljaid és az előzményeid továbbra is itt vannak.",
+    "endsToday": "Az ingyenes próbaidőszakod ma véget ér",
+    "daysLeft_one": "{{count}} nap van hátra az ingyenes próbaidőszakból",
+    "daysLeft_other": "{{count}} nap van hátra az ingyenes próbaidőszakból",
+    "activeBody": "A(z) {{plan}} csomagot használod minden funkcióval feloldva, és soha nem kértünk kártyát."
+  },
+  "planUpdatedTitle": "Csomag frissítve",
+  "planUpdatedBody": "Most már a(z) {{plan}} csomagon vagy. Élvezd az új funkciókat! 🎉",
+  "downgradeCanceledTitle": "Visszaminősítés visszavonva",
+  "downgradeCanceledBody": "Maradsz a(z) {{plan}} csomagon.",
+  "checkoutNotConfiguredTitle": "A fizetés nincs beállítva",
+  "checkoutNotConfiguredBody": "A Stripe Checkout nincs beállítva ebben a verzióban. Szimuláljunk egy sikeres fizetést a(z) {{plan}} csomagért?",
+  "cancel": "Mégse",
+  "simulatePayment": "Fizetés szimulálása",
+  "switchToTitle": "Váltasz a(z) {{plan}} csomagra?",
+  "switchToBody": "Ez ekkor lép életbe: {{date}}. Semmi sem törlődik — ha ez a csomag kevesebb célt támogat, mint amennyid van, kiválaszthatod, melyek maradjanak aktívak.",
+  "keepCurrentPlan": "Jelenlegi csomag megtartása",
+  "continue": "Tovább",
+  "header": "Válaszd ki a csomagodat",
+  "confirmingPurchase": "Vásárlás megerősítése…",
+  "pendingBanner": "Ütemezett váltás: a csomagod {{date}} napon átvált erre: {{plan}}. Válaszd ki újra a jelenlegi csomagodat lent ennek visszavonásához.",
+  "perMonth": "/hó",
+  "status": {
+    "activeUntilCanceled": "Aktív eddig: {{date}} (lemondva)",
+    "trialEndedPaused": "Próbaidőszak véget ért — funkciók szüneteltetve",
+    "currentTrialing": "Jelenlegi csomag (ingyenes próbaidőszak)",
+    "pastDue": "Sikertelen fizetés — frissítsd a kártyádat, hogy ne veszítsd el a hozzáférést",
+    "current": "Jelenlegi csomag",
+    "scheduledNextCycle": "A következő ciklusra ütemezve"
+  },
+  "buttons": {
+    "yourCurrentPlan": "A jelenlegi csomagod",
+    "keepThisPlan": "Ennél a csomagnál maradok",
+    "openingCheckout": "Fizetés megnyitása…",
+    "upgradeTo": "Frissítés erre: {{plan}}",
+    "switchTo": "Váltás erre: {{plan}}"
+  },
+  "disclaimer": "A frissítések azonnal életbe lépnek. A visszaminősítések a jelenlegi számlázási időszak végén lépnek életbe, az adataid pedig mindig biztonságban vannak.",
+  "gates": {
+    "aiCoach": {
+      "title": "AI edző feloldása",
+      "description": "Csevegj a személyes megtakarítási edződdel csomagfrissítéssel."
+    },
+    "aiMessages": {
+      "title": "Elfogytak az AI-üzeneteid",
+      "description": "Felhasználtad az összes ebben a hónapban elérhető AI-üzenetet. Frissíts nagyobb havi keretért."
+    },
+    "goals": {
+      "title": "Elérted a célok korlátját",
+      "description": "A jelenlegi csomagod kevesebb célt támogat. Frissíts, hogy egyszerre több megtakarítási célt is nyomon követhess."
+    },
+    "incomes": {
+      "title": "Elérted a jövedelemforrások korlátját",
+      "description": "Frissíts, hogy több jövedelemforrást adhass hozzá a költségvetésedhez."
+    },
+    "devices": {
+      "title": "Elérted az eszközök korlátját",
+      "description": "Ez a csomag kevesebb csatlakoztatott eszközt enged. Frissíts, hogy több eszközön használhasd a Piggyt."
+    },
+    "emailReports": {
+      "title": "Az e-mail riportok fizetős funkciók",
+      "description": "Frissítsd a csomagodat, hogy e-mail riportokat kérhess a fejlődésedről."
+    },
+    "deepAnalysis": {
+      "title": "Részletes kiadáselemzés",
+      "description": "Kapj AI-alapú, részletes elemzést a kiadásaidról, egyenesen a postaládádba, csomagfrissítéssel."
+    },
+    "deepAnalysisQuota": {
+      "title": "Elfogytak a mélyelemzéseid",
+      "description": "Felhasználtad az ebben az időszakban elérhető összes mélyelemzést. Frissíts nagyobb keretért."
+    },
+    "referral": {
+      "title": "Ajánlási jutalmak",
+      "description": "Hívj meg barátokat, és szerezz ingyenes hónapokat a Family csomaghoz."
+    }
+  },
+  "upgradeModal": {
+    "defaultTitle": "Csomag frissítése",
+    "defaultDescription": "Ez a funkció egy magasabb csomagban érhető el. Frissíts a feloldásához.",
+    "recommendedPlan": "Ajánlott csomag",
+    "upgradeToPlan": "Frissítés erre: {{plan}}",
+    "upgradeToHigherPlan": "Frissítés magasabb csomagra",
+    "onTopPlan": "Már a legmagasabb csomagon vagy",
+    "maybeLater": "Talán később",
+    "perMonth": "/hó"
+  },
+  "downgradeSelection": {
+    "nothingToChoose": "Itt nincs mit választani — lépj vissza, és próbáld újra.",
+    "chooseWhatToKeep": "Válaszd ki, mit tartasz meg",
+    "keepBody_one": "A(z) {{plan}} csomag {{count}} aktív célt enged. Neked {{total}} van. Válassz {{pickText}} aktívan tartáshoz — a többi lekerül a listádról, de semmi sem törlődik véglegesen. Azonnal visszatérnek, ha újra frissítesz.",
+    "keepBody_other": "A(z) {{plan}} csomag {{count}} aktív célt enged. Neked {{total}} van. Válassz {{pickText}} aktívan tartáshoz — a többi lekerül a listádról, de semmi sem törlődik véglegesen. Azonnal visszatérnek, ha újra frissítesz.",
+    "pickOne": "egyet",
+    "pickUpTo": "legfeljebb {{count}}-t",
+    "keepingCountOfLimit": "{{count}} / {{limit}} megtartva",
+    "confirm": "Megerősítés",
+    "genericErrorTitle": "Valami hiba történt",
+    "retentionTooMany": "Túl sok {{resource}} van kiválasztva megtartásra ({{count}}); a(z) {{plan}} csomag {{limit}} darabot enged.",
+    "retentionResource": {
+      "goals": "cél",
+      "incomes": "jövedelemforrás",
+      "devices": "eszköz"
+    }
+  },
+  "planGate": {
+    "continue": "Tovább",
+    "locked": {
+      "trialEndedTitle": "Az ingyenes próbaidőszakod véget ért",
+      "subscriptionEndedTitle": "Az előfizetésed véget ért",
+      "featuresPaused": "A(z) {{plan}} funkciói egyelőre szüneteltetve vannak.",
+      "nothingDeletedBold": "Semmi sem törlődött.",
+      "nothingDeletedRest": " A céljaid, befizetéseid, sorozatod és előzményeid pontosan ott vannak, ahol hagytad őket, és azonnal visszatérnek, ha előfizetsz.",
+      "checkoutNotConfigured": "A fizetés nincs beállítva ebben a verzióban, így az előfizetés itt nem fog működni. Egyelőre tovább használhatod a Piggyt.",
+      "pickPlan": "Válassz csomagot a folytatáshoz",
+      "alreadySubscribed": "Már előfizettem",
+      "continueWithoutSubscribing": "Folytatás előfizetés nélkül",
+      "deletingAccount": "Fiók törlése…",
+      "logOut": "Kijelentkezés",
+      "contactSupport": "Kapcsolatfelvétel az ügyfélszolgálattal",
+      "deleteAccount": "Fiók törlése",
+      "checkoutFailed": "Nem sikerült megnyitni a fizetést. Ellenőrizd a kapcsolatot, és próbáld újra, vagy írj nekünk: {{email}}.",
+      "noActiveSubscription": "Még nem találtunk aktív előfizetést. Ha most fizettél, adj neki egy kis időt, és próbáld újra.",
+      "logoutBody": "Bármikor visszajelentkezhetsz az e-mail-címeddel.",
+      "deleteAccountTitle": "Fiók törlése",
+      "deleteAccountBody": "Ez véglegesen törli a fiókodat és minden adatodat a szervereinkről. Ez nem vonható vissza.",
+      "deleteAction": "Törlés",
+      "somethingWrongTitle": "Valami hiba történt",
+      "somethingWrongBody": "Nem sikerült törölni a fiókodat. Próbáld újra."
+    },
+    "trialIntro": {
+      "title": "{{days}} nap {{plan}}\na mi költségünkön",
+      "body": "Mától minden fel van oldva. Nem kértünk kártyát, szóval nincs mit lemondani.",
+      "perk1": "A Piggy minden funkciója, beleértve az AI edzőt is",
+      "perk2": "Korlátlan számú cél, hogy egyszerre többre is tervezhess",
+      "perk3": "Szólunk, mielőtt véget ér — semmi meglepetés",
+      "cta": "Kezdjük"
+    }
+  }
+}

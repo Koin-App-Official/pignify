@@ -174,7 +174,8 @@
     "PL": "Poland",
     "AE": "United Arab Emirates",
     "ZA": "South Africa",
-    "NZ": "New Zealand"
+    "NZ": "New Zealand",
+    "HU": "Hungary"
   },
   "currencies": {
     "USD": "US Dollar",
@@ -195,7 +196,8 @@
     "PLN": "Polish Złoty",
     "AED": "UAE Dirham",
     "ZAR": "South African Rand",
-    "NZD": "New Zealand Dollar"
+    "NZD": "New Zealand Dollar",
+    "HUF": "Hungarian Forint"
   },
   "expenseCategories": {
     "food": "Food & Drinks",

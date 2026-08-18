@@ -1,0 +1,156 @@
+{
+  "welcome": {
+    "skip": "Kihagyás",
+    "next": "Tovább",
+    "getStarted": "Kezdjük el",
+    "haveAccount": "Már van fiókod?",
+    "signIn": "Bejelentkezés",
+    "slides": {
+      "goal": {
+        "headline": "Minden cél egy\nszámmal kezdődik",
+        "sub": "Mondd el a Piggynek, mire gyűjtesz. Mi pedig havi bontású tervet készítünk, amit tényleg tartani tudsz."
+      },
+      "noBank": {
+        "headline": "Banki bejelentkezés\nsoha.",
+        "sub": "A Piggy soha nem kapcsolódik a bankszámláidhoz. Nincs mit összekötni, és nincs mit ellopni."
+      },
+      "coach": {
+        "headline": "Edző\na zsebedben",
+        "sub": "Sorozatok, küldetések és egy AI edző, aki ismeri a terved — így a harmadik hónap is olyan jó lesz, mint az első nap."
+      }
+    }
+  },
+  "contribution": {
+    "monthlyHeadline": "Mennyit tudsz félretenni havonta?",
+    "monthlySub": "Kiszámoljuk, mikor éred el a célodat.",
+    "suggestionChip": "{{pct}}% · {{amount}}",
+    "amountPlaceholder": "0,00",
+    "reachGoalBy": "{{amount}}/hó mellett ekkorra éred el a célodat:",
+    "pctOfIncome": "Ez a havi jövedelmed {{pct}}%-a.",
+    "cappedWarning": "Ezzel a tempóval több mint 10 évig fog tartani. Próbáld növelni a havi összeget vagy csökkenteni a célt.",
+    "incomeWarning": "Ez a jövedelmed jelentős része. Győződj meg róla, hogy kényelmes összeg — bármikor módosíthatod később.",
+    "switchToDeadline": "Van egy konkrét határidőm",
+    "deadlineHeadline": "Mikor szeretnéd elérni ezt?",
+    "deadlineSub": "Válaszd ki a dátumot — kiszámoljuk a havi hozzájárulásodat.",
+    "selectDate": "Válassz dátumot",
+    "needToSetAside": "<bold>{{amount}}/hó</bold> összeget kell félretenned, hogy elérd ezt eddig: {{date}}.",
+    "deadlineIncomeWarning": "Ez a dátum a jövedelmed nagy részének félretételét igényli. Ezt később módosíthatjuk!",
+    "switchToMonthly": "Vissza a havi félretételre",
+    "continue": "Tovább"
+  },
+  "common": {
+    "next": "Tovább",
+    "continue": "Tovább",
+    "notNow": "Most nem",
+    "stepProgress": "{{current}}. / {{total}}. lépés",
+    "resumeBanner": "Üdvözlünk újra, {{firstName}} — onnan folytatjuk, ahol abbahagytad.",
+    "resumeBannerNoName": "Onnan folytatjuk, ahol abbahagytad."
+  },
+  "name": {
+    "headline": "Üdv a Piggyben! Hogyan szólíthatunk?",
+    "sub": "Tegyük ezt személyessé.",
+    "placeholder": "A keresztneved",
+    "errorEmpty": "Hé, szeretnénk tudni a neved! 😊"
+  },
+  "ageGate": {
+    "blockedTitle": "A Piggy 18 éven felülieknek szól",
+    "blockedBody": "A megadott születési dátum alapján nem tudunk fiókot létrehozni számodra. Ez az alkalmazás nem elérhető 18 év alatti felhasználók számára.",
+    "headline": "Mikor születtél, {{firstName}}?",
+    "sub": "A Piggy csak 18 éves vagy idősebb felhasználók számára elérhető, ezért meg kell erősítenünk a korodat, mielőtt továbblépnénk.",
+    "privacyNote": "Ez jogi életkor-követelmény, nem profilalkotás. A születési dátumodat kizárólag annak megerősítésére használjuk, hogy 18 éves vagy — soha nem használjuk célzásra, és senkivel sem osztjuk meg."
+  },
+  "localization": {
+    "headline": "Honnan vagy, {{firstName}}?",
+    "sub": "Ezt a pénznem formázásához és hasznos alapértelmezések beállításához használjuk.",
+    "countryLabel": "Ország",
+    "currencyLabel": "Pénznem",
+    "selectCountry": "Ország kiválasztása",
+    "selectCurrency": "Pénznem kiválasztása",
+    "currencyDisplay": "{{symbol}} — {{name}}",
+    "continue": "Így jó, kezdjük!",
+    "selectCountryTitle": "Ország kiválasztása",
+    "selectCurrencyTitle": "Pénznem kiválasztása",
+    "languageLabel": "Nyelv",
+    "selectLanguageTitle": "Nyelv kiválasztása"
+  },
+  "goal": {
+    "headline": "Mire gyűjtünk?",
+    "sub": "Válassz egy célt, vagy írd be sajátodat lent.",
+    "placeholder": "Szeretnék...",
+    "errorEmpty": "Mondd el, mire gyűjtesz! 🎯",
+    "chips": {
+      "vacation": "Nyaralás",
+      "newCar": "Új autó",
+      "houseDeposit": "Önerő házra",
+      "emergencyFund": "Vészhelyzeti alap",
+      "somethingElse": "Valami más"
+    }
+  },
+  "targetAmount": {
+    "headline": "Mennyi kell a(z) {{goalName}} célodhoz?",
+    "sub": "Ne aggódj, ezt bármikor módosíthatod később.",
+    "errorEmpty": "Adj meg egy 0-nál nagyobb összeget 💸"
+  },
+  "income": {
+    "headline": "A terved elkészítéséhez mennyi az átlagos havi jövedelmed?",
+    "sub": "Ezt kizárólag annak kiszámítására használjuk, mennyit kell félretenned. Az adataid titkosítva és teljesen privátak.",
+    "skip": "Inkább nem mondom meg most"
+  },
+  "blueprint": {
+    "headline": "Tegyük ezt hivatalossá!",
+    "sub": "Íme a személyes megtakarítási terved.",
+    "rowName": "Név",
+    "rowGoal": "Cél",
+    "rowTarget": "Célösszeg",
+    "rowMonthlyIncome": "Havi jövedelem",
+    "notProvided": "Nincs megadva",
+    "rowMonthlySetAside": "Havi félretétel",
+    "rowGoalReached": "Cél elérve",
+    "exceedsIncomeWarning": "Ez a terv a havi jövedelmednél többet tesz félre havonta. Bármikor módosíthatjuk!",
+    "incomeSkippedNote": "Ha megadod a jövedelmedet a kezdőlapon, részletes, a helyzetedre szabott elemzéseket kapsz.",
+    "monthsAway_one": "Már csak {{count}} hónapra vagy az álmodtól. Valósítsuk meg.",
+    "monthsAway_other": "Már csak {{count}} hónapra vagy az álmodtól. Valósítsuk meg.",
+    "createAccount": "Piggy fiókom létrehozása"
+  },
+  "pushPermission": {
+    "headline": "Szeretnél egy lökést, amikor számít, {{firstName}}?",
+    "sub": "Havi {{amount}} félretenni könnyű megtervezni, de könnyű elfelejteni is. Egy gyors emlékeztető tartja életben a sorozatodat.",
+    "streakTitle": "Sorozatvédelem",
+    "streakBody": "Értesítés, ha a mai félretétel még nincs elintézve.",
+    "milestoneTitle": "Mérföldkő-ünneplések",
+    "milestoneBody": "Szólunk, amint a(z) {{goalName}} céljelentése eléri a 25%-ot, 50%-ot, 75%-ot.",
+    "milestoneBodyFallback": "Szólunk, amint a célod eléri a 25%-ot, 50%-ot, 75%-ot.",
+    "weeklyTitle": "Heti összefoglaló",
+    "weeklyBody": "Egy nyugodt összefoglaló arról, hogyan telt a hét. Sosincs spam.",
+    "footerNote": "Ezt bármikor módosíthatod később a Beállításokban.",
+    "keepMeOnTrack": "Tartsatok a helyes úton"
+  },
+  "account": {
+    "headline": "A Piggy terved elkészült!",
+    "subEmailConfirmed": "Az e-mail-címed megerősítve — már csak be kell fejeznünk a(z) {{goalName}} tervedet.",
+    "subOtpSent": "Add meg az e-mailben kapott 6 jegyű kódot a fiókod beállításának befejezéséhez.",
+    "subInitial": "Add meg az e-mail-címedet — küldünk egy bejelentkezési kódot, hogy rögzítsük a(z) {{goalName}} tervedet eddig: {{date}}.",
+    "emailPlaceholder": "te@pelda.com",
+    "emailError": "Adj meg egy érvényes e-mail-címet 📧",
+    "codeLabel": "Bejelentkezési kód (ez nem az alkalmazás PIN-kódja)",
+    "resendCode": "Kód újraküldése",
+    "sendCode": "Kód küldése",
+    "verifyCreate": "Megerősítés és fiók létrehozása",
+    "retry": "Újra",
+    "requestCodeError": "Hoppá! Nem sikerült elküldeni a kódot. Ellenőrizd a kapcsolatot, és próbáld újra.",
+    "otpEnterCode": "Add meg az e-mailben kapott 6 jegyű kódot.",
+    "sessionSecretError": "Bejelentkeztél, de nem sikerült biztosítani a munkamenetet. Kérj új kódot, és próbáld újra.",
+    "codeIncorrect": "A kód helytelen vagy lejárt. Kérj új kódot, és próbáld újra.",
+    "provisionError": "Megerősítettük az e-mail-címedet, de nem sikerült befejezni a fiókod beállítását. A kódod még érvényes — koppints az Újra gombra."
+  },
+  "legal": {
+    "reassuranceTitle": "Az e-mail-címedet kérjük. Nem a bankodat.",
+    "reassuranceBody": "A Piggy soha nem kapcsolódik a bankszámláidhoz — nincs mit összekötni, és nincs mit ellopni. A terved titkosított és privát.",
+    "acceptTerms": "A fiók létrehozásával elfogadod a feltételeinket",
+    "privacyPolicy": "Adatvédelmi irányelvek",
+    "termsOfService": "Felhasználási feltételek",
+    "aiTransparency": "AI átláthatóság",
+    "services": "Szolgáltatások",
+    "aiFeatureAccess": "AI és funkciók elérése"
+  }
+}

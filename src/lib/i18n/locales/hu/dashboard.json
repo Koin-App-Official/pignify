@@ -1,0 +1,54 @@
+{
+  "greetingMorning": "Jó reggelt",
+  "greetingAfternoon": "Jó napot",
+  "greetingEvening": "Jó estét",
+  "analysisStartedTitle": "Elemzés elindult",
+  "analysisStartedBody": "Dolgozunk a számaidon — nézd meg az e-mailjeidet kicsit később.",
+  "analysisErrorTitle": "Valami hiba történt",
+  "analysisErrorBody": "Nem sikerült elindítani az elemzést. Próbáld újra.",
+  "welcomeBanner": {
+    "title": "Minden készen áll",
+    "body": "A Piggy terved élesben fut.",
+    "bodyGoalSuffix": "Ideje elkezdeni gyűjteni a(z) {{goalName}} célra."
+  },
+  "pastDueWarning": "⚠️ A legutóbbi fizetésed nem sikerült. Frissítsd a kártyádat, hogy megtartsd a csomagod — koppints ide az ügyfélszolgálat eléréséhez.",
+  "incomeSkippedTip": "💡 Add meg a havi jövedelmedet, hogy személyre szabott megtakarítási elemzéseket kapj.",
+  "emptyGoals": {
+    "title": "Hozd létre az első célodat",
+    "newGoal": "Új cél"
+  },
+  "motivation": {
+    "lowProgress": "Remek kezdés! Minden forint számít 🌱",
+    "midProgress": "Már {{progress}}%-kal közelebb vagy a(z) {{goalName}} célhoz! 💪",
+    "highProgress": "Félúton túli hős! Tartsd a lendületet 🚀",
+    "almostDone": "Már majdnem ott vagy! A célod karnyújtásnyira van 👑"
+  },
+  "deepAnalysis": {
+    "analyzing": "Elemzés…",
+    "title": "Mélyelemzés",
+    "upgradeToUnlock": "Frissíts a feloldáshoz",
+    "unlimited": "Korlátlan",
+    "remainingOfLimit": "{{remaining}} / {{limit}}"
+  },
+  "todaysSpending": "Mai kiadások",
+  "expenseCount_one": "{{count}} kiadás alapján",
+  "expenseCount_other": "{{count}} kiadás alapján",
+  "savedToday": "Ma megtakarítva",
+  "savedThisMonth": "E hónapban megtakarítva",
+  "quickAddExpense": "Gyors kiadás hozzáadása",
+  "saverLevel": "Megtakarítói szint {{level}}",
+  "xpProgress": "{{xp}}/100 XP",
+  "yourGoals": "A céljaid",
+  "seeAll": "Összes megtekintése",
+  "daysLeft_one": "{{count}} nap van hátra",
+  "daysLeft_other": "{{count}} nap van hátra",
+  "ofAmount": "/ {{amount}}",
+  "addExpense": {
+    "title": "Kiadás hozzáadása",
+    "amountLabel": "Összeg ({{symbol}})",
+    "amountPlaceholder": "0",
+    "categoryLabel": "Kategória",
+    "notePlaceholder": "Megjegyzés (opcionális)",
+    "save": "Kiadás mentése"
+  }
+}

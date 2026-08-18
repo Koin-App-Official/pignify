@@ -174,7 +174,8 @@
     "PL": "Polska",
     "AE": "Zjednoczone Emiraty Arabskie",
     "ZA": "Republika Południowej Afryki",
-    "NZ": "Nowa Zelandia"
+    "NZ": "Nowa Zelandia",
+    "HU": "Węgry"
   },
   "currencies": {
     "USD": "Dolar amerykański",
@@ -195,7 +196,8 @@
     "PLN": "Polski złoty",
     "AED": "Dirham ZEA",
     "ZAR": "Rand południowoafrykański",
-    "NZD": "Dolar nowozelandzki"
+    "NZD": "Dolar nowozelandzki",
+    "HUF": "Forint węgierski"
   },
   "expenseCategories": {
     "food": "Jedzenie i napoje",

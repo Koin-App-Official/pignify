@@ -1,0 +1,25 @@
+{
+  "yourGoals": "A céljaid",
+  "empty": {
+    "title": "Még nincs célod",
+    "body": "Hozd létre az első megtakarítási célodat a kezdéshez!",
+    "cta": "Cél létrehozása"
+  },
+  "detail": {
+    "back": "Vissza",
+    "savedOfTarget": "{{saved}} / {{target}}",
+    "settingAside": "{{amount}}/hó félretéve · Cél elérve: {{date}}",
+    "addSavingsPlaceholder": "Megtakarítás hozzáadása...",
+    "save": "Mentés",
+    "milestones": "Mérföldkövek",
+    "depositHistory": "Befizetési előzmények"
+  },
+  "primary": "Elsődleges",
+  "review": {
+    "headline": "Jól néz ki!",
+    "sub": "Íme a megtakarítási terved áttekintése.",
+    "warningMultiGoal": "Az összes aktív célodat figyelembe véve ez meghaladja a havi jövedelmedet. Bármikor módosíthatod.",
+    "warningSingleGoal": "Ehhez a célhoz a havi jövedelmednél többet kell félretenned. Bármikor módosíthatod.",
+    "createGoal": "Cél létrehozása 🎉"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "noEmailApp": "Ezen az eszközön nincs beállítva e-mail alkalmazás. Írj nekünk: {{email}}.",
+  "notAvailable": "Nem elérhető",
+  "cancel": "Mégse",
+  "confirm": "Megerősítés",
+  "search": "Keresés...",
+  "tabs": {
+    "home": "Kezdőlap",
+    "goals": "Célok",
+    "missions": "Küldetések",
+    "coach": "Edző",
+    "profile": "Profil"
+  },
+  "calendarModal": {
+    "title": "Céldátum",
+    "subtitle": "Mikor szeretnéd elérni a célodat?",
+    "quickJump6mo": "+6hó",
+    "quickJump1yr": "+1év",
+    "quickJump2yr": "+2év",
+    "quickJump5yr": "+5év"
+  },
+  "dobConfirmModal": {
+    "title": "Ez helyes?",
+    "body": "Megerősítés után ez már nem módosítható.",
+    "edit": "Szerkesztés"
+  },
+  "language": {
+    "en": "English",
+    "pl": "Polski",
+    "hu": "Magyar"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "language": {
+    "sectionLabel": "Nyelv"
+  },
+  "title": "Beállítások",
+  "sections": {
+    "subscription": "Előfizetés",
+    "security": "Biztonság",
+    "account": "Fiók",
+    "supportAndAbout": "Támogatás és névjegy"
+  },
+  "planLabel": "{{plan}} csomag",
+  "planStatus": {
+    "canceled": "Lemondva — az időszak végéig aktív",
+    "expired": "Az ingyenes próbaidőszak véget ért",
+    "trialing": "Ingyenes próbaidőszak",
+    "pastDue": "Sikertelen fizetés — frissítsd a kártyádat",
+    "switchingTo": "Váltás {{plan}} csomagra a következő ciklusban",
+    "priceMonthly": "{{price}}/hó"
+  },
+  "manage": "Kezelés",
+  "changePin": "PIN-kód módosítása",
+  "cancel": "Mégse",
+  "biometric": {
+    "faceId": "Face ID",
+    "irisUnlock": "Íriszfeloldás",
+    "fingerprintUnlock": "Ujjlenyomatos feloldás",
+    "turnOffTitle": "Kikapcsolod ezt: {{label}}?",
+    "turnOffBody": "Ezután PIN-kóddal fogsz feloldani.",
+    "turnOff": "Kikapcsolás"
+  },
+  "autoLock": {
+    "label": "Automatikus zárolás",
+    "immediately": "Azonnal",
+    "oneMin": "1 perc",
+    "fiveMin": "5 perc",
+    "never": "Soha"
+  },
+  "logOut": "Kijelentkezés",
+  "logOutConfirmBody": "Bármikor visszajelentkezhetsz az e-mail-címeddel.",
+  "deleteAccount": "Fiók törlése",
+  "enableBiometricFlow": {
+    "confirmPinSubtitle": "Add meg a PIN-kódodat a biometrikus feloldás bekapcsolásához",
+    "enrollFailed": "Nem sikerült bekapcsolni a biometrikus feloldást. Próbáld újra."
+  },
+  "deleteAccountFlow": {
+    "confirmPinSubtitle": "Add meg a PIN-kódodat a fiók törlésének folytatásához",
+    "warningTitle": "Fiók törlése",
+    "warningBody": "Ez véglegesen törli a profilodat, céljaidat és előfizetésedet a szervereinkről. Ez nem vonható vissza.",
+    "deleting": "Fiók törlése…",
+    "confirmAlertBody": "Ez véglegesen törli a fiókodat és minden adatodat a szervereinkről. Ez nem vonható vissza.",
+    "delete": "Törlés",
+    "errorTitle": "Valami hiba történt",
+    "errorBody": "Nem sikerült törölni a fiókodat. Próbáld újra."
+  },
+  "support": {
+    "privacyPolicy": "Adatvédelmi irányelvek",
+    "privacyPolicyError": "Nem sikerült megnyitni az Adatvédelmi irányelvek hivatkozását.",
+    "termsOfService": "Felhasználási feltételek",
+    "termsOfServiceError": "Nem sikerült megnyitni a Felhasználási feltételek hivatkozását.",
+    "contactSupport": "Kapcsolatfelvétel az ügyfélszolgálattal",
+    "notConfigured": "A támogatási hivatkozások még nincsenek beállítva."
+  },
+  "versionLabel": "Piggy v{{version}}"
+}

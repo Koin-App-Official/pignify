@@ -1,0 +1,32 @@
+{
+  "firstGoal": {
+    "title": "🎯 Kezdd el az első célodat",
+    "body": "Állíts be egy megtakarítási célt, hogy elkezdhesd az egymást követő napok gyűjtését — még egy kis havi összeg is számít."
+  },
+  "checkin": {
+    "titleStreak": "🔥 Sorozat-bejelentkezés",
+    "titlePlain": "💰 Napi bejelentkezés",
+    "bodyStreak": "A(z) {{streak}} napos sorozatod veszélyben van! Rögzítsd a mai kiadásaidat, és tegyél félre {{remaining}} összeget a célodhoz, hogy megőrizd.",
+    "bodyPlain": "Gyors bejelentkezés — költöttél ma valamit? Rögzítsd, hogy tartsd a tempót."
+  },
+  "weeklyReflection": {
+    "title": "📊 Heti összefoglaló",
+    "body_one": "A heted: {{saved}} megtakarítva, {{count}} kiadás rögzítve. Koppints az összefoglaló megtekintéséhez.",
+    "body_other": "A heted: {{saved}} megtakarítva, {{count}} kiadás rögzítve. Koppints az összefoglaló megtekintéséhez."
+  },
+  "trialEnding": {
+    "title": "⏳ Az ingyenes próbaidőszakod 2 nap múlva véget ér",
+    "body": "A(z) {{plan}} próbaidőszakod 2 nap múlva lejár. Nézd meg, mi változik — a megtakarításaid biztonságban vannak."
+  },
+  "milestone": {
+    "goalCrushedTitle": "👑 Cél teljesítve!",
+    "goalCrushedBody": "Épp most érted el a(z) {{name}} célt — {{amount}} megtakarítva.",
+    "progressTitle": "{{emoji}} {{percent}}%-nál tartasz!",
+    "progressBody": "Már {{percent}}%-on vagy a(z) {{name}} célod felé! Így tovább.",
+    "achievementUnlockedTitle": "🏆 Kitüntetés feloldva"
+  },
+  "channels": {
+    "reminders": "Emlékeztetők",
+    "digest": "Összefoglalók és ünneplések"
+  }
+}

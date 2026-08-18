@@ -1,0 +1,21 @@
+{
+  "title": "Küldetések",
+  "subtitle": "Teljesíts küldetéseket XP-ért és jó szokásokért",
+  "tier1": "1. szint",
+  "tier2": "2. szint",
+  "tier3": "3. szint",
+  "missionsCompleted": "{{claimed}}/{{total}} küldetés teljesítve",
+  "dailyMissions": "Napi küldetések",
+  "weeklyMissions": "Heti küldetések",
+  "tabMissions": "Küldetések",
+  "tabBadges": "Jelvények",
+  "onYourHonour": "Becsületszóra",
+  "progressCurrency": "{{current}} / {{target}} megtakarítva",
+  "progressCount": "{{current}} / {{target}}",
+  "rewardXp": "+{{reward}} XP",
+  "quiz": {
+    "claim": "+{{reward}} XP átvétele",
+    "tryAgainLater": "Rendben — próbáld újra később",
+    "notNow": "Most nem"
+  }
+}
