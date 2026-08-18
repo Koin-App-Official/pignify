@@ -1,0 +1,142 @@
+# Add German (de) language support
+
+Tracking issue: [#126](https://github.com/Koin-App-Official/pignify/issues/126)
+Branch (to create when implementation starts): `feat/issue-126-german-i18n` (off `main`, after `feat/issue-124-hungarian-i18n` merges — or off that branch directly if it's still open)
+
+## Context
+
+The app currently ships English, Polish, and Hungarian. Issue #122 rebuilt the i18n architecture specifically so adding a new language is a **mechanical, compiler/test-enforced** change, and issue #124 proved that recipe for real with Hungarian (language #3). This plan applies the same recipe — written down as an 11-step checklist in [I18N_SCALE.md](I18N_SCALE.md) and worked end-to-end in [I18N_HU.md](I18N_HU.md) — to German (language #4).
+
+I read the current state of every guardrail file directly (`detect.ts`, `format.ts`, `calendarLocale.ts`, `index.ts`, `catalogs.ts`, `locales.test.ts`, `contentParity.test.ts`, `plurals.test.ts`, `detect.test.ts`, `app.json`, `package.json`, `.github/workflows/ci.yml`) rather than relying only on the Hungarian precedent, and verified German-specific facts directly against this app's toolchain (Node's ICU, which the ADR docs treat as ground truth before an on-device Hermes check):
+
+- `Intl.PluralRules('de').resolvedOptions().pluralCategories` → `['one', 'other']` — same 2-category shape as English/Hungarian, simpler than Polish's 3-way system.
+- `@formatjs/intl-pluralrules/locale-data/de.js` already exists in `node_modules` — no missing dependency.
+- `Intl.NumberFormat('de-DE').formatToParts(1234567.89)` → group separator `.` (a real period, **not** NBSP like pl/hu), decimal separator `,`. This is a new pattern for `GROUP_SEPARATOR`/`DECIMAL_SEPARATOR` — first locale where the group separator is a plain ASCII character.
+- `Intl.DateTimeFormat('de-DE', {month:'long', year:'numeric'})` → `"August 2026"`; with `day` added → `"16. August 2026"` (day-then-month, period after the day number — different order from Hungarian's year-first convention).
+- **Germany/EUR already exist** in `src/lib/catalogs.ts`'s `COUNTRIES`/`CURRENCIES` and in every existing locale's `content.json` (`en.countries.DE = "Germany"`, `pl.countries.DE = "Niemcy"`, `hu.countries.DE = "Németország"`, and `currencies.EUR` similarly) — Germany was already selectable as a *country* before this language work. Unlike Hungarian (which needed new `HU`/`HUF` catalog entries), **this plan needs zero changes to `catalogs.ts`** — the new `de/content.json` just needs its own translation of the existing `DE`/`EUR` entries, same as any other catalog id.
+- `src/lib/i18n/detect.test.ts` currently uses `'de'` and `'de-AT'` **as its own example of an unsupported language** (lines 32 and 39: `matchSupportedLanguage('de')` / `matchSupportedLanguage('de-AT')` both asserted to fall back to `'en'`). Once German is real, these two assertions must be swapped to a different still-unsupported code (e.g. `'it'` / `'it-IT'`) or they'll start failing.
+- German grammar pluralizes nouns normally after a numeral (unlike Hungarian, which keeps the noun singular) — so `_one`/`_other` copy should look genuinely different ("1 Versuch übrig" vs. "2 Versuche übrig"), not near-duplicate text the way Hungarian's was. This is a translation-quality expectation to hold the draft to, not a guardrail.
+- German is prone to long compound words and capitalized nouns — a real risk for button/chip truncation, flagged the same way Polish (~13% longer) and Hungarian were.
+
+**Decisions carried over from the Hungarian plan, applied identically here:**
+- Claude drafts the full German translation for every string and catalog entry as part of this plan; the plan ends with an on-device native-speaker review pass.
+- Every phase below ends in a state where `npm run typecheck && npm test` is clean.
+
+---
+
+## Phase 1 — Core language registration
+
+**Files:** `src/lib/i18n/detect.ts`
+
+- [x] Add `'de'` to the `SupportedLanguage` union: `'en' | 'pl' | 'hu' | 'de'`
+- [x] Add `'de'` to `SUPPORTED_LANGUAGES`: `['en', 'pl', 'hu', 'de']`
+- [x] Confirm `@formatjs/intl-pluralrules/locale-data/de.js` exists in `node_modules` — confirmed already present
+
+**Expected result — confirmed via `npm run typecheck`:** this alone breaks the build with 7 named errors — `calendarLocale.ts`'s two records (lines 14, 20), `format.ts`'s three records (lines 21, 32, 38), `index.ts`'s `resources` (line 110) and `PLURAL_LOCALE_DATA` (line 119), and `plurals.test.ts`'s `CASES` (line 23) — each naming the missing `'de'` key. That's the guardrail from #122 working as designed; Phases 2–5 fix each one in turn.
+
+---
+
+## Phase 2 — Formatting data
+
+**Files:** `src/lib/i18n/format.ts`, `src/lib/i18n/calendarLocale.ts`
+
+- [ ] `format.ts`: add `de: 'de-DE'` to `LOCALE_TAG`
+- [ ] `format.ts`: add `de: '.'` to `GROUP_SEPARATOR` — a real period, verified via `Intl.NumberFormat('de-DE').formatToParts()`; first locale in this table that isn't `,`/NBSP-space
+- [ ] `format.ts`: add `de: ','` to `DECIMAL_SEPARATOR`
+- [ ] `calendarLocale.ts`: add `de: 'de-DE'` to `LOCALE_TAG`
+- [ ] `calendarLocale.ts`: add `de: 'Heute'` to `TODAY_LABEL` ("today" in German)
+- [ ] **Hermes verification (not compiler-enforced — do this for real once the app runs with `de` selected):** confirm `formatNumber`/`formatMoney` group correctly at the `.` separator on-device, and that `formatDate`/`formatMonthYear` render the day-before-month order (`"16. August 2026"`) correctly on the actual Hermes build, not just Node's ICU
+
+---
+
+## Phase 3 — Wire the `de` resource bundle
+
+**Files:** `src/lib/i18n/index.ts`
+
+- [ ] Import all 12 German namespace JSON files (created in Phase 4) alongside the existing `en`/`pl`/`hu` imports
+- [ ] Add the `de` block to `resources`, matching the `en`/`pl`/`hu` shape exactly (the `satisfies Record<SupportedLanguage, Record<Namespace, unknown>>` annotation makes an incomplete block a compile error)
+- [ ] Add `de: () => import('@formatjs/intl-pluralrules/locale-data/de.js')` to `PLURAL_LOCALE_DATA`
+
+Can be stubbed with placeholder content first and filled in once Phase 4's real translations exist, or done last — either order works since it's all compiler-checked.
+
+---
+
+## Phase 4 — Translate the 12 UI namespace files
+
+**Files:** new `src/lib/i18n/locales/de/*.json` (12 files: `auth`, `coach`, `common`, `content`, `dashboard`, `goals`, `missions`, `notifications`, `onboarding`, `plans`, `profile`, `settings`)
+
+- [ ] Translate all ~749 strings across the 11 non-`content` namespaces, using `en/*.json` as the structural source of truth (key-for-key — `pl`/`hu` are secondary references for tone/plural handling, not the copy source)
+- [ ] Handle pluralized keys for German's `{one, other}` category set — same bases as before (`errors.incorrectPinWithAttempts`, `expenseCount`, `daysLeft`, `incomeSources`, `goals`, `devices`, `aiMessages`, `emailReports`, `trialDays`, `monthsAway`, `keepBody`, `body`) — write genuinely distinct `_one`/`_other` forms (German pluralizes nouns normally, unlike Hungarian)
+- [ ] Add `common.json`'s `language.de: "Deutsch"` self-name (endonym) entry — **and** add the same `de: "Deutsch"` key to the three **existing** `en/common.json`, `pl/common.json`, `hu/common.json` files (this is how the language picker gets a label for German; `app/settings.tsx`/`app/onboarding.tsx` read `t(\`common:language.${code}\`)` generically off `SUPPORTED_LANGUAGES`, no other UI code change needed)
+- [ ] Translate `content.json` — all 121 catalog entries (30 missions, 15 lessons, 12 achievements, 10 goal templates, 26 countries incl. the existing `DE`, 20 currencies incl. the existing `EUR`, 8 expense categories)
+- [ ] Run `npm test -- locales.test.ts` and confirm exact key parity for `de` across all 12 namespaces, correct `{one, other}` plural suffixes throughout, and no `{{symbol}}{{amount}}` baked-in copy
+
+---
+
+## Phase 5 — Real fixture-based plural test
+
+**Files:** `src/lib/i18n/plurals.test.ts`
+
+- [ ] Add a `de` row to the `CASES` record (the `Record<SupportedLanguage, ...>` typing makes omitting `de` a compile error) using the real translated `de/auth.json` fixture for `auth:errors.incorrectPinWithAttempts` at representative counts (1, 2, 5, 22) — expect genuinely different `_one`/`_other` wording (e.g. `"Versuch"` vs `"Versuche"`), unlike Hungarian's near-identical forms
+- [ ] Register `deAuth` in the test's `beforeAll` i18next resources
+- [ ] Run `npm run typecheck` (should be fully clean) and `npx vitest run -- plurals.test.ts`
+
+---
+
+## Phase 6 — Catalog ↔ content.json parity
+
+**Files:** `src/lib/i18n/contentParity.test.ts`
+
+- [ ] **No `catalogs.ts` changes needed** — Germany/EUR already exist as catalog entries; German's `content.json` (from Phase 4) just needs to translate the existing `countries.DE`/`currencies.EUR` ids like any other catalog entry
+- [ ] Import `deContent` and add `de: deContent` to the hardcoded `Object.entries({ en: enContent, pl: plContent, hu: huContent })` lesson `correctKey` check (line ~108) — the one guardrail in the #122 recipe not derived automatically from `SUPPORTED_LANGUAGES`
+- [ ] Run `npm test -- contentParity.test.ts src/lib/i18n/locales.test.ts` and confirm bidirectional catalog↔translation parity for every catalog including `de`
+
+---
+
+## Phase 7 — Native locale scaffolding
+
+**Files:** `app.json`, new `languages/de.json`
+
+- [ ] Add `"de": "./languages/de.json"` to `expo.locales`
+- [ ] Add `"de"` to `expo.ios.infoPlist.CFBundleLocalizations`
+- [ ] Create `languages/de.json` with the Face ID permission string translated (mirrors `languages/hu.json`'s single `ios.NSFaceIDUsageDescription` key), e.g. `"Erlaube Piggy, die App per Face ID zu entsperren."`
+- [ ] `android/`/`ios/` are gitignored, native-generated (Expo prebuild) — no manual native-project edits needed
+
+---
+
+## Phase 8 — Recommended (not blocking): extend format/regression tests, fix stale `de` assertions
+
+**Files:** `src/lib/i18n/format.test.ts`, `src/lib/i18n/contributionMoneyFormatting.test.ts`, `src/lib/i18n/detect.test.ts`
+
+- [ ] `format.test.ts`: add `de` cases alongside the existing `pl`/`hu` ones — thousands grouping with the `.` separator, comma decimal separator, `formatMoney` with EUR, `formatMonthYear`/`formatDate` with real German month names and the day-before-month convention (`"August 2026"` / `"16. August 2026"`)
+- [ ] `contributionMoneyFormatting.test.ts`: add a `de` + EUR case at all 3 `ContributionStep` interpolation sites, using the real translated `de/onboarding.json` copy
+- [ ] `detect.test.ts`: add `matchSupportedLanguage('de')` / `'de-DE'` assertions to the *supported*-language tests — **and** fix the two now-stale assertions that use `'de'`/`'de-AT'` as examples of an *unsupported* language (lines ~32, ~39), swapping them to a different still-unsupported code (e.g. `'it'` / `'it-IT'`)
+- [ ] Run `npm run typecheck && npx vitest run`
+
+---
+
+## Phase 9 — Full verification and review
+
+- [ ] `npm run typecheck && npm test && npm run check:bundle-size` — all clean (budget: 8,000,000 bytes iOS; Hungarian added +0.43 MB, expect a similar bump from German's ~12 new JSON files)
+- [ ] Manual Simulator/on-device smoke test: confirm the Metro/Hermes runtime loads the German plural-rules locale data at boot with no errors, and that the language picker in Settings and onboarding both offer German and switch the UI correctly
+- [ ] On-device review pass for text length/line wrap — German compound words and capitalized nouns are a real risk for buttons/chips/labels, check these especially
+- [ ] Native-speaker copy review — treat all German copy from Phase 4 as a first draft pending this review, same as Polish (`441f342`, `371a910`) and Hungarian
+- [ ] Fix anything the review surfaces, re-run verification
+
+---
+
+## Out of scope (flagging, not doing here)
+
+- **n8n coach / Deep Analysis backend prompts.** Same caveat as the Hungarian plan — `language` is already passed through to the n8n backend, but whether `CLAUDE_coach_reply`/Deep Analysis actually produce good German output is a backend-prompt question for a separate follow-up, not this repo's code.
+- **`README.md`'s stale "English and Polish" line** — already stale after Hungarian shipped; worth a fix but not part of this plan unless requested.
+
+---
+
+## Verification summary (end state)
+
+- `npm run typecheck` — clean, no new errors
+- `npm test` — clean, `locales.test.ts` / `plurals.test.ts` / `contentParity.test.ts` all passing for `de` alongside `en`/`pl`/`hu`
+- `npm run check:bundle-size` — within budget
+- Settings and onboarding language pickers offer German with no code change beyond Phase 4's `common.json` entries (both already read `SUPPORTED_LANGUAGES` generically)
+- Onboarding country/currency picker already offers Germany/EUR (pre-existing, now with German-language display copy too)
+- On-device/native-speaker review completed and any findings fixed
