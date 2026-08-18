@@ -117,7 +117,8 @@ export default function Dashboard() {
     if (!deepAnalysis.allowed) return openGate('deepAnalysisQuota');
 
     setIsAnalyzing(true);
-    const result = await triggerDeepAnalysis(userID ?? '', language);
+    const savedMoney = goals.reduce((s, g) => s + g.savedAmount, 0);
+    const result = await triggerDeepAnalysis(userID ?? '', language, savedMoney);
     setIsAnalyzing(false);
 
     if (result.status === 'success') {
