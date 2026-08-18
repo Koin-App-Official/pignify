@@ -82,9 +82,11 @@ Stubbed with placeholder content now, to be filled in with real translations in 
 
 **Files:** `src/lib/i18n/plurals.test.ts`
 
-- [ ] Add a `de` row to the `CASES` record (the `Record<SupportedLanguage, ...>` typing makes omitting `de` a compile error) using the real translated `de/auth.json` fixture for `auth:errors.incorrectPinWithAttempts` at representative counts (1, 2, 5, 22) — expect genuinely different `_one`/`_other` wording (e.g. `"Versuch"` vs `"Versuche"`), unlike Hungarian's near-identical forms
-- [ ] Register `deAuth` in the test's `beforeAll` i18next resources
-- [ ] Run `npm run typecheck` (should be fully clean) and `npx vitest run -- plurals.test.ts`
+- [x] Added a `de` row to the `CASES` record using the real translated `de/auth.json` fixture for `auth:errors.incorrectPinWithAttempts` at counts 1, 2, 5, 22 — genuinely different `_one`/`_other` wording confirmed (`"Versuch übrig"` vs `"Versuche übrig"`), unlike Hungarian's near-identical forms
+- [x] Registered `deAuth` in the test's `beforeAll` i18next resources
+- [x] `npm run typecheck` — **fully clean, 0 errors**, exactly as predicted
+- [x] `npx vitest run src/lib/i18n/plurals.test.ts` — 19/19 passing
+- [x] Full `npx vitest run` — 349/351 passing; the only 2 remaining failures are the known Phase 8 `detect.test.ts` cases
 
 ---
 
