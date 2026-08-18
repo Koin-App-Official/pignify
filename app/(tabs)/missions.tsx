@@ -10,7 +10,6 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
@@ -35,7 +34,7 @@ import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
-import { springPresets } from '@/lib/springPresets';
+import { timingPresets } from '@/lib/springPresets';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -216,7 +215,7 @@ function SegmentedControl({
   const indicator = useSharedValue(tab === 'missions' ? 0 : 1);
 
   useEffect(() => {
-    indicator.value = withSpring(tab === 'missions' ? 0 : 1, springPresets.press);
+    indicator.value = withTiming(tab === 'missions' ? 0 : 1, timingPresets.segment);
   }, [tab]);
 
   const onLayout = (e: LayoutChangeEvent) => {
