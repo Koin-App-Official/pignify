@@ -20,23 +20,29 @@ describe('matchSupportedLanguage', () => {
     expect(matchSupportedLanguage('pl')).toBe('pl');
     expect(matchSupportedLanguage('en')).toBe('en');
     expect(matchSupportedLanguage('hu')).toBe('hu');
+    expect(matchSupportedLanguage('de')).toBe('de');
   });
 
   it('strips a region suffix before matching', () => {
     expect(matchSupportedLanguage('pl-PL')).toBe('pl');
     expect(matchSupportedLanguage('en-US')).toBe('en');
     expect(matchSupportedLanguage('hu-HU')).toBe('hu');
+    expect(matchSupportedLanguage('de-DE')).toBe('de');
   });
 
   it('falls back to en for an unsupported language code', () => {
-    expect(matchSupportedLanguage('de')).toBe('en');
+    // 'de' used to be the example here, back when German wasn't supported
+    // (implementations/I18N_DE.md) — swapped to 'it', which is still
+    // unsupported, now that 'de' is a real match above.
+    expect(matchSupportedLanguage('it')).toBe('en');
     expect(matchSupportedLanguage('fr-CA')).toBe('en');
   });
 
   it('falls back to en for a region tag whose base language is unsupported', () => {
     // The exact case the plan's Phase 7 called out: a regional tag must
-    // resolve by its base language, not fail to match at all.
-    expect(matchSupportedLanguage('de-AT')).toBe('en');
+    // resolve by its base language, not fail to match at all. 'de-AT' used
+    // to be the example here; swapped to 'it-IT' for the same reason as above.
+    expect(matchSupportedLanguage('it-IT')).toBe('en');
   });
 
   it('falls back to en for null, undefined, or an empty string', () => {

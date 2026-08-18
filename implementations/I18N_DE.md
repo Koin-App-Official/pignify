@@ -117,10 +117,10 @@ Stubbed with placeholder content now, to be filled in with real translations in 
 
 **Files:** `src/lib/i18n/format.test.ts`, `src/lib/i18n/contributionMoneyFormatting.test.ts`, `src/lib/i18n/detect.test.ts`
 
-- [ ] `format.test.ts`: add `de` cases alongside the existing `pl`/`hu` ones — thousands grouping with the `.` separator, comma decimal separator, `formatMoney` with EUR, `formatMonthYear`/`formatDate` with real German month names and the day-before-month convention (`"August 2026"` / `"16. August 2026"`)
-- [ ] `contributionMoneyFormatting.test.ts`: add a `de` + EUR case at all 3 `ContributionStep` interpolation sites, using the real translated `de/onboarding.json` copy
-- [ ] `detect.test.ts`: add `matchSupportedLanguage('de')` / `'de-DE'` assertions to the *supported*-language tests — **and** fix the two now-stale assertions that use `'de'`/`'de-AT'` as examples of an *unsupported* language (lines ~32, ~39), swapping them to a different still-unsupported code (e.g. `'it'` / `'it-IT'`)
-- [ ] Run `npm run typecheck && npx vitest run`
+- [x] `format.test.ts`: added `de` cases alongside the existing `pl`/`hu` ones — thousands grouping with the `.` separator (incl. below 10,000), comma decimal separator, `formatMoney` with EUR (`€1.000`, symbol before), `formatMonthYear`/`formatDate` with real German month names and the day-before-month convention (`"August 2026"` / `"16. August 2026"`)
+- [x] `contributionMoneyFormatting.test.ts`: added a `de` + EUR case at all 3 `ContributionStep` interpolation sites, using the real translated `de/onboarding.json` copy
+- [x] `detect.test.ts`: added `matchSupportedLanguage('de')` / `'de-DE'` assertions to the *supported*-language tests — **and** fixed the two stale assertions that used `'de'`/`'de-AT'` as examples of an *unsupported* language, swapping them to `'it'` / `'it-IT'`
+- [x] `npm run typecheck && npx vitest run` — fully clean: 0 typecheck errors, 356/356 tests passing (up from 349/351 with 2 known failures before this phase)
 
 ---
 
