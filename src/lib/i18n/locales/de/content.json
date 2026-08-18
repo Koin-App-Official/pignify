@@ -1,0 +1,212 @@
+{
+  "missions": {
+    "save-today": { "title": "Spare {amount} heute", "description": "Leg etwas für dein Ziel zurück — muss nicht viel sein." },
+    "hit-daily-target": { "title": "Erreiche das heutige Ziel", "description": "Spare heute genug, um im Tempo für dein Ziel zu bleiben." },
+    "log-expense": { "title": "Erfasse eine Ausgabe", "description": "Erfasse eine Sache, die du heute ausgegeben hast." },
+    "check-in": { "title": "Schau vorbei", "description": "Öffne die App und sieh, wo du stehst." },
+    "skip-coffee": { "title": "Verzichte auf einen Kaffee", "description": "Mach ihn dir heute zu Hause." },
+    "no-spend-lunch": { "title": "Ausgabenfreies Mittagessen", "description": "Bring dein Mittagessen mit, statt es zu kaufen." },
+    "walk-instead": { "title": "Lauf statt zu fahren", "description": "Spare heute bei den Fahrtkosten." },
+    "cook-at-home": { "title": "Koch zu Hause", "description": "Verzichte heute Abend auf Lieferdienst." },
+    "save-this-week": { "title": "Spare {amount} diese Woche", "description": "Ein wöchentlicher Schub für dein Ziel." },
+    "first-goal": { "title": "Richte dein erstes Ziel ein", "description": "Erstelle ein Sparziel, um loszulegen." },
+    "log-five-expenses": { "title": "Erfasse 5 Ausgaben diese Woche", "description": "Baue die Gewohnheit auf, Ausgaben zu verfolgen." },
+    "no-spend-weekend": { "title": "Ausgabenfreies Wochenende", "description": "Halte nicht notwendige Ausgaben dieses Wochenende bei null." },
+    "save-1-5x-target": { "title": "Spare das 1,5-Fache des heutigen Ziels", "description": "Leg dich heute richtig ins Zeug." },
+    "log-three-expenses": { "title": "Erfasse jede Ausgabe heute", "description": "Erfasse mindestens 3 Dinge, die du heute ausgegeben hast." },
+    "expense-with-note": { "title": "Füge einer Ausgabe eine Notiz hinzu", "description": "Gib einer der heutigen Ausgaben etwas Kontext." },
+    "save-almost-bought": { "title": "Spare, was du fast gekauft hättest", "description": "Auf etwas verzichtet, das du wolltest? Leg diesen Betrag ins Sparen." },
+    "beat-last-week": { "title": "Schlag die Ausgaben der letzten Woche", "description": "Gib diese Woche weniger aus als letzte Woche." },
+    "dine-out-detox": { "title": "Restaurant-Detox", "description": "Verzichte diese Woche auf Essen gehen." },
+    "cancel-subscription": { "title": "Kündige ein Abo", "description": "Überprüfe und kündige ein ungenutztes Abo." },
+    "streak-seven": { "title": "Erreiche eine 7-Tage-Serie", "description": "Spare 7 Tage in Folge auf dein Ziel." },
+    "save-20-percent-over": { "title": "Spare 20 % über deinem Wochenziel", "description": "Übertriff dein übliches Tempo diese Woche." },
+    "money-quiz": { "title": "Heutiges Geld-Quiz", "description": "Beantworte eine 30-Sekunden-Frage zum Thema Geld." },
+    "save-2x-target": { "title": "Spare das 2-Fache des heutigen Ziels", "description": "Ein richtig starker Schub heute." },
+    "two-deposits-today": { "title": "Zwei Einzahlungen heute", "description": "Spare heute zweimal statt einmal." },
+    "pantry-day": { "title": "Vorratskammer-Tag", "description": "Koch nur mit dem, was du schon zu Hause hast." },
+    "push-goal-ten-percent": { "title": "Bring dein Ziel zum nächsten 10-%-Schritt", "description": "Überschreite diese Woche einen neuen Zehntel deines Ziels." },
+    "streak-thirty": { "title": "Erreiche eine 30-Tage-Serie", "description": "Ein ganzer Monat mit erreichtem Ziel." },
+    "review-contribution": { "title": "Überprüfe den Beitrag für nächsten Monat", "description": "Prüfe, ob dein monatlicher Betrag noch passt." },
+    "add-second-goal": { "title": "Füge ein zweites Ziel hinzu", "description": "Beginne, auch für etwas anderes zu sparen." },
+    "negotiate-bill": { "title": "Verhandle oder reduziere eine Rechnung", "description": "Ruf einen Anbieter an und bitte um einen besseren Tarif." }
+  },
+  "lessons": {
+    "emergency-fund": {
+      "topic": "Notgroschen",
+      "question": "Wofür ist ein Notgroschen hauptsächlich da?",
+      "options": { "a": "Unerwartete Ausgaben abdecken", "b": "Investitionen bei einem Kursrückgang kaufen", "c": "Den höchsten Zinssatz erzielen" },
+      "explanation": "Es ist Bargeld, das für Überraschungen zurückgelegt wird — Jobverlust, Arztrechnung, Autoreparatur — leicht zugänglich statt zum Wachstum investiert."
+    },
+    "apy": {
+      "topic": "Effektivzins (APY)",
+      "question": "Was sagt dir der Effektivzins (APY, Annual Percentage Yield)?",
+      "options": { "a": "Dein monatliches Ausgabenlimit", "b": "Die tatsächliche Jahresrendite inklusive Zinseszins", "c": "Einen einmaligen Anmeldebonus" },
+      "explanation": "Der Effektivzins berücksichtigt den Zinseszins und spiegelt daher wider, was du tatsächlich im Jahr verdienst — eine ehrlichere Zahl als ein fester Zinssatz."
+    },
+    "needs-vs-wants": {
+      "topic": "Bedürfnisse vs. Wünsche",
+      "question": "Was davon ist eher ein „Bedürfnis“ als ein „Wunsch“?",
+      "options": { "a": "Miete", "b": "Streaming-Abos", "c": "Essen gehen" },
+      "explanation": "Bedürfnisse halten dich wohnhaft, ernährt und funktionsfähig. Wünsche verbessern das Leben, sind aber nicht essenziell — diese Unterscheidung ist das Rückgrat der meisten Budgets."
+    },
+    "50-30-20": {
+      "topic": "Die 50/30/20-Regel",
+      "question": "Wofür ist bei der 50/30/20-Budgetregel der 20-%-Anteil gedacht?",
+      "options": { "a": "Wünsche", "b": "Bedürfnisse", "c": "Sparen und Schuldenabbau" },
+      "explanation": "Die Aufteilung ist etwa 50 % Bedürfnisse, 30 % Wünsche, 20 % Sparen/Schuldenabbau — ein einfacher Ausgangsrahmen, keine strikte Regel."
+    },
+    "compound-interest": {
+      "topic": "Zinseszins",
+      "question": "Warum ist es so wichtig, früh mit dem Sparen zu beginnen?",
+      "options": { "a": "Der Zinseszins erwirtschaftet Rendite auch auf deine bisherigen Renditen", "b": "Banken zahlen neuen Sparern mehr", "c": "Preise steigen nur zu Jahresbeginn" },
+      "explanation": "In jeder Periode werden Zinsen sowohl auf deinen ursprünglichen Betrag als auch auf alles, was er bereits erwirtschaftet hat, gezahlt — das Wachstum beschleunigt sich, je länger es läuft."
+    },
+    "budgeting-basics": {
+      "topic": "Budgetierung",
+      "question": "Was ist der Hauptzweck, jede Ausgabe zu erfassen?",
+      "options": { "a": "Um sich wegen des Ausgebens schuldig zu fühlen", "b": "Um zu sehen, wohin das Geld wirklich fließt", "c": "Um sich für einen Kredit zu qualifizieren" },
+      "explanation": "Die meisten Menschen unterschätzen kleine wiederkehrende Ausgaben, bis sie sie erfassen — das Ziel ist Transparenz, nicht Verurteilung."
+    },
+    "credit-score": {
+      "topic": "Kreditwürdigkeit",
+      "question": "Welche Gewohnheit hilft der Kreditwürdigkeit am beständigsten?",
+      "options": { "a": "Rechnungen pünktlich bezahlen", "b": "Schnell viele Karten eröffnen", "c": "Absichtlich einen Saldo offen halten" },
+      "explanation": "Die Zahlungshistorie ist in der Regel der größte Einzelfaktor — konsequente, pünktliche Zahlungen zählen mehr als jeder einzelne Trick."
+    },
+    "diversification": {
+      "topic": "Diversifikation",
+      "question": "Welches Problem löst Diversifikation hauptsächlich?",
+      "options": { "a": "Einen Gewinn garantieren", "b": "Die Auswirkung einer einzelnen schlecht laufenden Investition verringern", "c": "Steuern vollständig vermeiden" },
+      "explanation": "Geld über verschiedene Anlagen zu verteilen bedeutet, dass ein schlechter Performer nicht das gesamte Bild versenkt. Es steuert das Risiko, nicht die Rendite."
+    },
+    "inflation": {
+      "topic": "Inflation",
+      "question": "Was macht Inflation mit ungenutztem Bargeld?",
+      "options": { "a": "Nichts, der Wert des Geldes ändert sich nie", "b": "Verringert langsam seine Kaufkraft", "c": "Erhöht seine Kaufkraft" },
+      "explanation": "Wenn die Preise schneller steigen als dein Geld Zinsen erwirtschaftet, kauft dieselbe Summe jedes Jahr etwas weniger."
+    },
+    "debt-snowball": {
+      "topic": "Schulden abbauen",
+      "question": "Bei der „Schulden-Schneeball“-Methode: Welche Schuld zahlst du zuerst ab?",
+      "options": { "a": "Den kleinsten Saldo", "b": "Den höchsten Zinssatz", "c": "Was auch immer am aktuellsten ist" },
+      "explanation": "Der Schneeball zielt zuerst auf den kleinsten Saldo für schnelle Erfolge und Schwung — eine andere Methode (Lawine) zielt stattdessen auf den höchsten Zinssatz."
+    },
+    "opportunity-cost": {
+      "topic": "Opportunitätskosten",
+      "question": "Was bedeuten „Opportunitätskosten“ beim Geldausgeben?",
+      "options": { "a": "Die Steuer, die du auf einen Kauf zahlst", "b": "Was du aufgibst, indem du das Geld nicht anderweitig nutzt", "c": "Der Aufschlag eines Geschäfts auf einen Artikel" },
+      "explanation": "Jeder Euro, der auf eine Weise ausgegeben wird, ist ein Euro, der nicht für etwas anderes eingesetzt werden kann — die eigentlichen Kosten umfassen das, was du stattdessen nicht tun konntest."
+    },
+    "net-worth": {
+      "topic": "Nettovermögen",
+      "question": "Wie wird das Nettovermögen berechnet?",
+      "options": { "a": "Monatliches Einkommen minus Ausgaben", "b": "Was du besitzt minus was du schuldest", "c": "Gesamtsaldo des Sparkontos" },
+      "explanation": "Das Nettovermögen ist eine Momentaufnahme: alles, was du besitzt (Vermögenswerte), minus alles, was du schuldest (Schulden). Einkommen ist ein Fluss, das Nettovermögen eine Summe."
+    },
+    "automatic-savings": {
+      "topic": "Sparen automatisieren",
+      "question": "Warum funktionieren automatische Überweisungen aufs Sparkonto meist gut?",
+      "options": { "a": "Sie entfernen die Notwendigkeit, jedes Mal neu zu entscheiden", "b": "Sie erzielen einen gesetzlich garantierten höheren Zinssatz", "c": "Sie sind bei den meisten Banken vorgeschrieben" },
+      "explanation": "Automatisierung bedeutet „sich selbst zuerst bezahlen“, bevor du es ausgeben kannst — sie macht Sparen zur Voreinstellung statt zu einer Entscheidung, die du immer wieder treffen musst."
+    },
+    "high-yield-savings": {
+      "topic": "Hochzins-Sparkonto",
+      "question": "Was unterscheidet ein Hochzins-Sparkonto hauptsächlich von einem normalen?",
+      "options": { "a": "Es hat überhaupt keine Abhebungslimits", "b": "Es zahlt einen deutlich höheren Zinssatz", "c": "Es dient gleichzeitig als Girokonto" },
+      "explanation": "Der Kernunterschied ist der Zinssatz — oft ein Vielfaches eines Standard-Sparkontos — meist angeboten von Online-Banken."
+    },
+    "index-funds": {
+      "topic": "Indexfonds",
+      "question": "Was macht ein Indexfonds?",
+      "options": { "a": "Wählt eine Handvoll „Gewinner“-Aktien aus", "b": "Bildet einen breiten Marktindex als Ganzes ab", "c": "Garantiert eine feste jährliche Rendite" },
+      "explanation": "Statt auf einzelne Unternehmen zu setzen, hält ein Indexfonds einen breiten Ausschnitt des Marktes und verteilt das Risiko auf viele Positionen gleichzeitig."
+    }
+  },
+  "achievements": {
+    "a1": { "title": "Erster Schritt", "description": "Erstelle dein erstes Sparziel" },
+    "a2": { "title": "Serienstarter", "description": "Spare 3 Tage in Folge" },
+    "a3": { "title": "Wochenkrieger", "description": "Vollende eine 7-Tage-Serie" },
+    "a4": { "title": "Missionsmeister", "description": "Vollende 5 Missionen" },
+    "a5": { "title": "Viertelweg", "description": "Erreiche 25 % eines Ziels" },
+    "a6": { "title": "Halbzeit-Held", "description": "Erreiche 50 % eines Ziels" },
+    "a7": { "title": "Fast geschafft", "description": "Erreiche 75 % eines Ziels" },
+    "a8": { "title": "Zieleroberer", "description": "Vollende ein Sparziel" },
+    "a9": { "title": "Budget-Boss", "description": "Verfolge Ausgaben 7 Tage lang" },
+    "a10": { "title": "Level Up", "description": "Erreiche Sparer-Level 3" },
+    "a11": { "title": "König der Beständigkeit", "description": "30-Tage-Serie" },
+    "a12": { "title": "Cleverer Sparer", "description": "Vollende das KI-Persönlichkeitsquiz" }
+  },
+  "goalTemplates": {
+    "holiday": "Urlaub",
+    "concert": "Konzert",
+    "car": "Auto",
+    "emergency": "Notgroschen",
+    "laptop": "Laptop",
+    "education": "Bildung",
+    "apartment": "Wohnung",
+    "wedding": "Hochzeit",
+    "trip": "Erste Reise",
+    "purchase": "Große Anschaffung"
+  },
+  "countries": {
+    "US": "Vereinigte Staaten",
+    "GB": "Vereinigtes Königreich",
+    "CA": "Kanada",
+    "AU": "Australien",
+    "DE": "Deutschland",
+    "FR": "Frankreich",
+    "ES": "Spanien",
+    "IT": "Italien",
+    "NL": "Niederlande",
+    "IE": "Irland",
+    "PT": "Portugal",
+    "BR": "Brasilien",
+    "MX": "Mexiko",
+    "JP": "Japan",
+    "CN": "China",
+    "IN": "Indien",
+    "SG": "Singapur",
+    "CH": "Schweiz",
+    "SE": "Schweden",
+    "NO": "Norwegen",
+    "DK": "Dänemark",
+    "PL": "Polen",
+    "AE": "Vereinigte Arabische Emirate",
+    "ZA": "Südafrika",
+    "NZ": "Neuseeland",
+    "HU": "Ungarn"
+  },
+  "currencies": {
+    "USD": "US-Dollar",
+    "EUR": "Euro",
+    "GBP": "Britisches Pfund",
+    "CAD": "Kanadischer Dollar",
+    "AUD": "Australischer Dollar",
+    "BRL": "Brasilianischer Real",
+    "MXN": "Mexikanischer Peso",
+    "JPY": "Japanischer Yen",
+    "CNY": "Chinesischer Yuan",
+    "INR": "Indische Rupie",
+    "SGD": "Singapur-Dollar",
+    "CHF": "Schweizer Franken",
+    "SEK": "Schwedische Krone",
+    "NOK": "Norwegische Krone",
+    "DKK": "Dänische Krone",
+    "PLN": "Polnischer Złoty",
+    "AED": "VAE-Dirham",
+    "ZAR": "Südafrikanischer Rand",
+    "NZD": "Neuseeland-Dollar",
+    "HUF": "Ungarischer Forint"
+  },
+  "expenseCategories": {
+    "food": "Essen & Trinken",
+    "transport": "Transport",
+    "entertainment": "Unterhaltung",
+    "shopping": "Einkaufen",
+    "bills": "Rechnungen",
+    "health": "Gesundheit",
+    "education": "Bildung",
+    "other": "Sonstiges"
+  }
+}

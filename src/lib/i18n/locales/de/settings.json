@@ -1,0 +1,65 @@
+{
+  "language": {
+    "sectionLabel": "Sprache"
+  },
+  "title": "Einstellungen",
+  "sections": {
+    "subscription": "Abo",
+    "security": "Sicherheit",
+    "account": "Konto",
+    "supportAndAbout": "Support & Über"
+  },
+  "planLabel": "{{plan}}-Plan",
+  "planStatus": {
+    "canceled": "Gekündigt — aktiv bis Periodenende",
+    "expired": "Kostenlose Testphase beendet",
+    "trialing": "Kostenlose Testphase",
+    "pastDue": "Zahlung fehlgeschlagen — aktualisiere deine Karte",
+    "switchingTo": "Wechselt im nächsten Zyklus zu {{plan}}",
+    "priceMonthly": "{{price}}/Monat"
+  },
+  "manage": "Verwalten",
+  "changePin": "PIN ändern",
+  "cancel": "Abbrechen",
+  "biometric": {
+    "faceId": "Face ID",
+    "irisUnlock": "Iris-Entsperrung",
+    "fingerprintUnlock": "Fingerabdruck-Entsperrung",
+    "turnOffTitle": "{{label}} deaktivieren?",
+    "turnOffBody": "Du entsperrst stattdessen mit deiner PIN.",
+    "turnOff": "Deaktivieren"
+  },
+  "autoLock": {
+    "label": "Auto-Sperre",
+    "immediately": "Sofort",
+    "oneMin": "1 Min.",
+    "fiveMin": "5 Min.",
+    "never": "Nie"
+  },
+  "logOut": "Abmelden",
+  "logOutConfirmBody": "Du kannst dich jederzeit wieder mit deiner E-Mail anmelden.",
+  "deleteAccount": "Konto löschen",
+  "enableBiometricFlow": {
+    "confirmPinSubtitle": "Gib deine PIN ein, um die biometrische Entsperrung zu aktivieren",
+    "enrollFailed": "Die biometrische Entsperrung konnte nicht aktiviert werden. Bitte versuche es erneut."
+  },
+  "deleteAccountFlow": {
+    "confirmPinSubtitle": "Gib deine PIN ein, um mit dem Löschen deines Kontos fortzufahren",
+    "warningTitle": "Konto löschen",
+    "warningBody": "Dies löscht dauerhaft dein Profil, deine Ziele und dein Abo von unseren Servern. Dies kann nicht rückgängig gemacht werden.",
+    "deleting": "Dein Konto wird gelöscht…",
+    "confirmAlertBody": "Dies löscht dauerhaft dein Konto und alle Daten von unseren Servern. Dies kann nicht rückgängig gemacht werden.",
+    "delete": "Löschen",
+    "errorTitle": "Etwas ist schiefgelaufen",
+    "errorBody": "Wir konnten dein Konto nicht löschen. Bitte versuche es erneut."
+  },
+  "support": {
+    "privacyPolicy": "Datenschutzerklärung",
+    "privacyPolicyError": "Der Link zur Datenschutzerklärung konnte nicht geöffnet werden.",
+    "termsOfService": "Nutzungsbedingungen",
+    "termsOfServiceError": "Der Link zu den Nutzungsbedingungen konnte nicht geöffnet werden.",
+    "contactSupport": "Support kontaktieren",
+    "notConfigured": "Support-Links noch nicht konfiguriert."
+  },
+  "versionLabel": "Piggy v{{version}}"
+}

@@ -22,23 +22,29 @@ const LOCALE_TAG: Record<SupportedLanguage, string> = {
   en: 'en-US',
   pl: 'pl-PL',
   hu: 'hu-HU',
+  de: 'de-DE',
 };
 
 /**
  * Thousands separator per language. pl-PL's and hu-HU's are both U+00A0
  * (NBSP), not a plain space — see Phase 0 (pl) and implementations/I18N_HU.md
- * Phase 2 (hu, verified via Intl.NumberFormat('hu-HU').formatToParts()).
+ * Phase 2 (hu, verified via Intl.NumberFormat('hu-HU').formatToParts()). de-DE
+ * uses a real period instead — verified via
+ * Intl.NumberFormat('de-DE').formatToParts() (implementations/I18N_DE.md
+ * Phase 2) — the first locale in this table that isn't a comma or NBSP.
  */
 const GROUP_SEPARATOR: Record<SupportedLanguage, string> = {
   en: ',',
   pl: ' ',
   hu: ' ',
+  de: '.',
 };
 
 const DECIMAL_SEPARATOR: Record<SupportedLanguage, string> = {
   en: '.',
   pl: ',',
   hu: ',',
+  de: ',',
 };
 
 function groupThousands(digits: string, separator: string): string {

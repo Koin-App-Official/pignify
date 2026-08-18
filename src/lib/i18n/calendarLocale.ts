@@ -15,12 +15,14 @@ const LOCALE_TAG: Record<SupportedLanguage, string> = {
   en: 'en-US',
   pl: 'pl-PL',
   hu: 'hu-HU',
+  de: 'de-DE',
 };
 
 const TODAY_LABEL: Record<SupportedLanguage, string> = {
   en: 'Today',
   pl: 'Dziś',
   hu: 'Ma',
+  de: 'Heute',
 };
 
 function monthNames(tag: string, style: 'long' | 'short'): string[] {

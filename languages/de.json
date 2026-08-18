@@ -1,0 +1,5 @@
+{
+  "ios": {
+    "NSFaceIDUsageDescription": "Erlaube Piggy, die App per Face ID zu entsperren."
+  }
+}

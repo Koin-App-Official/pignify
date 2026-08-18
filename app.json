@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "locales": {
       "pl": "./languages/pl.json",
-      "hu": "./languages/hu.json"
+      "hu": "./languages/hu.json",
+      "de": "./languages/de.json"
     },
     "experiments": {
       "reactCompiler": true
@@ -30,7 +31,7 @@
           "_expo._tcp",
           "_metro._tcp"
         ],
-        "CFBundleLocalizations": ["en", "pl", "hu"]
+        "CFBundleLocalizations": ["en", "pl", "hu", "de"]
       }
     },
     "android": {

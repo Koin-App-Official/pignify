@@ -1,0 +1,25 @@
+{
+  "greetings": [
+    "Wie kann ich dir heute helfen?",
+    "Was beschäftigt dich?",
+    "Welche Fragen hast du?",
+    "Möchtest du über etwas Finanzielles sprechen?",
+    "Woran arbeiten wir heute?",
+    "Wobei brauchst du Hilfe?",
+    "Kann ich etwas für dich tun?"
+  ],
+  "hiGreetingNamed": "Hi {{name}}! {{greeting}}",
+  "hiGreetingAnonymous": "Hallo! {{greeting}}",
+  "connectionError": "Entschuldigung, ich habe gerade Verbindungsprobleme. Bitte versuche es gleich noch einmal.",
+  "checkoutNotConfiguredTitle": "Checkout nicht konfiguriert",
+  "checkoutNotConfiguredBody": "Stripe Checkout ist in diesem Build nicht eingerichtet. Einen erfolgreichen Kauf einer zusätzlichen Nachricht simulieren?",
+  "cancel": "Abbrechen",
+  "simulatePurchase": "Kauf simulieren",
+  "title": "KI-Coach",
+  "onlineStatus": "Online • Bereit zu helfen",
+  "upgradeYourPlan": "Plan upgraden",
+  "unlimited": "Unbegrenzt",
+  "pctUsedThisPeriod": "{{pct}}% in diesem Zeitraum genutzt",
+  "inputPlaceholder": "Frag deinen Coach...",
+  "buyMoreMessage": "1 weitere Nachricht kaufen · $2.99"
+}

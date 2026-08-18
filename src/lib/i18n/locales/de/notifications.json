@@ -1,0 +1,32 @@
+{
+  "firstGoal": {
+    "title": "🎯 Starte dein erstes Ziel",
+    "body": "Lege ein Sparziel fest, um eine Serie aufzubauen — schon ein kleiner monatlicher Betrag zählt."
+  },
+  "checkin": {
+    "titleStreak": "🔥 Serien-Check-in",
+    "titlePlain": "💰 Tägliches Check-in",
+    "bodyStreak": "Deine {{streak}}-tägige Serie steht auf dem Spiel! Trage die heutigen Ausgaben ein und lege {{remaining}} für dein Ziel zurück, um sie zu erhalten.",
+    "bodyPlain": "Kurzes Check-in — hast du heute etwas ausgegeben? Trage es ein, um am Ball zu bleiben."
+  },
+  "weeklyReflection": {
+    "title": "📊 Wochenrückblick",
+    "body_one": "Deine Woche: {{saved}} gespart, {{count}} Ausgabe erfasst. Tippe, um deine Zusammenfassung zu sehen.",
+    "body_other": "Deine Woche: {{saved}} gespart, {{count}} Ausgaben erfasst. Tippe, um deine Zusammenfassung zu sehen."
+  },
+  "trialEnding": {
+    "title": "⏳ Deine kostenlose Testphase endet in 2 Tagen",
+    "body": "Deine {{plan}}-Testphase endet in 2 Tagen. Schau dir an, was sich ändert — nichts von deinem Ersparten geht verloren."
+  },
+  "milestone": {
+    "goalCrushedTitle": "👑 Ziel geschafft!",
+    "goalCrushedBody": "Du hast gerade {{name}} erreicht — {{amount}} gespart.",
+    "progressTitle": "{{emoji}} {{percent}}% geschafft!",
+    "progressBody": "Du bist zu {{percent}}% auf dem Weg zu {{name}}! Weiter so.",
+    "achievementUnlockedTitle": "🏆 Erfolg freigeschaltet"
+  },
+  "channels": {
+    "reminders": "Erinnerungen",
+    "digest": "Zusammenfassungen & Feiern"
+  }
+}

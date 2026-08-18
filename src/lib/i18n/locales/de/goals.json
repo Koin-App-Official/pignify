@@ -1,0 +1,25 @@
+{
+  "yourGoals": "Deine Ziele",
+  "empty": {
+    "title": "Noch keine Ziele",
+    "body": "Erstelle dein erstes Sparziel, um loszulegen!",
+    "cta": "Ziel erstellen"
+  },
+  "detail": {
+    "back": "Zurück",
+    "savedOfTarget": "{{saved}} von {{target}}",
+    "settingAside": "{{amount}}/Monat zurückgelegt · Ziel erreicht am {{date}}",
+    "addSavingsPlaceholder": "Ersparnisse hinzufügen...",
+    "save": "Speichern",
+    "milestones": "Meilensteine",
+    "depositHistory": "Einzahlungsverlauf"
+  },
+  "primary": "Primär",
+  "review": {
+    "headline": "Sieht gut aus!",
+    "sub": "Hier ist dein Sparplan auf einen Blick.",
+    "warningMultiGoal": "Über all deine aktiven Ziele hinweg übersteigt dies deine monatliche Gesamtrücklage dein Einkommen. Du kannst das jederzeit anpassen.",
+    "warningSingleGoal": "Dieses Ziel erfordert, mehr zurückzulegen als dein monatliches Einkommen. Du kannst es jederzeit anpassen.",
+    "createGoal": "Ziel erstellen 🎉"
+  }
+}

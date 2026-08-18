@@ -1,0 +1,169 @@
+{
+  "quota": {
+    "incomeSourcesUnlimited": "Unbegrenzte Einkommensquellen",
+    "incomeSources_one": "{{count}} Einkommensquelle",
+    "incomeSources_other": "{{count}} Einkommensquellen",
+    "goalsUnlimited": "Unbegrenzte Ziele",
+    "goals_one": "{{count}} Ziel",
+    "goals_other": "{{count}} Ziele",
+    "devicesUnlimited": "Unbegrenzte Geräte",
+    "devices_one": "{{count}} Gerät",
+    "devices_other": "{{count}} Geräte",
+    "aiMessagesUnlimited": "Unbegrenzte KI-Nachrichten/Monat",
+    "aiMessages_one": "{{count}} KI-Nachricht/Monat",
+    "aiMessages_other": "{{count}} KI-Nachrichten/Monat",
+    "aiMessagesExtra": " (dann {{price}}/Nachricht)",
+    "emailReportsUnlimited": "Unbegrenzte E-Mail-Berichte/Monat",
+    "emailReports_one": "{{count}} E-Mail-Bericht/Monat",
+    "emailReports_other": "{{count}} E-Mail-Berichte/Monat"
+  },
+  "feature": {
+    "exclusiveProtection": "Exklusiver Schutz",
+    "deepAnalysis": "Detaillierte Ausgabenanalyse",
+    "referral": "Empfehlungsbonus",
+    "goalBonus": "Zielerreichungs-Bonus",
+    "loyaltyDiscount": "Treuerabatt nach 6 Monaten",
+    "trialDays_one": "{{count}}-tägige kostenlose Testphase",
+    "trialDays_other": "{{count}}-tägige kostenlose Testphase"
+  },
+  "endOfBillingPeriod": "das Ende deines Abrechnungszeitraums",
+  "trial": {
+    "endedTitle": "Deine kostenlose Testphase ist beendet",
+    "endedBody": "Deine {{plan}}-Funktionen sind pausiert. Es wurde nichts gelöscht — deine Ziele und dein Verlauf sind noch alle vorhanden.",
+    "endsToday": "Deine kostenlose Testphase endet heute",
+    "daysLeft_one": "{{count}} Tag deiner kostenlosen Testphase übrig",
+    "daysLeft_other": "{{count}} Tage deiner kostenlosen Testphase übrig",
+    "activeBody": "Du nutzt {{plan}} mit allem freigeschaltet, und wir haben nie nach einer Karte gefragt."
+  },
+  "planUpdatedTitle": "Plan aktualisiert",
+  "planUpdatedBody": "Du bist jetzt im {{plan}}-Plan. Viel Freude mit deinen neuen Funktionen! 🎉",
+  "downgradeCanceledTitle": "Downgrade abgebrochen",
+  "downgradeCanceledBody": "Du bleibst im {{plan}}-Plan.",
+  "checkoutNotConfiguredTitle": "Checkout nicht konfiguriert",
+  "checkoutNotConfiguredBody": "Stripe Checkout ist in diesem Build nicht eingerichtet. Eine erfolgreiche Zahlung für {{plan}} simulieren?",
+  "cancel": "Abbrechen",
+  "simulatePayment": "Zahlung simulieren",
+  "switchToTitle": "Zu {{plan}} wechseln?",
+  "switchToBody": "Dies tritt am {{date}} in Kraft. Es wird nie etwas gelöscht — wenn dieser Plan weniger Ziele bietet als du hast, wählst du selbst aus, welche zuerst aktiv bleiben.",
+  "keepCurrentPlan": "Aktuellen Plan behalten",
+  "continue": "Weiter",
+  "header": "Wähle deinen Plan",
+  "confirmingPurchase": "Dein Kauf wird bestätigt…",
+  "pendingBanner": "Geplante Änderung: Dein Plan wechselt am {{date}} zu {{plan}}. Wähle deinen aktuellen Plan unten erneut aus, um dies abzubrechen.",
+  "perMonth": "/Monat",
+  "status": {
+    "activeUntilCanceled": "Aktiv bis {{date}} (gekündigt)",
+    "trialEndedPaused": "Testphase beendet — Funktionen pausiert",
+    "currentTrialing": "Aktueller Plan (kostenlose Testphase)",
+    "pastDue": "Zahlung fehlgeschlagen — aktualisiere deine Karte, um den Zugriff nicht zu verlieren",
+    "current": "Aktueller Plan",
+    "scheduledNextCycle": "Geplant für den nächsten Zyklus"
+  },
+  "buttons": {
+    "yourCurrentPlan": "Dein aktueller Plan",
+    "keepThisPlan": "Diesen Plan behalten",
+    "openingCheckout": "Checkout wird geöffnet…",
+    "upgradeTo": "Auf {{plan}} upgraden",
+    "switchTo": "Zu {{plan}} wechseln"
+  },
+  "disclaimer": "Upgrades gelten sofort. Downgrades treten am Ende deines aktuellen Abrechnungszeitraums in Kraft, und deine Daten sind immer sicher.",
+  "gates": {
+    "aiCoach": {
+      "title": "Den KI-Coach freischalten",
+      "description": "Chatte mit deinem persönlichen Sparcoach, indem du deinen Plan upgradest."
+    },
+    "aiMessages": {
+      "title": "Deine KI-Nachrichten sind aufgebraucht",
+      "description": "Du hast alle KI-Nachrichten dieses Monats verbraucht. Upgrade für ein größeres monatliches Kontingent."
+    },
+    "goals": {
+      "title": "Ziellimit erreicht",
+      "description": "Dein aktueller Plan unterstützt weniger Ziele. Upgrade, um mehr Sparziele gleichzeitig zu verfolgen."
+    },
+    "incomes": {
+      "title": "Einkommenslimit erreicht",
+      "description": "Upgrade, um mehr Einkommensquellen zu deinem Budget hinzuzufügen."
+    },
+    "devices": {
+      "title": "Gerätelimit erreicht",
+      "description": "Dieser Plan erlaubt weniger verbundene Geräte. Upgrade, um Piggy auf mehr Geräten zu nutzen."
+    },
+    "emailReports": {
+      "title": "E-Mail-Berichte sind eine kostenpflichtige Funktion",
+      "description": "Upgrade deinen Plan, um E-Mail-Berichte zu deinem Fortschritt anzufordern."
+    },
+    "deepAnalysis": {
+      "title": "Detaillierte Ausgabenanalyse",
+      "description": "Erhalte eine KI-gestützte Detailanalyse deiner Ausgaben direkt in dein Postfach, indem du deinen Plan upgradest."
+    },
+    "deepAnalysisQuota": {
+      "title": "Deine Detailanalysen sind aufgebraucht",
+      "description": "Du hast alle Detailanalysen dieses Zeitraums verbraucht. Upgrade für ein größeres Kontingent."
+    },
+    "referral": {
+      "title": "Empfehlungsprämien",
+      "description": "Lade Freunde ein und verdiene kostenlose Monate im Family-Plan."
+    }
+  },
+  "upgradeModal": {
+    "defaultTitle": "Upgrade deinen Plan",
+    "defaultDescription": "Diese Funktion ist in einem höheren Plan verfügbar. Upgrade, um sie freizuschalten.",
+    "recommendedPlan": "Empfohlener Plan",
+    "upgradeToPlan": "Auf {{plan}} upgraden",
+    "upgradeToHigherPlan": "Auf einen höheren Plan upgraden",
+    "onTopPlan": "Du bist im höchsten Plan",
+    "maybeLater": "Vielleicht später",
+    "perMonth": "/Monat"
+  },
+  "downgradeSelection": {
+    "nothingToChoose": "Hier gibt es nichts auszuwählen — geh zurück und versuche es erneut.",
+    "chooseWhatToKeep": "Wähle, was du behalten möchtest",
+    "keepBody_one": "{{plan}} erlaubt {{count}} aktives Ziel. Du hast {{total}}. Wähle {{pickText}} aus, um es aktiv zu behalten — der Rest verschwindet aus deiner Liste, wird aber nie gelöscht. Sie kommen sofort zurück, wenn du erneut upgradest.",
+    "keepBody_other": "{{plan}} erlaubt {{count}} aktive Ziele. Du hast {{total}}. Wähle {{pickText}} aus, um sie aktiv zu behalten — der Rest verschwindet aus deiner Liste, wird aber nie gelöscht. Sie kommen sofort zurück, wenn du erneut upgradest.",
+    "pickOne": "das eine",
+    "pickUpTo": "bis zu {{count}}",
+    "keepingCountOfLimit": "{{count}} von {{limit}} werden behalten",
+    "confirm": "Bestätigen",
+    "genericErrorTitle": "Etwas ist schiefgelaufen",
+    "retentionTooMany": "Zu viele {{resource}} zum Behalten ausgewählt ({{count}}); {{plan}} erlaubt {{limit}}.",
+    "retentionResource": {
+      "goals": "Ziele",
+      "incomes": "Einkommensquellen",
+      "devices": "Geräte"
+    }
+  },
+  "planGate": {
+    "continue": "Weiter",
+    "locked": {
+      "trialEndedTitle": "Deine kostenlose Testphase ist beendet",
+      "subscriptionEndedTitle": "Dein Abo ist beendet",
+      "featuresPaused": "{{plan}}-Funktionen sind vorübergehend pausiert.",
+      "nothingDeletedBold": "Es wurde nichts gelöscht.",
+      "nothingDeletedRest": " Deine Ziele, Einzahlungen, Serie und dein Verlauf sind genau dort, wo du sie zurückgelassen hast, und kommen sofort zurück, wenn du abonnierst.",
+      "checkoutNotConfigured": "Checkout ist in diesem Build nicht konfiguriert, daher funktioniert ein Abo hier nicht. Du kannst Piggy vorerst weiter nutzen.",
+      "pickPlan": "Wähle einen Plan, um weiterzumachen",
+      "alreadySubscribed": "Ich habe bereits abonniert",
+      "continueWithoutSubscribing": "Ohne Abo fortfahren",
+      "deletingAccount": "Dein Konto wird gelöscht…",
+      "logOut": "Abmelden",
+      "contactSupport": "Support kontaktieren",
+      "deleteAccount": "Konto löschen",
+      "checkoutFailed": "Wir konnten den Checkout nicht öffnen. Überprüfe deine Verbindung und versuche es erneut, oder schreibe uns an {{email}}.",
+      "noActiveSubscription": "Wir konnten noch kein aktives Abo finden. Falls du gerade bezahlt hast, warte einen Moment und tippe erneut.",
+      "logoutBody": "Du kannst dich jederzeit wieder mit deiner E-Mail anmelden.",
+      "deleteAccountTitle": "Konto löschen",
+      "deleteAccountBody": "Dies löscht dauerhaft dein Konto und alle Daten von unseren Servern. Dies kann nicht rückgängig gemacht werden.",
+      "deleteAction": "Löschen",
+      "somethingWrongTitle": "Etwas ist schiefgelaufen",
+      "somethingWrongBody": "Wir konnten dein Konto nicht löschen. Bitte versuche es erneut."
+    },
+    "trialIntro": {
+      "title": "{{days}} Tage {{plan}}\nauf uns",
+      "body": "Ab heute ist alles freigeschaltet. Wir haben nicht nach einer Karte gefragt, also gibt es nichts zu kündigen.",
+      "perk1": "Jede Funktion von Piggy, einschließlich des KI-Coaches",
+      "perk2": "Unbegrenzte Ziele, damit du mehr als eine Sache planen kannst",
+      "perk3": "Wir erinnern dich, bevor es endet — keine Überraschungen",
+      "cta": "Los geht's"
+    }
+  }
+}

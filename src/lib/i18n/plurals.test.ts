@@ -3,6 +3,7 @@ import i18next from 'i18next';
 import enAuth from './locales/en/auth.json';
 import plAuth from './locales/pl/auth.json';
 import huAuth from './locales/hu/auth.json';
+import deAuth from './locales/de/auth.json';
 import type { SupportedLanguage } from './detect';
 
 /**
@@ -48,6 +49,16 @@ const CASES: Record<SupportedLanguage, Array<[count: number, expectedFragment: s
     [5, 'próbálkozásod van'], // other
     [22, 'próbálkozásod van'], // other
   ],
+  // CLDR de is also just {one, other}, but unlike hu, German pluralizes the
+  // noun normally after a numeral — "1 Versuch" vs "2/5/22 Versuche" — so
+  // the _one/_other forms are genuinely distinct text, not near-identical
+  // like hu's (see de/auth.json).
+  de: [
+    [1, 'Versuch übrig'], // one
+    [2, 'Versuche übrig'], // other
+    [5, 'Versuche übrig'], // other
+    [22, 'Versuche übrig'], // other
+  ],
 };
 
 beforeAll(async () => {
@@ -58,6 +69,7 @@ beforeAll(async () => {
       en: { auth: enAuth },
       pl: { auth: plAuth },
       hu: { auth: huAuth },
+      de: { auth: deAuth },
     },
     ns: ['auth'],
     defaultNS: 'auth',

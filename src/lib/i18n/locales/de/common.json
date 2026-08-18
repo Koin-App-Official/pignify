@@ -1,0 +1,33 @@
+{
+  "noEmailApp": "Auf diesem Gerät ist keine E-Mail-App eingerichtet. Erreiche uns unter {{email}}.",
+  "notAvailable": "Nicht verfügbar",
+  "cancel": "Abbrechen",
+  "confirm": "Bestätigen",
+  "search": "Suchen...",
+  "tabs": {
+    "home": "Start",
+    "goals": "Ziele",
+    "missions": "Missionen",
+    "coach": "Coach",
+    "profile": "Profil"
+  },
+  "calendarModal": {
+    "title": "Zieldatum",
+    "subtitle": "Wann möchtest du dein Ziel erreichen?",
+    "quickJump6mo": "+6 Mon.",
+    "quickJump1yr": "+1 Jahr",
+    "quickJump2yr": "+2 Jahre",
+    "quickJump5yr": "+5 Jahre"
+  },
+  "dobConfirmModal": {
+    "title": "Ist das richtig?",
+    "body": "Nach der Bestätigung kann dies nicht mehr geändert werden.",
+    "edit": "Bearbeiten"
+  },
+  "language": {
+    "en": "English",
+    "pl": "Polski",
+    "hu": "Magyar",
+    "de": "Deutsch"
+  }
+}

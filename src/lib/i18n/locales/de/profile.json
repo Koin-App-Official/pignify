@@ -1,0 +1,32 @@
+{
+  "defaultName": "Sparer",
+  "levelLabel": "Lv.{{level}}",
+  "personalitySuffix": "{{type}}-Persönlichkeit",
+  "financialExplorer": "Finanz-Entdecker",
+  "totalSaved": "Gesamt gespart",
+  "goals": "Ziele",
+  "badges": "Abzeichen",
+  "monthlyIncome": "Monatliches Einkommen",
+  "notProvided": "Nicht angegeben",
+  "expenseBreakdown": "Ausgabenübersicht",
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "paydayReminder": "Erinnerung zum Zahltag-Sparen",
+    "streakProtection": "Serienschutz-Hinweis",
+    "milestoneAlerts": "Meilenstein-Feiern",
+    "weeklyReflection": "Wochenrückblick",
+    "softAskTitle": "Bleib am Ball",
+    "softAskBody": "Piggy nutzt Erinnerungen, damit du deine Serie hältst und deine Sparziele erreichst. Benachrichtigungen aktivieren?",
+    "notNow": "Nicht jetzt",
+    "enable": "Aktivieren",
+    "disabledTitle": "Benachrichtigungen deaktiviert",
+    "disabledBody": "Aktiviere Benachrichtigungen für Piggy in den Geräteeinstellungen, um dies einzuschalten."
+  },
+  "reset": {
+    "title": "Daten zurücksetzen",
+    "body": "Möchtest du wirklich alle Daten zurücksetzen? Dies kann nicht rückgängig gemacht werden.",
+    "cancel": "Abbrechen",
+    "confirm": "Zurücksetzen",
+    "button": "Alle Daten zurücksetzen (Demo)"
+  }
+}

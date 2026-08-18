@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import enContent from './locales/en/content.json';
 import plContent from './locales/pl/content.json';
 import huContent from './locales/hu/content.json';
+import deContent from './locales/de/content.json';
 import enSettings from './locales/en/settings.json';
 import enOnboarding from './locales/en/onboarding.json';
 import enCommon from './locales/en/common.json';
@@ -105,7 +106,7 @@ describe('catalog ↔ content.json parity', () => {
    */
   it("lessons: every locale's correctKey names one of that locale's own option keys", () => {
     for (const lesson of LESSONS) {
-      for (const [locale, content] of Object.entries({ en: enContent, pl: plContent, hu: huContent })) {
+      for (const [locale, content] of Object.entries({ en: enContent, pl: plContent, hu: huContent, de: deContent })) {
         const lessons = content.lessons as Record<string, { options?: Record<string, string> }>;
         const entry = lessons[lesson.id];
         expect(entry, `${locale}/content.json missing lessons.${lesson.id}`).toBeDefined();

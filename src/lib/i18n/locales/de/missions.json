@@ -1,0 +1,21 @@
+{
+  "title": "Missionen",
+  "subtitle": "Erledige Missionen, um XP zu verdienen und Gewohnheiten aufzubauen",
+  "tier1": "Stufe 1",
+  "tier2": "Stufe 2",
+  "tier3": "Stufe 3",
+  "missionsCompleted": "{{claimed}}/{{total}} Missionen abgeschlossen",
+  "dailyMissions": "Tägliche Missionen",
+  "weeklyMissions": "Wöchentliche Missionen",
+  "tabMissions": "Missionen",
+  "tabBadges": "Abzeichen",
+  "onYourHonour": "Auf Ehrenbasis",
+  "progressCurrency": "{{current}} von {{target}} gespart",
+  "progressCount": "{{current}} von {{target}}",
+  "rewardXp": "+{{reward}} XP",
+  "quiz": {
+    "claim": "+{{reward}} XP einlösen",
+    "tryAgainLater": "Verstanden — später erneut versuchen",
+    "notNow": "Nicht jetzt"
+  }
+}

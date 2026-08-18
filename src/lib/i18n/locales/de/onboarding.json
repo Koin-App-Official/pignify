@@ -1,0 +1,156 @@
+{
+  "welcome": {
+    "skip": "Überspringen",
+    "next": "Weiter",
+    "getStarted": "Los geht's",
+    "haveAccount": "Hast du schon ein Konto?",
+    "signIn": "Anmelden",
+    "slides": {
+      "goal": {
+        "headline": "Jedes Ziel beginnt\nmit einer Zahl",
+        "sub": "Sag Piggy, wofür du sparst. Wir machen daraus einen Monatsplan, den du wirklich einhalten kannst."
+      },
+      "noBank": {
+        "headline": "Kein Bank-Login.\nNiemals.",
+        "sub": "Piggy verbindet sich nie mit deinen Konten. Es gibt nichts zu verknüpfen und nichts zu stehlen."
+      },
+      "coach": {
+        "headline": "Ein Coach\nin deiner Tasche",
+        "sub": "Serien, Missionen und ein KI-Coach, der deinen Plan kennt — damit sich Monat drei genauso gut anfühlt wie Tag eins."
+      }
+    }
+  },
+  "contribution": {
+    "monthlyHeadline": "Wie viel kannst du jeden Monat zurücklegen?",
+    "monthlySub": "Wir berechnen, wann du dein Ziel erreichst.",
+    "suggestionChip": "{{pct}}% · {{amount}}",
+    "amountPlaceholder": "0,00",
+    "reachGoalBy": "Mit {{amount}}/Monat erreichst du dein Ziel bis",
+    "pctOfIncome": "Das sind {{pct}}% deines monatlichen Einkommens.",
+    "cappedWarning": "In diesem Tempo dauert es über 10 Jahre. Erhöhe den monatlichen Betrag oder senke dein Ziel.",
+    "incomeWarning": "Das ist ein großer Teil deines Einkommens. Stelle sicher, dass es machbar ist — du kannst es später jederzeit anpassen.",
+    "switchToDeadline": "Ich habe stattdessen einen festen Termin",
+    "deadlineHeadline": "Wann möchtest du das erreichen?",
+    "deadlineSub": "Wähle das Datum — wir berechnen deinen monatlichen Beitrag.",
+    "selectDate": "Datum auswählen",
+    "needToSetAside": "Du musst <bold>{{amount}}/Monat</bold> zurücklegen, um dies bis {{date}} zu erreichen.",
+    "deadlineIncomeWarning": "Dieses Datum erfordert, einen großen Teil deines Einkommens zurückzulegen. Wir können das später anpassen!",
+    "switchToMonthly": "Zurück zur monatlichen Rücklage",
+    "continue": "Weiter"
+  },
+  "common": {
+    "next": "Weiter",
+    "continue": "Weiter",
+    "notNow": "Nicht jetzt",
+    "stepProgress": "Schritt {{current}} von {{total}}",
+    "resumeBanner": "Willkommen zurück, {{firstName}} — weiter geht's, wo du aufgehört hast.",
+    "resumeBannerNoName": "Weiter geht's, wo du aufgehört hast."
+  },
+  "name": {
+    "headline": "Willkommen bei Piggy! Wie sollen wir dich nennen?",
+    "sub": "Lass uns das persönlich gestalten.",
+    "placeholder": "Dein Vorname",
+    "errorEmpty": "Hey, wir würden gerne deinen Namen kennen! 😊"
+  },
+  "ageGate": {
+    "blockedTitle": "Piggy ist für Erwachsene 18+",
+    "blockedBody": "Wir können anhand des bestätigten Geburtsdatums kein Konto für dich erstellen. Diese App ist nicht für Nutzer unter 18 Jahren verfügbar.",
+    "headline": "Wann bist du geboren, {{firstName}}?",
+    "sub": "Piggy ist nur für Nutzer ab 18 Jahren verfügbar, daher müssen wir dein Alter bestätigen, bevor wir fortfahren.",
+    "privacyNote": "Dies ist eine gesetzliche Altersanforderung, kein Profiling. Wir verwenden dein Geburtsdatum nur, um zu bestätigen, dass du 18 bist — es wird nie zum Targeting verwendet oder mit jemandem geteilt."
+  },
+  "localization": {
+    "headline": "Wo lebst du, {{firstName}}?",
+    "sub": "Wir nutzen das, um Währungen zu formatieren und hilfreiche Standardwerte festzulegen.",
+    "countryLabel": "Land",
+    "currencyLabel": "Währung",
+    "selectCountry": "Land auswählen",
+    "selectCurrency": "Währung auswählen",
+    "currencyDisplay": "{{symbol}} — {{name}}",
+    "continue": "Sieht gut aus, los geht's!",
+    "selectCountryTitle": "Land auswählen",
+    "selectCurrencyTitle": "Währung auswählen",
+    "languageLabel": "Sprache",
+    "selectLanguageTitle": "Sprache auswählen"
+  },
+  "goal": {
+    "headline": "Wofür sparen wir?",
+    "sub": "Wähle ein Ziel oder gib unten dein eigenes ein.",
+    "placeholder": "Ich möchte...",
+    "errorEmpty": "Sag uns, wofür du sparst! 🎯",
+    "chips": {
+      "vacation": "Urlaub",
+      "newCar": "Neues Auto",
+      "houseDeposit": "Anzahlung fürs Haus",
+      "emergencyFund": "Notgroschen",
+      "somethingElse": "Etwas anderes"
+    }
+  },
+  "targetAmount": {
+    "headline": "Wie viel brauchst du für {{goalName}}?",
+    "sub": "Keine Sorge, du kannst das später jederzeit anpassen.",
+    "errorEmpty": "Bitte gib einen Betrag größer als 0 ein 💸"
+  },
+  "income": {
+    "headline": "Um deinen Plan zu erstellen: Wie hoch ist dein durchschnittliches monatliches Einkommen?",
+    "sub": "Wir nutzen das nur, um zu berechnen, wie viel du zurücklegen musst. Deine Daten sind verschlüsselt und vollständig privat.",
+    "skip": "Möchte ich jetzt lieber nicht sagen"
+  },
+  "blueprint": {
+    "headline": "Machen wir es offiziell!",
+    "sub": "Hier ist dein persönlicher Sparplan.",
+    "rowName": "Name",
+    "rowGoal": "Ziel",
+    "rowTarget": "Zielbetrag",
+    "rowMonthlyIncome": "Monatliches Einkommen",
+    "notProvided": "Nicht angegeben",
+    "rowMonthlySetAside": "Monatliche Rücklage",
+    "rowGoalReached": "Ziel erreicht",
+    "exceedsIncomeWarning": "Dieser Plan legt jeden Monat mehr zurück als dein Einkommen. Wir können das jederzeit anpassen!",
+    "incomeSkippedNote": "Wenn du dein Einkommen im Dashboard angibst, schaltest du detaillierte, auf deine Situation zugeschnittene Analysen frei.",
+    "monthsAway_one": "Du bist nur noch {{count}} Monat von deinem Traum entfernt. Lass es uns wahr machen.",
+    "monthsAway_other": "Du bist nur noch {{count}} Monate von deinem Traum entfernt. Lass es uns wahr machen.",
+    "createAccount": "Mein Piggy-Konto erstellen"
+  },
+  "pushPermission": {
+    "headline": "Möchtest du einen Anstoß, wenn es darauf ankommt, {{firstName}}?",
+    "sub": "{{amount}} im Monat zu sparen ist leicht zu planen und leicht zu vergessen. Eine kurze Erinnerung hält deine Serie am Leben.",
+    "streakTitle": "Serienschutz",
+    "streakBody": "Ein Hinweis, wenn die heutige Rücklage noch aussteht.",
+    "milestoneTitle": "Meilenstein-Feiern",
+    "milestoneBody": "Wir sagen dir Bescheid, sobald {{goalName}} 25 %, 50 %, 75 % erreicht.",
+    "milestoneBodyFallback": "Wir sagen dir Bescheid, sobald dein Ziel 25 %, 50 %, 75 % erreicht.",
+    "weeklyTitle": "Ein wöchentlicher Rückblick",
+    "weeklyBody": "Eine ruhige Zusammenfassung, wie die Woche lief. Niemals Spam.",
+    "footerNote": "Du kannst das später jederzeit in den Einstellungen ändern.",
+    "keepMeOnTrack": "Auf Kurs halten"
+  },
+  "account": {
+    "headline": "Dein Piggy-Plan ist fertig!",
+    "subEmailConfirmed": "Deine E-Mail ist bestätigt — wir müssen nur noch deinen Plan für {{goalName}} fertigstellen.",
+    "subOtpSent": "Gib den 6-stelligen Code ein, den wir an {{email}} gesendet haben, um dein Konto einzurichten.",
+    "subInitial": "Gib deine E-Mail-Adresse ein — wir senden dir einen Anmeldecode, um deinen Plan für {{goalName}} bis {{date}} zu sichern.",
+    "emailPlaceholder": "du@beispiel.de",
+    "emailError": "Bitte gib eine gültige E-Mail-Adresse ein 📧",
+    "codeLabel": "Anmeldecode (das ist nicht deine App-PIN)",
+    "resendCode": "Code erneut senden",
+    "sendCode": "Code senden",
+    "verifyCreate": "Bestätigen & Konto erstellen",
+    "retry": "Erneut versuchen",
+    "requestCodeError": "Hoppla! Wir konnten deinen Code nicht senden. Überprüfe deine Verbindung und versuche es erneut.",
+    "otpEnterCode": "Gib den 6-stelligen Code aus deiner E-Mail ein.",
+    "sessionSecretError": "Angemeldet, aber die Sitzung konnte nicht gesichert werden. Fordere einen neuen Code an und versuche es erneut.",
+    "codeIncorrect": "Dieser Code ist falsch oder abgelaufen. Fordere einen neuen Code an und versuche es erneut.",
+    "provisionError": "Wir haben deine E-Mail bestätigt, konnten aber die Einrichtung deines Kontos nicht abschließen. Dein Code ist noch gültig — tippe auf Erneut versuchen."
+  },
+  "legal": {
+    "reassuranceTitle": "Wir bitten um deine E-Mail. Nicht um deine Bank.",
+    "reassuranceBody": "Piggy verbindet sich nie mit deinen Konten — es gibt nichts zu verknüpfen und nichts zu stehlen. Dein Plan ist verschlüsselt und privat.",
+    "acceptTerms": "Mit der Kontoerstellung akzeptierst du unsere Bedingungen",
+    "privacyPolicy": "Datenschutzerklärung",
+    "termsOfService": "Nutzungsbedingungen",
+    "aiTransparency": "KI-Transparenz",
+    "services": "Dienste",
+    "aiFeatureAccess": "KI- & Funktionszugriff"
+  }
+}
