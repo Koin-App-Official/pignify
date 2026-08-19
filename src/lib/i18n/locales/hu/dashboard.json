@@ -30,6 +30,13 @@
     "unlimited": "Korlátlan",
     "remainingOfLimit": "{{remaining}} / {{limit}}"
   },
+  "deepAnalysisConfirm": {
+    "title": "Elindítod a mélyelemzést?",
+    "bodyValue": "E-mailben elküldjük pénzügyeid teljes áttekintését — bevételek, kiadások és megtakarítások — a legfrissebb adataid alapján.",
+    "bodyLastOne": "Ez az utolsó mélyelemzésed ebben a hónapban. E-mailben elküldjük pénzügyeid teljes áttekintését.",
+    "notNow": "Most nem",
+    "runAnalysis": "Elemzés indítása"
+  },
   "todaysSpending": "Mai kiadások",
   "expenseCount_one": "{{count}} kiadás alapján",
   "expenseCount_other": "{{count}} kiadás alapján",

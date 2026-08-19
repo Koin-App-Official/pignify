@@ -30,6 +30,13 @@
     "unlimited": "Unbegrenzt",
     "remainingOfLimit": "{{remaining}} von {{limit}} übrig"
   },
+  "deepAnalysisConfirm": {
+    "title": "Detailanalyse starten?",
+    "bodyValue": "Wir senden dir per E-Mail eine vollständige Übersicht deiner Finanzen — Einnahmen, Ausgaben und Ersparnisse — basierend auf deinen aktuellen Daten.",
+    "bodyLastOne": "Dies ist deine letzte Detailanalyse in diesem Monat. Wir senden dir per E-Mail eine vollständige Übersicht deiner Finanzen.",
+    "notNow": "Nicht jetzt",
+    "runAnalysis": "Analyse starten"
+  },
   "todaysSpending": "Heutige Ausgaben",
   "expenseCount_one": "aus {{count}} Ausgabe",
   "expenseCount_other": "aus {{count}} Ausgaben",
