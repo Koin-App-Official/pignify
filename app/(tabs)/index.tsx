@@ -29,6 +29,7 @@ import { getTodayString, normalizeDay, sumDepositsForDate } from '@/lib/deposits
 import { useEntitlements } from '@/hooks/useEntitlements';
 import { gateInfo, type GateInfo, type GateKey } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { DeepAnalysisConfirmModal } from '@/components/DeepAnalysisConfirmModal';
 import { SkiaConfetti } from '@/components/animation/SkiaConfetti';
 import { useCelebrate } from '@/components/animation/useCelebrate';
 import { triggerDeepAnalysis } from '@/lib/deepAnalysis';
@@ -104,6 +105,7 @@ export default function Dashboard() {
   const incrementDeepAnalysis = useStore((s) => s.incrementDeepAnalysis);
   const [gate, setGate] = useState<GateInfo | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [confirmingAnalysis, setConfirmingAnalysis] = useState(false);
 
   const openGate = (key: GateKey) => setGate(gateInfo(key, plan, tPlans));
   const closeGate = () => setGate(null);
@@ -112,13 +114,18 @@ export default function Dashboard() {
     router.push(`/plans?highlight=${target}`);
   };
 
-  const runDeepAnalysis = async () => {
+  const runDeepAnalysis = () => {
     if (!has('deepAnalysis')) return openGate('deepAnalysis');
     if (!deepAnalysis.allowed) return openGate('deepAnalysisQuota');
+    setConfirmingAnalysis(true);
+  };
 
+  const confirmDeepAnalysis = async () => {
     setIsAnalyzing(true);
-    const result = await triggerDeepAnalysis(userID ?? '', language);
+    const savedMoney = goals.reduce((s, g) => s + g.savedAmount, 0);
+    const result = await triggerDeepAnalysis(userID ?? '', language, savedMoney);
     setIsAnalyzing(false);
+    setConfirmingAnalysis(false);
 
     if (result.status === 'success') {
       incrementDeepAnalysis();
@@ -477,6 +484,14 @@ export default function Dashboard() {
         gate={gate}
         onClose={closeGate}
         onUpgrade={goUpgrade}
+      />
+
+      <DeepAnalysisConfirmModal
+        isVisible={confirmingAnalysis}
+        remaining={deepAnalysis.remaining ?? Infinity}
+        isRunning={isAnalyzing}
+        onConfirm={confirmDeepAnalysis}
+        onClose={() => setConfirmingAnalysis(false)}
       />
     </SafeAreaView>
     </ScreenTransition>

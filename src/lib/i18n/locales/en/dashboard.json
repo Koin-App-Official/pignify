@@ -30,6 +30,13 @@
     "unlimited": "Unlimited",
     "remainingOfLimit": "{{remaining}} of {{limit}} left"
   },
+  "deepAnalysisConfirm": {
+    "title": "Run Deep Analysis?",
+    "bodyValue": "We'll email you a full breakdown of your finances — income, spending, and savings — based on your latest data.",
+    "bodyLastOne": "This is your last Deep Analysis this month. We'll email you a full breakdown of your finances.",
+    "notNow": "Not now",
+    "runAnalysis": "Run Analysis"
+  },
   "todaysSpending": "Today's Spending",
   "expenseCount_one": "across {{count}} expense",
   "expenseCount_other": "across {{count}} expenses",

@@ -30,6 +30,13 @@
     "unlimited": "Bez limitu",
     "remainingOfLimit": "{{remaining}} z {{limit}}"
   },
+  "deepAnalysisConfirm": {
+    "title": "Uruchomić szczegółową analizę?",
+    "bodyValue": "Wyślemy Ci e-mailem pełne podsumowanie Twoich finansów — dochodów, wydatków i oszczędności — na podstawie najnowszych danych.",
+    "bodyLastOne": "To Twoja ostatnia szczegółowa analiza w tym miesiącu. Wyślemy Ci e-mailem pełne podsumowanie Twoich finansów.",
+    "notNow": "Nie teraz",
+    "runAnalysis": "Uruchom analizę"
+  },
   "todaysSpending": "Dzisiejsze wydatki",
   "expenseCount_one": "z {{count}} wydatku",
   "expenseCount_few": "z {{count}} wydatków",
