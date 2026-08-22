@@ -10,33 +10,51 @@
  *     → HTTP: create webhook_events row (result=processed)
  */
 
-/** Map a Stripe event type to an internal branch key (or 'ignore'). */
+/**
+ * Map a Stripe event type to an internal branch key (or 'ignore').
+ *
+ * NOTE (2026-08-22, #136): this reference implementation predates the add-on
+ * flow's pivot from PaymentIntent to hosted Checkout Session (implementations/
+ * ADDONS.md) — the live `Route Event` code in `CLAUDE_stripe_webhook` does NOT
+ * use `payment_intent.*` for add-ons; a `checkout.session.completed` event
+ * branches into 'subscription' vs 'addon' by `mode`/`metadata.type` instead.
+ * Kept here updated to match the live inline logic for reference, but the
+ * live workflow is the source of truth — this file is not executed by it.
+ */
 function routeEvent(event) {
   const t = event.type;
+  const obj = (event.data && event.data.object) || {};
   switch (t) {
     case 'checkout.session.completed':
+      return obj.mode === 'payment' || (obj.metadata && obj.metadata.type === 'extra_ai_message')
+        ? 'addon'
+        : 'subscription';
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted':
       return 'subscription'; // mirror + resolve
     case 'invoice.paid':
-    case 'invoice.payment_succeeded':
-      return 'renewal'; // roll period, apply pending downgrade, eval bonuses/loyalty
+      // A renewal reuses the 'subscription' branch as-is: refetching moves
+      // current_period_start/end forward, which is all "roll the period"
+      // requires (usage counters reset lazily elsewhere off that same field).
+      // Applying a scheduled downgrade is NOT done here -- nothing in this
+      // codebase writes subscriptions.pending_plan_id today.
+      return 'subscription';
     case 'invoice.payment_failed':
+      // Informational only -- Stripe already flips subscription.status to
+      // past_due via customer.subscription.updated, already handled above.
       return 'payment_failed';
-    case 'payment_intent.succeeded':
-      return event.data.object.metadata && event.data.object.metadata.type === 'extra_ai_message'
-        ? 'addon_succeeded'
-        : 'ignore';
-    case 'payment_intent.payment_failed':
-      return event.data.object.metadata && event.data.object.metadata.type === 'extra_ai_message'
-        ? 'addon_failed'
-        : 'ignore';
     case 'charge.refunded':
+      // Only one-time (add-on) charges are actionable here -- a charge tied to
+      // a subscription invoice (obj.invoice truthy) is left alone; its status
+      // effects already flow through customer.subscription.updated/deleted.
+      return obj.invoice ? 'ignore' : 'clawback_addon_refund';
     case 'charge.dispute.created':
-      return 'clawback';
+      // Recorded as needs_review, not auto-revoked -- a dispute is provisional
+      // and this workflow doesn't subscribe to its resolution event.
+      return 'clawback_dispute';
     case 'customer.subscription.trial_will_end':
-      return 'trial_will_end'; // notify only
+      return 'trial_will_end'; // notify only, recorded for a future feature
     default:
       return 'ignore';
   }
