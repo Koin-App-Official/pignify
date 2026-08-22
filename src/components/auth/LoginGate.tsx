@@ -88,7 +88,15 @@ export function LoginGate() {
       // internal plan-gate check skips entirely while onboardingCompleted is
       // false (planGateReason returns null), which would silently skip the
       // trial-intro/lockout gate for a returning trialing/locked user.
-      if (!onboardingCompleted) updateProfile({ onboardingCompleted: true });
+      //
+      // userID is set unconditionally (every login, not just first-time) --
+      // onboarding.tsx is the only other place that sets it, so a user who
+      // signs into an existing account here (rather than completing fresh
+      // onboarding on this device) would otherwise have profile.userID stuck
+      // undefined forever, silently breaking anything keyed on it (e.g.
+      // billing.ts's startCheckout, which falls back to the "Simulate
+      // Payment" dev path when userID is missing).
+      updateProfile({ userID: userId, ...(!onboardingCompleted && { onboardingCompleted: true }) });
       onLoggedIn(userId, secret); // → needs_pin_setup or needs_pin_confirm
     } catch (err) {
       log.error('verify failed:', err);
