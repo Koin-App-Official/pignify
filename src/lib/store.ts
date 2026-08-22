@@ -133,6 +133,16 @@ export type PlanStatus = 'active' | 'trialing' | 'canceled' | 'expired' | 'past_
 
 export interface UserProfile {
   userID?: string;
+  /**
+   * Set by `authLock.ts`'s `logout()`, consumed once by the next `bootstrap()`
+   * cold start. Logout revokes the server session but deliberately keeps the
+   * local PIN blob (so the next login only needs a PIN re-confirm, not a new
+   * PIN) -- `hasPin()` alone can't tell that apart from an ordinary
+   * backgrounded app with a still-live session, since both leave the same
+   * blob. This flag disambiguates so a relaunch after logout goes straight to
+   * the login screen instead of prompting for a PIN whose session is already dead.
+   */
+  explicitlyLoggedOut?: boolean;
   name: string;
   email: string;
   /** ISO date (yyyy-mm-dd) confirmed during the onboarding 18+ age gate. */
