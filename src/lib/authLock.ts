@@ -240,6 +240,14 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
       await get().resetToLogin();
       return;
     }
+    if (useStore.getState().profile.explicitlyLoggedOut) {
+      // See UserProfile.explicitlyLoggedOut / logout() above: the PIN blob is
+      // still there on purpose, but its session is already dead, so there's
+      // nothing to gain from prompting for it here — go straight to login.
+      useStore.getState().updateProfile({ explicitlyLoggedOut: false });
+      set({ status: 'unauthenticated' });
+      return;
+    }
     const pinExists = await hasPin();
     if (pinExists && !useStore.getState().profile.onboardingCompleted) {
       // Keychain items outlive both "Reset Data" and a full app delete on iOS, so a
@@ -404,6 +412,11 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
     clearClientSession();
     // Deliberately does NOT touch the local PIN blob/biometric key — the next
     // login only needs needs_pin_confirm, not a brand-new PIN (see file header).
+    // The flag is what lets the *next cold start's* bootstrap() know the PIN
+    // blob it finds belongs to an already-revoked session (see UserProfile.
+    // explicitlyLoggedOut) — this in-memory `status: 'unauthenticated'` alone
+    // doesn't survive an app kill, but the persisted flag does.
+    useStore.getState().updateProfile({ explicitlyLoggedOut: true });
     set({ status: 'unauthenticated', userId: null, sessionSecret: null, backgroundedAt: null, planGateReturnTo: null });
   },
 
