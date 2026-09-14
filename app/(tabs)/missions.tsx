@@ -364,13 +364,16 @@ function MissionCard({
       >
         <View className="flex-row items-center gap-4">
           {state === 'ready' ? <PulsingRing>{circle}</PulsingRing> : circle}
-          <View className="flex-1">
+          <View className="flex-1 shrink">
             <View className="flex-row items-center gap-2 mb-1">
-              <Text className={`text-sm font-bold ${state === 'claimed' ? 'line-through text-on-surface-variant' : styles.dimmed ? 'text-on-surface-variant' : 'text-on-surface'}`}>
+              <Text
+                numberOfLines={1}
+                className={`flex-shrink text-sm font-bold ${state === 'claimed' ? 'line-through text-on-surface-variant' : styles.dimmed ? 'text-on-surface-variant' : 'text-on-surface'}`}
+              >
                 {copy.title}
               </Text>
               {state === 'manual' && (
-                <View className="rounded-full bg-surface-container px-2 py-0.5">
+                <View className="shrink-0 rounded-full bg-surface-container px-2 py-0.5">
                   <Text className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant">{t('onYourHonour')}</Text>
                 </View>
               )}
