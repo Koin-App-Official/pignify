@@ -15,8 +15,13 @@
  * converted goal target or income figure by a fraction of a unit.
  */
 
+export interface ConvertibleIncome {
+  amount: number;
+  saveAmount: number | null;
+}
+
 export interface ConvertibleProfile {
-  monthlyIncome: number | null;
+  incomes: ConvertibleIncome[];
   monthlyContribution: number | null;
   estimatedMonthlySavings: number | null;
   expenses: { amount: number }[];
@@ -36,7 +41,11 @@ export function convertAmount(amount: number, rate: number): number {
 export function convertProfileAmounts<T extends ConvertibleProfile>(profile: T, rate: number): T {
   return {
     ...profile,
-    monthlyIncome: profile.monthlyIncome == null ? null : convertAmount(profile.monthlyIncome, rate),
+    incomes: profile.incomes.map((i) => ({
+      ...i,
+      amount: convertAmount(i.amount, rate),
+      saveAmount: i.saveAmount == null ? null : convertAmount(i.saveAmount, rate),
+    })),
     monthlyContribution:
       profile.monthlyContribution == null ? null : convertAmount(profile.monthlyContribution, rate),
     estimatedMonthlySavings:
@@ -62,7 +71,7 @@ export function convertGoalAmounts<T extends ConvertibleGoal>(goals: T[], rate: 
  * yet — nothing to ask the user about.
  */
 export function hasConvertibleMonetaryData(profile: ConvertibleProfile, goals: ConvertibleGoal[]): boolean {
-  if (profile.monthlyIncome || profile.monthlyContribution || profile.estimatedMonthlySavings) return true;
+  if (profile.incomes.length > 0 || profile.monthlyContribution || profile.estimatedMonthlySavings) return true;
   if (profile.expenses.length > 0) return true;
   return goals.some(
     (g) => g.targetAmount > 0 || g.savedAmount > 0 || (g.monthlyContribution ?? 0) > 0 || g.deposits.length > 0

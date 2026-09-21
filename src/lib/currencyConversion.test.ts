@@ -9,7 +9,7 @@ import {
 } from './currencyConversion';
 
 const emptyProfile = (overrides: Partial<ConvertibleProfile> = {}): ConvertibleProfile => ({
-  monthlyIncome: null,
+  incomes: [],
   monthlyContribution: null,
   estimatedMonthlySavings: null,
   expenses: [],
@@ -43,17 +43,15 @@ describe('convertAmount', () => {
 });
 
 describe('convertProfileAmounts', () => {
-  it('converts income, contribution, and the deprecated savings alias', () => {
-    const profile = emptyProfile({ monthlyIncome: 1000, monthlyContribution: 200, estimatedMonthlySavings: 200 });
+  it('converts contribution and the deprecated savings alias', () => {
+    const profile = emptyProfile({ monthlyContribution: 200, estimatedMonthlySavings: 200 });
     const result = convertProfileAmounts(profile, 0.5);
-    expect(result.monthlyIncome).toBe(500);
     expect(result.monthlyContribution).toBe(100);
     expect(result.estimatedMonthlySavings).toBe(100);
   });
 
   it('leaves null fields as null instead of converting them', () => {
     const result = convertProfileAmounts(emptyProfile(), 0.5);
-    expect(result.monthlyIncome).toBeNull();
     expect(result.monthlyContribution).toBeNull();
     expect(result.estimatedMonthlySavings).toBeNull();
   });
@@ -62,6 +60,38 @@ describe('convertProfileAmounts', () => {
     const profile = emptyProfile({ expenses: [{ amount: 40 }, { amount: 60 }] });
     const result = convertProfileAmounts(profile, 2);
     expect(result.expenses).toEqual([{ amount: 80 }, { amount: 120 }]);
+  });
+
+  it('converts every income source\'s amount and saveAmount', () => {
+    const profile = emptyProfile({
+      incomes: [
+        { amount: 1000, saveAmount: 200 },
+        { amount: 500, saveAmount: null },
+      ],
+    });
+    const result = convertProfileAmounts(profile, 0.5);
+    expect(result.incomes).toEqual([
+      { amount: 500, saveAmount: 100 },
+      { amount: 250, saveAmount: null },
+    ]);
+  });
+
+  it('preserves extra fields on each income (id, label, archived) while converting amounts', () => {
+    // convertProfileAmounts<T extends ConvertibleProfile> preserves whatever
+    // shape T's incomes actually are (e.g. the real IncomeSource) — exercised
+    // here with a richer inline type rather than the bare ConvertibleIncome
+    // `emptyProfile` is typed to, matching how store.ts's IncomeSource carries
+    // id/label/archived on top of amount/saveAmount.
+    const profile: ConvertibleProfile & {
+      incomes: { id: string; label: string; amount: number; saveAmount: number | null; archived: boolean }[];
+    } = {
+      ...emptyProfile(),
+      incomes: [{ id: 'a1', label: 'Salary', amount: 1000, saveAmount: 200, archived: false }],
+    };
+    const result = convertProfileAmounts(profile, 0.5);
+    expect(result.incomes).toEqual([
+      { id: 'a1', label: 'Salary', amount: 500, saveAmount: 100, archived: false },
+    ]);
   });
 });
 
@@ -99,8 +129,10 @@ describe('hasConvertibleMonetaryData', () => {
     expect(hasConvertibleMonetaryData(emptyProfile(), [])).toBe(false);
   });
 
-  it('is true when income is set', () => {
-    expect(hasConvertibleMonetaryData(emptyProfile({ monthlyIncome: 1000 }), [])).toBe(true);
+  it('is true when an income source exists', () => {
+    expect(
+      hasConvertibleMonetaryData(emptyProfile({ incomes: [{ amount: 1000, saveAmount: null }] }), [])
+    ).toBe(true);
   });
 
   it('is true when an expense exists', () => {

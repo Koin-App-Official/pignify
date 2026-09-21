@@ -134,6 +134,13 @@ describe('migratePiggyState — v0 (pre-#63) → current', () => {
   it('remaps the goal icon emoji to an icon-registry key (v6 → v7, full chain)', () => {
     expect(migrated.goals[0].icon).toBe('target');
   });
+
+  it('carries the income scalar-to-array migration through the full v0 chain (v8 → v9)', () => {
+    expect(migrated.profile.incomes).toEqual([
+      { id: 'primary', label: 'Primary', amount: 4000, saveAmount: null },
+    ]);
+    expect(migrated.profile.monthlyIncome).toBeUndefined();
+  });
 });
 
 describe('migratePiggyState — v1 (post-#63, pre-Phase-2) → current', () => {
@@ -233,7 +240,7 @@ describe('migratePiggyState — edge cases', () => {
   it('PIGGY_STORE_VERSION matches the highest migration step', () => {
     // Sanity guard: if a step is added above without bumping this, zustand
     // would never invoke migrate for it on a fresh install already at the old version.
-    expect(PIGGY_STORE_VERSION).toBe(8);
+    expect(PIGGY_STORE_VERSION).toBe(10);
   });
 });
 
@@ -392,5 +399,51 @@ describe('migratePiggyState — v7 → v8 (AI consent backfill, App Review 5.1.2
 
   it('does not throw on a payload with no profile', () => {
     expect(() => migratePiggyState({}, 7)).not.toThrow();
+  });
+});
+
+describe('migratePiggyState — v8 → v9 (multiple income sources, #191)', () => {
+  it('turns a positive monthlyIncome into one active "Primary" source', () => {
+    const migrated = migratePiggyState({ profile: { monthlyIncome: 4000 } }, 8) as any;
+    expect(migrated.profile.incomes).toEqual([
+      { id: 'primary', label: 'Primary', amount: 4000, saveAmount: null },
+    ]);
+    expect(migrated.profile.monthlyIncome).toBeUndefined();
+  });
+
+  it('turns a null monthlyIncome into an empty array', () => {
+    const migrated = migratePiggyState({ profile: { monthlyIncome: null } }, 8) as any;
+    expect(migrated.profile.incomes).toEqual([]);
+    expect(migrated.profile.monthlyIncome).toBeUndefined();
+  });
+
+  it('turns a missing monthlyIncome into an empty array', () => {
+    const migrated = migratePiggyState({ profile: {} }, 8) as any;
+    expect(migrated.profile.incomes).toEqual([]);
+  });
+
+  it('turns a zero monthlyIncome into an empty array (never a $0 source)', () => {
+    const migrated = migratePiggyState({ profile: { monthlyIncome: 0 } }, 8) as any;
+    expect(migrated.profile.incomes).toEqual([]);
+  });
+
+  it('does not throw on a payload with no profile', () => {
+    expect(() => migratePiggyState({}, 8)).not.toThrow();
+  });
+});
+
+describe('migratePiggyState — v9 → v10 (capacityApplyPending backfill, #191 Phase 9)', () => {
+  it('backfills capacityApplyPending to false on an installed state with none set', () => {
+    const migrated = migratePiggyState({ profile: {} }, 9) as any;
+    expect(migrated.capacityApplyPending).toBe(false);
+  });
+
+  it('does not override an existing true value', () => {
+    const migrated = migratePiggyState({ profile: {}, capacityApplyPending: true }, 9) as any;
+    expect(migrated.capacityApplyPending).toBe(true);
+  });
+
+  it('does not throw on an empty payload', () => {
+    expect(() => migratePiggyState({}, 9)).not.toThrow();
   });
 });

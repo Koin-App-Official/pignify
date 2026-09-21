@@ -9,7 +9,7 @@
 import { migrateGoalDepositDates } from './deposits';
 
 /** Bump alongside a new migration step below, and in store.ts's persist config. */
-export const PIGGY_STORE_VERSION = 8;
+export const PIGGY_STORE_VERSION = 10;
 
 /** Pre-#83 name of the entry tier, still present in every persisted blob. */
 const LEGACY_BEGINNER = 'free';
@@ -170,6 +170,51 @@ export function migratePiggyState(persisted: unknown, from: number): unknown {
     state = {
       ...state,
       profile: { ...state.profile, aiConsent: state.profile?.aiConsent ?? null },
+    };
+  }
+
+  // v8 → v9: replaces the single `profile.monthlyIncome: number | null` scalar
+  // with `profile.incomes: IncomeSource[]` (#191, multiple income sources
+  // gated to Family). A positive value becomes one active source labelled
+  // "Primary" — matching the label n8n's CLAUDE_onboarding already writes
+  // server-side, so a later read-down (goalsSync-style hydrate) reconciles
+  // cleanly instead of producing a second, differently-labelled row. `null`/
+  // 0/missing becomes an empty array, same as "no income declared" today.
+  // `saveAmount` starts null (not backfilled from `monthlyContribution`) —
+  // existing users haven't been asked what to declare as savings capacity per
+  // source, only what to set aside in total for their goal.
+  if (from < 9) {
+    const profile = state.profile ?? {};
+    const legacyIncome = profile.monthlyIncome;
+    state = {
+      ...state,
+      profile: {
+        ...profile,
+        incomes:
+          typeof legacyIncome === 'number' && legacyIncome > 0
+            ? [
+                {
+                  id: 'primary',
+                  label: 'Primary',
+                  amount: legacyIncome,
+                  saveAmount: null,
+                },
+              ]
+            : [],
+      },
+    };
+    delete state.profile.monthlyIncome;
+  }
+
+  // v9 → v10: adds top-level `capacityApplyPending` (#191 Phase 9) — the
+  // Phase 8 apply-to-goals check a downgrade's income-retention choice can
+  // owe Profile. Every existing install predates it, so `false` (nothing
+  // owed) is the only sensible backfill — there's no retroactive way to know
+  // whether an old install's last downgrade should have triggered one.
+  if (from < 10) {
+    state = {
+      ...state,
+      capacityApplyPending: state.capacityApplyPending ?? false,
     };
   }
 

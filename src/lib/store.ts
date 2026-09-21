@@ -40,8 +40,9 @@ import {
 } from './catalogs';
 import type { IconName } from '@/components/icons/registry';
 import { AI_CONSENT_VERSION, type AiConsent } from './aiConsent';
+import { type IncomeSource } from './income';
 
-export type { Achievement };
+export type { Achievement, IncomeSource };
 export { GOAL_TEMPLATES, COUNTRIES, CURRENCIES, EXPENSE_CATEGORIES, getCurrency, getCurrencySymbol };
 
 export interface Goal {
@@ -173,7 +174,13 @@ export interface UserProfile {
    * exists, or before the first entitlements sync has landed.
    */
   trialEndsAt: string | null;
-  monthlyIncome: number | null;
+  /**
+   * Multiple income sources (#191). Everyone gets 1; Family gets up to 3
+   * (`PLAN_CONFIG.family.quotas.incomes`, entitlements.ts) — enforced by the
+   * UI gating layer, not here. Replaces the old `monthlyIncome: number | null`
+   * scalar as of the v8 -> v9 migration (storeMigrations.ts).
+   */
+  incomes: IncomeSource[];
   incomeSkipped: boolean;
   /**
    * How the user planned their goal: 'contribution' (set aside $X/month, date
@@ -279,7 +286,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   currentPeriodEnd: null,
   planSince: null,
   trialEndsAt: null,
-  monthlyIncome: null,
+  incomes: [],
   incomeSkipped: false,
   planningMode: 'contribution',
   monthlyContribution: null,
@@ -338,6 +345,13 @@ export interface PiggyState {
    * dismissed prompt survives a restart and can be re-asked rather than lost.
    */
   retentionRequiredFor: UserPlan | null;
+  /**
+   * True when an income was archived by a downgrade retention choice and a
+   * capacity-apply check (Phase 8) is owed next time Profile is visited
+   * (#191 Phase 9). Persisted for the same reason as `retentionRequiredFor` —
+   * survives the user closing the app before ever reaching Profile.
+   */
+  capacityApplyPending: boolean;
   deepAnalysisUsed: number;
   deepAnalysisMonth: string;
   lastProfileSync: string;
@@ -353,21 +367,30 @@ export interface PiggyState {
   revokeAiConsent: () => void;
 
   /**
-   * Archive goals not in `keepGoalIds` (never deleted — C4, see `Goal.archived`)
-   * and clear `retentionRequiredFor`.
+   * Archive goals not in `keepGoalIds` and incomes not in `keepIncomeIds`
+   * (never deleted — C4, see `Goal.archived`/`IncomeSource.archived`) and
+   * clear `retentionRequiredFor`.
    *
    * Archive-only since #173: the plan itself is never changed here. Plan changes
    * happen on the web and arrive through the entitlements sync, so by the time
    * the user picks what to keep, the downgrade has already taken effect
-   * server-side — this only resolves the over-limit goals it left behind.
+   * server-side — this only resolves the over-limit goals/incomes it left behind.
    *
    * Deliberately takes plain IDs rather than importing retention.ts's evaluation
    * here — that logic (and re-validating it, since counts can change between the
    * prompt and the confirm) lives in the UI layer (downgrade-selection.tsx),
    * consistent with retention.ts staying a pure, independently-tested module
    * rather than folding its rules into the store.
+   *
+   * When any income is actually archived, also sets `capacityApplyPending`
+   * (#191 Phase 9) — archiving income can lower declared savings capacity,
+   * which is a Phase 8 apply-to-goals trigger. The prompt itself lives on
+   * Profile, not here (downgrade-selection.tsx never renders it — "offered
+   * after the retention choice, not during it," and the two sheets must
+   * never stack), so this only flags that a check is owed next time Profile
+   * is visited; Profile clears the flag itself once it has checked.
    */
-  applyRetentionSelection: (keepGoalIds: string[]) => void;
+  applyRetentionSelection: (selection: { keepGoalIds: string[]; keepIncomeIds: string[] }) => void;
   /**
    * Set (or clear) the plan whose goal limit the user is currently over, after a
    * downgrade made on the web. The UI watches this to prompt for a selection;
@@ -375,6 +398,8 @@ export interface PiggyState {
    * than silently auto-archiving anything (C4/C7).
    */
   setRetentionRequired: (plan: UserPlan | null) => void;
+  /** Clears the Phase 8 apply-to-goals trigger once Profile has checked it (#191 Phase 9). */
+  clearCapacityApplyPending: () => void;
 
   setGoals: (g: Goal[]) => void;
   addGoal: (g: Goal) => void;
@@ -521,6 +546,7 @@ export const useStore = create<PiggyState>()(
       serverAiMessagesUsed: null,
       addonMessageBalance: 0,
       retentionRequiredFor: null,
+      capacityApplyPending: false,
       deepAnalysisUsed: 0,
       deepAnalysisMonth: getTodayString().slice(0, 7),
       lastProfileSync: '',
@@ -545,14 +571,27 @@ export const useStore = create<PiggyState>()(
         },
       })),
 
-      applyRetentionSelection: (keepGoalIds) => set((state) => ({
-        goals: state.goals.map((g) =>
-          g.archived || keepGoalIds.includes(g.id) ? g : { ...g, archived: true }
-        ),
-        retentionRequiredFor: null,
-      })),
+      applyRetentionSelection: ({ keepGoalIds, keepIncomeIds }) => set((state) => {
+        const incomeArchived = state.profile.incomes.some(
+          (i) => !i.archived && !keepIncomeIds.includes(i.id)
+        );
+        return {
+          goals: state.goals.map((g) =>
+            g.archived || keepGoalIds.includes(g.id) ? g : { ...g, archived: true }
+          ),
+          profile: {
+            ...state.profile,
+            incomes: state.profile.incomes.map((i) =>
+              i.archived || keepIncomeIds.includes(i.id) ? i : { ...i, archived: true }
+            ),
+          },
+          retentionRequiredFor: null,
+          capacityApplyPending: state.capacityApplyPending || incomeArchived,
+        };
+      }),
 
       setRetentionRequired: (plan) => set({ retentionRequiredFor: plan }),
+      clearCapacityApplyPending: () => set({ capacityApplyPending: false }),
 
       setGoals: (goals) => set({ goals }),
       addGoal: (g) => set((state) => {
@@ -830,7 +869,7 @@ export const useStore = create<PiggyState>()(
     {
       name: 'piggy-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: PIGGY_STORE_VERSION, // bumped to 8 for profile.aiConsent — see storeMigrations.ts
+      version: PIGGY_STORE_VERSION, // bumped to 10 for capacityApplyPending (#191) — see storeMigrations.ts
       // Migration steps live in storeMigrations.ts (pure, unit-tested) — this
       // module transitively pulls in react-native (AsyncStorage,
       // expo-notifications) and can't be imported under vitest at all.
