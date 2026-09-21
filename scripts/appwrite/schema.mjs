@@ -318,15 +318,25 @@ export const tables = [
   // Per-user income sources (Family allows up to 3; others 1). Replaces the single
   // `users.income` scalar so income limits + archived-exclusion can be enforced.
   // Money as integer cents. Denormalized indexed user_id (no relationship).
+  //
+  // 2026-09-17 (#191, multiple income sources): added `save_amount_cents`
+  // (optional int, no default — "not set" is meaningfully different from "set
+  // aside 0"; the user's declared per-source monthly savings capacity, D2).
+  // Added `create("users")` to `permissions`, matching the `devices` table
+  // below — the client creates its own income rows directly
+  // (`src/lib/incomeSync.ts`), with row-level owner permissions stamped on
+  // create, same pattern as `src/lib/device.ts`. Applied live via MCP; the 12
+  // existing rows and their owner permissions were confirmed unchanged after.
   {
     id: 'incomes',
     name: 'Incomes',
-    permissions: [],
+    permissions: ['create("users")'],
     rowSecurity: true,
     columns: [
       str('user_id', 64, true),
       str('label', 64, false),
       int('amount_cents', true),
+      int('save_amount_cents', false),
       bool('archived', false, false),
       dt('created_at', true),
     ],
