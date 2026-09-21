@@ -5,8 +5,12 @@ import {
   contributionBounds,
   requiredContribution,
   resolveMonthlyContribution,
+  capacityShareForGoal,
+  projectedGoalDate,
+  capacityApplyCandidates,
   addMonths,
   MAX_HORIZON_MONTHS,
+  type CapacityGoalInput,
 } from './goalMath';
 
 const FROM = new Date('2026-01-15T00:00:00.000Z');
@@ -126,5 +130,142 @@ describe('resolveMonthlyContribution', () => {
   it('derives from target/deadline/createdAt for pre-flip goals with no stored value', () => {
     const deadline = addMonths(FROM, 10).toISOString();
     expect(resolveMonthlyContribution(1000, deadline, FROM.toISOString())).toBe(100);
+  });
+});
+
+describe('capacityShareForGoal', () => {
+  it('splits capacity evenly across active goals', () => {
+    expect(capacityShareForGoal(900, 3)).toBe(300);
+  });
+
+  it('is the full amount for a single active goal', () => {
+    expect(capacityShareForGoal(900, 1)).toBe(900);
+  });
+
+  it('returns 0 for zero capacity', () => {
+    expect(capacityShareForGoal(0, 3)).toBe(0);
+  });
+
+  it('returns 0 for a negative capacity', () => {
+    expect(capacityShareForGoal(-100, 3)).toBe(0);
+  });
+
+  it('returns 0 for zero active goals (nothing to divide across)', () => {
+    expect(capacityShareForGoal(900, 0)).toBe(0);
+  });
+});
+
+describe('projectedGoalDate', () => {
+  it('projects the same as deriveGoalDate on the remaining amount, when nothing is saved yet', () => {
+    const result = projectedGoalDate(1000, 0, 250, FROM);
+    expect(result).toEqual(deriveGoalDate(1000, 250, FROM));
+  });
+
+  it('applies capacity only to the remaining (unsaved) amount', () => {
+    // $1000 target, $600 already saved -> $400 remaining at $200/month = 2 months.
+    const result = projectedGoalDate(1000, 600, 200, FROM);
+    expect(result.months).toBe(2);
+    expect(result.capped).toBe(false);
+  });
+
+  it('reports an already-complete goal as reached today, not capped at the horizon', () => {
+    const result = projectedGoalDate(1000, 1000, 0, FROM);
+    expect(result.months).toBe(0);
+    expect(result.capped).toBe(false);
+    expect(result.date).toBe(FROM.toISOString());
+  });
+
+  it('reports a goal saved past its target as reached today', () => {
+    const result = projectedGoalDate(1000, 1500, 200, FROM);
+    expect(result.months).toBe(0);
+    expect(result.capped).toBe(false);
+  });
+
+  it('caps at the 10-year horizon for zero capacity with money still remaining', () => {
+    const result = projectedGoalDate(1000, 0, 0, FROM);
+    expect(result.capped).toBe(true);
+    expect(result.months).toBe(MAX_HORIZON_MONTHS);
+  });
+
+  it('caps at the 10-year horizon for a capacity share too small to reach the goal in time', () => {
+    const result = projectedGoalDate(10000, 0, 5, FROM);
+    expect(result.capped).toBe(true);
+    expect(result.months).toBe(MAX_HORIZON_MONTHS);
+  });
+
+  it('splits capacity across 2+ goals before projecting each one', () => {
+    // $600 total capacity across 3 goals -> $200/goal share.
+    const share = capacityShareForGoal(600, 3);
+    const goalA = projectedGoalDate(1000, 0, share, FROM);
+    const goalB = projectedGoalDate(2000, 0, share, FROM);
+    expect(share).toBe(200);
+    expect(goalA.months).toBe(5); // 1000 / 200
+    expect(goalB.months).toBe(10); // 2000 / 200
+  });
+});
+
+describe('capacityApplyCandidates', () => {
+  const goal = (overrides: Partial<CapacityGoalInput> = {}): CapacityGoalInput => ({
+    id: 'g1',
+    targetAmount: 1200,
+    savedAmount: 0,
+    deadline: addMonths(FROM, 12).toISOString(), // implies a slow ~$100/month original plan
+    createdAt: FROM.toISOString(),
+    planningMode: 'contribution',
+    ...overrides,
+  });
+
+  it('returns no candidates when capacity is 0', () => {
+    expect(capacityApplyCandidates([goal()], 0, FROM)).toEqual([]);
+  });
+
+  it('returns no candidates when capacity is unset (negative/NaN guard)', () => {
+    expect(capacityApplyCandidates([goal()], -100, FROM)).toEqual([]);
+  });
+
+  it('includes a contribution-mode goal whose projected month differs from its stored month', () => {
+    // $300/month capacity reaches $1200 in 4 months, not the stored 12.
+    const result = capacityApplyCandidates([goal()], 300, FROM);
+    expect(result).toHaveLength(1);
+    expect(result[0].goalId).toBe('g1');
+    expect(result[0].newContribution).toBe(300);
+  });
+
+  it('excludes a goal whose stored date already matches the projected month (capacity unchanged)', () => {
+    // Deadline already lands in the same month deriveGoalDate(1200, 300) would produce.
+    const alreadyCurrent = goal({ deadline: deriveGoalDate(1200, 300, FROM).date });
+    expect(capacityApplyCandidates([alreadyCurrent], 300, FROM)).toEqual([]);
+  });
+
+  it('never includes a deadline-mode goal', () => {
+    const deadlineGoal = goal({ planningMode: 'deadline' });
+    expect(capacityApplyCandidates([deadlineGoal], 300, FROM)).toEqual([]);
+  });
+
+  it('never includes a goal with no planningMode at all (pre-flip goals default to deadline)', () => {
+    const preFlipGoal = goal({ planningMode: undefined });
+    expect(capacityApplyCandidates([preFlipGoal], 300, FROM)).toEqual([]);
+  });
+
+  it('never includes an archived goal', () => {
+    const archivedGoal = goal({ archived: true });
+    expect(capacityApplyCandidates([archivedGoal], 300, FROM)).toEqual([]);
+  });
+
+  it('never includes an already-complete goal', () => {
+    const doneGoal = goal({ savedAmount: 1200 });
+    expect(capacityApplyCandidates([doneGoal], 300, FROM)).toEqual([]);
+  });
+
+  it('splits capacity across multiple contribution-mode goals and reports each new date', () => {
+    const goalA = goal({ id: 'a', targetAmount: 1000 });
+    const goalB = goal({ id: 'b', targetAmount: 2000 });
+    // $600 total / 2 goals = $300 share each.
+    const result = capacityApplyCandidates([goalA, goalB], 600, FROM);
+    expect(result).toHaveLength(2);
+    expect(result.every((c) => c.newContribution === 300)).toBe(true);
+    const a = result.find((c) => c.goalId === 'a')!;
+    const b = result.find((c) => c.goalId === 'b')!;
+    expect(new Date(a.newDate).getTime()).toBeLessThan(new Date(b.newDate).getTime());
   });
 });

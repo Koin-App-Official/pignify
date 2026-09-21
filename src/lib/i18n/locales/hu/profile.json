@@ -9,6 +9,22 @@
   "monthlyIncome": "Havi jövedelem",
   "notProvided": "Nincs megadva",
   "expenseBreakdown": "Kiadások megoszlása",
+  "income": {
+    "addButton": "Jövedelem hozzáadása",
+    "defaultLabel": "Jövedelem",
+    "labelPlaceholder": "pl. Fizetés",
+    "setAsideLabel": "Megtakarításra félretéve",
+    "setAsideHint": "Opcionális",
+    "totalIncomeLabel": "Összes havi jövedelem",
+    "totalSetAsideLabel": "Összesen félretéve",
+    "emptyState": "Még nincs hozzáadott jövedelem.",
+    "archivedBadge": "Archiválva",
+    "removeA11y": "Jövedelem eltávolítása",
+    "removeConfirmTitle": "Eltávolítod a jövedelmet?",
+    "removeConfirmBody": "Ez a jövedelemforrás eltávolításra kerül a költségvetésedből.",
+    "removeConfirmCancel": "Mégse",
+    "removeConfirmConfirm": "Eltávolítás"
+  },
   "notifications": {
     "title": "Értesítések",
     "paydayReminder": "Fizetésnapi megtakarítási emlékeztető",

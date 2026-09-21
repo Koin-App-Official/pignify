@@ -168,7 +168,7 @@ device state (PIN/session/store) after this responds success.
 2. **Code** `buildDeletionPlan` (`code-nodes/account-deletion.js`) → decides
    whether a live Stripe subscription needs canceling and lists the
    user-keyed tables to purge (`subscriptions`, `entitlements`, `devices`,
-   `addon_purchases`, `goals`).
+   `addon_purchases`, `goals`, `incomes`).
 3. If `needsStripeCancel` → **Stripe** cancel the subscription immediately
    (not `cancel_at_period_end` — this is account deletion, not a downgrade).
 4. For each table in the plan → **Appwrite** list rows by `user_id` then
@@ -241,6 +241,43 @@ is a separate figure the client uses only to track its own rollover spend-down.
 optional), `trial_ends_at` (datetime, optional), and `expired` appended to the
 `status` enum so a lapsed trial is distinguishable from a cancelled paid
 subscription — the win-back copy in issue G depends on that distinction.
+
+## Income sources ([#191](https://github.com/Koin-App-Official/pignify/issues/191))
+
+> Live in `CLAUDE_onboarding` (writes), `CLAUDE_coach_reply` + the Deep Analysis
+> workflow (reads), `CLAUDE_account_delete` (purge) — not in the templates in
+> this folder.
+
+Income is a per-row table (`incomes`: `user_id`, `label`, `amount_cents`,
+`save_amount_cents`, `archived`, `created_at`), not a scalar on `users` — it
+was designed this way from the start (`scripts/appwrite/schema.mjs`) even
+though the client only caught up to writing/reading multiple rows in #191.
+Quota is `quota_incomes` on the `plans`/`entitlements` rows: 1 for
+`beginner`/`medium`, 3 for `family` — enforced client-side only (UX gating),
+same posture as every other quota here.
+
+**Write — `CLAUDE_onboarding` → `Normalize` → `Has Income?` → `Create Income
+Row` / `Repair Missing Income`.** Onboarding always writes at most one row,
+labelled `"Primary"`. As of #191 the row's `documentId` is the client-supplied
+`incomeId` from the request body (the id of the `IncomeSource` the app already
+created locally), falling back to `unique()` when absent so older app builds
+keep working. This is deliberate: once the client also writes income rows
+directly (its own income-management UI, not yet built server-side), a
+server-minted id would create a second row for the same income the moment
+that ships — the shared id keeps the local and server rows as one record from
+the first write.
+
+**Read — `CLAUDE_coach_reply`'s `Build Prompt` and the Deep Analysis
+workflow's `SetPriorityInfo`** both sum `amount_cents` across a user's income
+rows, filtering `archived` (a downgrade from Family's 3 sources to
+Medium/Beginner's 1 archives the excess rather than deleting it — C4/C7,
+`src/lib/retention.ts`). The Deep Analysis filter was added in #191 (bug B2)
+to match what the Coach already did correctly.
+
+**Purge — `CLAUDE_account_delete`.** `incomes` is a user-keyed table like
+`goals`/`devices`/etc: List → Split → Delete, merged into `All Table Deletes
+Done` (added as its 7th input in #191, bug B1 — income rows previously
+outlived a deleted account).
 
 ## n8n credentials to configure
 - **Stripe API** credential (secret key) — for Stripe nodes.

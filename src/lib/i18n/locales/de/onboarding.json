@@ -24,6 +24,7 @@
     "monthlyHeadline": "Wie viel kannst du jeden Monat zurücklegen?",
     "monthlySub": "Wir berechnen, wann du dein Ziel erreichst.",
     "suggestionChip": "{{pct}}% · {{amount}}",
+    "savingsCapacityChip": "Aus deinem Einkommen · {{amount}}",
     "amountPlaceholder": "0,00",
     "reachGoalBy": "Mit {{amount}}/Monat erreichst du dein Ziel bis",
     "pctOfIncome": "Das sind {{pct}}% deines monatlichen Einkommens.",

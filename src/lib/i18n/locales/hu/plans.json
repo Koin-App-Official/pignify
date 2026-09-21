@@ -99,6 +99,7 @@
     "keepBody_other": "A csomagod mostantól {{plan}}, amely {{count}} aktív célt enged. Neked {{total}} van. Válassz {{pickText}} aktívan tartáshoz — a többi lekerül a listádról, de semmi sem törlődik véglegesen. Azonnal visszatérnek, ha újra frissítesz.",
     "pickOne": "egyet",
     "pickUpTo": "legfeljebb {{count}}-t",
+    "keepIncomeBody": "Válassz {{pickText}} aktívan tartáshoz — a többi lekerül a listádról, de semmi sem törlődik véglegesen.",
     "keepingCountOfLimit": "{{count}} / {{limit}} megtartva",
     "confirm": "Megerősítés",
     "genericErrorTitle": "Valami hiba történt",

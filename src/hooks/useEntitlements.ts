@@ -14,6 +14,7 @@ import {
   type QuotaResource,
 } from '@/lib/entitlements';
 import { evaluatePeriodicQuota } from '@/lib/quota';
+import { activeIncomes } from '@/lib/income';
 
 /**
  * Everything zeroed — the client-side mirror of the locked entitlements row the
@@ -34,7 +35,7 @@ const LOCKED_PLAN_CONFIG = {
 export function useEntitlements() {
   const plan = useStore((s) => s.profile.plan ?? 'beginner');
   const goals = useStore((s) => s.goals);
-  const monthlyIncome = useStore((s) => s.profile.monthlyIncome);
+  const incomes = useStore((s) => s.profile.incomes);
   const addonMessageBalance = useStore((s) => s.addonMessageBalance);
   const localCoachMessagesUsed = useStore((s) => {
     const thisMonth = new Date().toISOString().slice(0, 7);
@@ -59,10 +60,9 @@ export function useEntitlements() {
     // locked user can't reach the app at all — but it stops the leak existing.
     const config = locked ? LOCKED_PLAN_CONFIG : getPlanConfig(plan);
 
-    // Active (non-archived) goals are the only ones that count toward limits (C7).
+    // Active (non-archived) goals/incomes are the only ones that count toward limits (C7).
     const activeGoals = goals.filter((g) => !g.archived).length;
-    // Income is currently a single value; an unset income counts as 0 used.
-    const incomesUsed = monthlyIncome != null ? 1 : 0;
+    const incomesUsed = activeIncomes(incomes).length;
 
     // Prefer the server-authoritative quota/usage (synced from CLAUDE_entitlements_get,
     // which reflects the real enforcement in CLAUDE_coach_reply) once it's landed at
@@ -87,5 +87,5 @@ export function useEntitlements() {
       addonMessageBalance,
       deepAnalysisUsed,
     };
-  }, [plan, locked, goals, monthlyIncome, localCoachMessagesUsed, serverAiMessagesQuota, serverAiMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
+  }, [plan, locked, goals, incomes, localCoachMessagesUsed, serverAiMessagesQuota, serverAiMessagesUsed, addonMessageBalance, deepAnalysisUsed]);
 }

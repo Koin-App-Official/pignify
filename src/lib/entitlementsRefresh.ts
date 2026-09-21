@@ -12,6 +12,7 @@
  */
 import { fetchEntitlementsSync } from './entitlementsSync';
 import { evaluateDowngradeRetention } from './retention';
+import { activeIncomes } from './income';
 import { useStore } from './store';
 
 /** How long a background/foreground refresh trusts the last successful sync. */
@@ -80,7 +81,7 @@ export async function syncEntitlements(opts: SyncOptions = {}): Promise<boolean>
   const { profile: synced, goals, setRetentionRequired } = useStore.getState();
   const requirement = evaluateDowngradeRetention(synced.plan, {
     goals: goals.filter((g) => !g.archived).length,
-    incomes: synced.monthlyIncome != null ? 1 : 0,
+    incomes: activeIncomes(synced.incomes).length,
     devices: 0,
   });
   setRetentionRequired(requirement.selectionRequired ? synced.plan : null);

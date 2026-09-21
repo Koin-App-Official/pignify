@@ -99,6 +99,7 @@
     "keepBody_other": "Dein Plan ist jetzt {{plan}} und erlaubt {{count}} aktive Ziele. Du hast {{total}}. Wähle {{pickText}} aus, um sie aktiv zu behalten — der Rest verschwindet aus deiner Liste, wird aber nie gelöscht. Sie kommen sofort zurück, wenn du erneut upgradest.",
     "pickOne": "das eine",
     "pickUpTo": "bis zu {{count}}",
+    "keepIncomeBody": "Wähle {{pickText}} aus, um es aktiv zu behalten — der Rest verschwindet aus deiner Liste, wird aber nie gelöscht.",
     "keepingCountOfLimit": "{{count}} von {{limit}} werden behalten",
     "confirm": "Bestätigen",
     "genericErrorTitle": "Etwas ist schiefgelaufen",

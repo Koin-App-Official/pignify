@@ -36,6 +36,14 @@ describe('evaluateDowngradeRetention', () => {
     expect(req.selectionRequired).toBe(true);
     expect(req.toArchive.devices).toBeGreaterThan(0);
   });
+
+  it('requires a selection for 3 income sources downgraded to Medium (#191 Phase 9)', () => {
+    // Family allows 3 income sources; Medium allows 1 (entitlements.ts PLAN_CONFIG).
+    const req = evaluateDowngradeRetention('medium', { goals: 1, incomes: 3, devices: 1 });
+    expect(req.selectionRequired).toBe(true);
+    expect(req.limits.incomes).toBe(1);
+    expect(req.toArchive.incomes).toBe(2);
+  });
 });
 
 describe('validateRetentionSelection', () => {

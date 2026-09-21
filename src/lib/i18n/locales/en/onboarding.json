@@ -24,6 +24,7 @@
     "monthlyHeadline": "How much can you set aside each month?",
     "monthlySub": "We'll work out when you'll hit your goal.",
     "suggestionChip": "{{pct}}% · {{amount}}",
+    "savingsCapacityChip": "From your income · {{amount}}",
     "amountPlaceholder": "0.00",
     "reachGoalBy": "At {{amount}}/month you'll reach your goal by",
     "pctOfIncome": "That's {{pct}}% of your monthly income.",

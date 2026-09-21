@@ -25,6 +25,11 @@ const USER_KEYED_TABLES = [
   'devices',
   'addon_purchases',
   'goals',
+  // Added 2026-09-17 (#191 bug B1) — income rows previously outlived a
+  // deleted account entirely; the live CLAUDE_account_delete workflow was
+  // updated in lockstep (List/Split/Delete Incomes Row, merged as a 7th input
+  // into "All Table Deletes Done").
+  'incomes',
 ];
 
 function buildDeletionPlan({ userId, subscriptionRow }) {

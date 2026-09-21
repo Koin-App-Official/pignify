@@ -9,6 +9,22 @@
   "monthlyIncome": "Monatliches Einkommen",
   "notProvided": "Nicht angegeben",
   "expenseBreakdown": "Ausgabenübersicht",
+  "income": {
+    "addButton": "Einkommen hinzufügen",
+    "defaultLabel": "Einkommen",
+    "labelPlaceholder": "z. B. Gehalt",
+    "setAsideLabel": "Für Ersparnisse zurücklegen",
+    "setAsideHint": "Optional",
+    "totalIncomeLabel": "Gesamtes monatliches Einkommen",
+    "totalSetAsideLabel": "Insgesamt zurückgelegt",
+    "emptyState": "Noch kein Einkommen hinzugefügt.",
+    "archivedBadge": "Archiviert",
+    "removeA11y": "Einkommen entfernen",
+    "removeConfirmTitle": "Einkommen entfernen?",
+    "removeConfirmBody": "Diese Einkommensquelle wird aus deinem Budget entfernt.",
+    "removeConfirmCancel": "Abbrechen",
+    "removeConfirmConfirm": "Entfernen"
+  },
   "notifications": {
     "title": "Benachrichtigungen",
     "paydayReminder": "Erinnerung zum Zahltag-Sparen",
