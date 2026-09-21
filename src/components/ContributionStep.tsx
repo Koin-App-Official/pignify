@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 import { AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react-native';
@@ -23,6 +23,14 @@ interface ContributionStepProps {
   language: SupportedLanguage;
   targetAmount: number;
   monthlyIncome: number | null;
+  /**
+   * Total declared monthly savings capacity (#191 D2) — the sum of every
+   * active income's set-aside. null/0 when unset (no income, or income set
+   * with no set-aside declared), same as monthlyIncome. Independent of
+   * monthlyIncome: a user can have income without a declared set-aside, or
+   * vice versa in principle, so this isn't derived from monthlyIncome here.
+   */
+  savingsCapacity?: number | null;
   incomeSkipped: boolean;
   planningMode: PlanningMode;
   onPlanningModeChange: (mode: PlanningMode) => void;
@@ -60,6 +68,7 @@ export function ContributionStep({
   language,
   targetAmount,
   monthlyIncome,
+  savingsCapacity,
   incomeSkipped,
   planningMode,
   onPlanningModeChange,
@@ -74,6 +83,18 @@ export function ContributionStep({
   const { t } = useTranslation('onboarding');
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const hasIncome = !incomeSkipped && !!monthlyIncome && monthlyIncome > 0;
+  const hasCapacity = savingsCapacity != null && savingsCapacity > 0;
+
+  // Pre-fills the contribution input from capacity on first mount only — the
+  // component remounts each time this step is genuinely (re-)entered (it's
+  // behind a step-index conditional at both call sites), so this fires once
+  // per visit, never fighting a value the user is actively typing.
+  useEffect(() => {
+    if (planningMode === 'contribution' && hasCapacity && !contribution) {
+      onContributionChange(String(savingsCapacity));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const contributionNumber = Number(contribution);
   const derived =
@@ -117,9 +138,29 @@ export function ContributionStep({
           <Text className="mb-2 text-3xl font-black text-on-surface">{t('contribution.monthlyHeadline')}</Text>
           <Text className="mb-6 text-sm font-medium text-on-surface-variant">{t('contribution.monthlySub')}</Text>
 
-          {hasIncome && (
+          {(hasCapacity || hasIncome) && (
             <View className="flex-row flex-wrap gap-2 mb-4">
-              {SUGGESTION_PCTS.map((pct) => {
+              {hasCapacity && (
+                <TouchableOpacity
+                  onPress={() => onContributionChange(String(savingsCapacity))}
+                  className={`rounded-full px-4 py-2.5 border ${
+                    contributionNumber === savingsCapacity
+                      ? 'bg-primary-container border-2 border-primary'
+                      : 'bg-surface-container-low border-outline'
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-semibold ${
+                      contributionNumber === savingsCapacity ? 'text-on-primary-container' : 'text-on-surface'
+                    }`}
+                  >
+                    {t('contribution.savingsCapacityChip', {
+                      amount: formatCurrency(savingsCapacity!, currency, language),
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {hasIncome && SUGGESTION_PCTS.map((pct) => {
                 const amount = suggestedContribution(monthlyIncome!, pct);
                 const selected = contributionNumber === amount;
                 return (
