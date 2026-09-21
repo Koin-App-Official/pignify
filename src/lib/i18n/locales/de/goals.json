@@ -9,6 +9,8 @@
     "back": "Zurück",
     "savedOfTarget": "{{saved}} von {{target}}",
     "settingAside": "{{amount}}/Monat zurückgelegt · Ziel erreicht am {{date}}",
+    "projectedFromCapacity": "Bei deiner aktuellen Rücklage erreichst du das bis {{date}}",
+    "capacityShortfallWarning": "Deine aktuelle Sparkapazität deckt nicht, was dieses Ziel monatlich benötigt.",
     "addSavingsPlaceholder": "Ersparnisse hinzufügen...",
     "save": "Speichern",
     "milestones": "Meilensteine",
@@ -21,5 +23,11 @@
     "warningMultiGoal": "Über all deine aktiven Ziele hinweg übersteigt dies deine monatliche Gesamtrücklage dein Einkommen. Du kannst das jederzeit anpassen.",
     "warningSingleGoal": "Dieses Ziel erfordert, mehr zurückzulegen als dein monatliches Einkommen. Du kannst es jederzeit anpassen.",
     "createGoal": "Ziel erstellen 🎉"
+  },
+  "applyCapacity": {
+    "title": "Ziele aktualisieren?",
+    "body": "Deine Sparkapazität hat sich geändert. Diese Ziele könnten früher erreicht werden:",
+    "notNow": "Nicht jetzt",
+    "updateGoals": "Ziele aktualisieren"
   }
 }

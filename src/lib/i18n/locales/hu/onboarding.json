@@ -24,6 +24,7 @@
     "monthlyHeadline": "Mennyit tudsz félretenni havonta?",
     "monthlySub": "Kiszámoljuk, mikor éred el a célodat.",
     "suggestionChip": "{{pct}}% · {{amount}}",
+    "savingsCapacityChip": "A jövedelmedből · {{amount}}",
     "amountPlaceholder": "0,00",
     "reachGoalBy": "{{amount}}/hó mellett ekkorra éred el a célodat:",
     "pctOfIncome": "Ez a havi jövedelmed {{pct}}%-a.",

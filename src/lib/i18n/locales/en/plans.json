@@ -99,6 +99,7 @@
     "keepBody_other": "Your plan is now {{plan}}, which keeps {{count}} active goals. You have {{total}}. Pick {{pickText}} to keep active — the rest come off your list, but nothing is ever deleted. They come straight back if you upgrade again.",
     "pickOne": "the one",
     "pickUpTo": "up to {{count}}",
+    "keepIncomeBody": "Pick {{pickText}} to keep active — the rest come off your list, but nothing is ever deleted.",
     "keepingCountOfLimit": "Keeping {{count}} of {{limit}}",
     "confirm": "Confirm",
     "genericErrorTitle": "Something went wrong",

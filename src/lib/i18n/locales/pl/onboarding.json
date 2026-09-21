@@ -24,6 +24,7 @@
     "monthlyHeadline": "Ile możesz odkładać co miesiąc?",
     "monthlySub": "Wyliczymy, kiedy osiągniesz cel.",
     "suggestionChip": "{{pct}}% · {{amount}}",
+    "savingsCapacityChip": "Z Twojego dochodu · {{amount}}",
     "amountPlaceholder": "0,00",
     "reachGoalBy": "Przy {{amount}}/mies. osiągniesz cel do",
     "pctOfIncome": "To {{pct}}% Twojego miesięcznego dochodu.",

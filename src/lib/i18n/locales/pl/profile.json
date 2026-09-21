@@ -9,6 +9,22 @@
   "monthlyIncome": "Miesięczny dochód",
   "notProvided": "Nie podano",
   "expenseBreakdown": "Podział wydatków",
+  "income": {
+    "addButton": "Dodaj dochód",
+    "defaultLabel": "Dochód",
+    "labelPlaceholder": "np. Wynagrodzenie",
+    "setAsideLabel": "Odłóż na oszczędności",
+    "setAsideHint": "Opcjonalnie",
+    "totalIncomeLabel": "Łączny miesięczny dochód",
+    "totalSetAsideLabel": "Łącznie odłożone",
+    "emptyState": "Nie dodano jeszcze żadnego dochodu.",
+    "archivedBadge": "Zarchiwizowano",
+    "removeA11y": "Usuń dochód",
+    "removeConfirmTitle": "Usunąć dochód?",
+    "removeConfirmBody": "To źródło dochodu zostanie usunięte z Twojego budżetu.",
+    "removeConfirmCancel": "Anuluj",
+    "removeConfirmConfirm": "Usuń"
+  },
   "notifications": {
     "title": "Powiadomienia",
     "paydayReminder": "Przypomnienie o dniu wypłaty",

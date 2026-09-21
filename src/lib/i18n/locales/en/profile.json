@@ -9,6 +9,22 @@
   "monthlyIncome": "Monthly Income",
   "notProvided": "Not provided",
   "expenseBreakdown": "Expense Breakdown",
+  "income": {
+    "addButton": "Add income",
+    "defaultLabel": "Income",
+    "labelPlaceholder": "e.g. Salary",
+    "setAsideLabel": "Set aside for savings",
+    "setAsideHint": "Optional",
+    "totalIncomeLabel": "Total monthly income",
+    "totalSetAsideLabel": "Total set aside",
+    "emptyState": "No income added yet.",
+    "archivedBadge": "Archived",
+    "removeA11y": "Remove income",
+    "removeConfirmTitle": "Remove income?",
+    "removeConfirmBody": "This income source will be removed from your budget.",
+    "removeConfirmCancel": "Cancel",
+    "removeConfirmConfirm": "Remove"
+  },
   "notifications": {
     "title": "Notifications",
     "paydayReminder": "Payday saving reminder",

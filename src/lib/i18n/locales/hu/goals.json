@@ -9,6 +9,8 @@
     "back": "Vissza",
     "savedOfTarget": "{{saved}} / {{target}}",
     "settingAside": "{{amount}}/hó félretéve · Cél elérve: {{date}}",
+    "projectedFromCapacity": "A jelenlegi félretett összeg alapján {{date}}-ra érnéd el ezt",
+    "capacityShortfallWarning": "A jelenlegi megtakarítási kereted nem fedezi, amire ennek a célnak havonta szüksége van.",
     "addSavingsPlaceholder": "Megtakarítás hozzáadása...",
     "save": "Mentés",
     "milestones": "Mérföldkövek",
@@ -21,5 +23,11 @@
     "warningMultiGoal": "Az összes aktív célodat figyelembe véve ez meghaladja a havi jövedelmedet. Bármikor módosíthatod.",
     "warningSingleGoal": "Ehhez a célhoz a havi jövedelmednél többet kell félretenned. Bármikor módosíthatod.",
     "createGoal": "Cél létrehozása 🎉"
+  },
+  "applyCapacity": {
+    "title": "Frissíted a céljaidat?",
+    "body": "Megváltozott a megtakarítási kereted. Ezeket a célokat hamarabb elérheted:",
+    "notNow": "Most nem",
+    "updateGoals": "Célok frissítése"
   }
 }

@@ -107,6 +107,7 @@
     "keepBody_many": "Twój plan to teraz {{plan}}, który pozwala zachować {{count}} aktywnych celów. Masz {{total}}. Wybierz {{pickText}}, aby zachować aktywne — reszta zniknie z listy, ale nic nigdy nie jest usuwane. Wrócą od razu, jeśli znów przejdziesz na wyższy plan.",
     "pickOne": "jeden",
     "pickUpTo": "do {{count}}",
+    "keepIncomeBody": "Wybierz {{pickText}}, aby zachować aktywne — reszta zniknie z listy, ale nic nigdy nie jest usuwane.",
     "keepingCountOfLimit": "Zachowujesz {{count}} z {{limit}}",
     "confirm": "Potwierdź",
     "genericErrorTitle": "Coś poszło nie tak",

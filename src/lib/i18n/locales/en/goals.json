@@ -9,6 +9,8 @@
     "back": "Back",
     "savedOfTarget": "{{saved}} of {{target}}",
     "settingAside": "Setting aside {{amount}}/month · Goal reached {{date}}",
+    "projectedFromCapacity": "At your current set-aside, you'd reach this by {{date}}",
+    "capacityShortfallWarning": "Your current savings capacity doesn't cover what this goal needs each month.",
     "addSavingsPlaceholder": "Add savings...",
     "save": "Save",
     "milestones": "Milestones",
@@ -21,5 +23,11 @@
     "warningMultiGoal": "Across all your active goals, this pushes your total monthly set-aside above your income. You can adjust anytime.",
     "warningSingleGoal": "This target requires setting aside more than your monthly income. You can adjust it anytime.",
     "createGoal": "Create Goal 🎉"
+  },
+  "applyCapacity": {
+    "title": "Update your goals?",
+    "body": "Your savings capacity changed. These goals could be reached sooner:",
+    "notNow": "Not now",
+    "updateGoals": "Update goals"
   }
 }
