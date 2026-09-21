@@ -155,23 +155,30 @@ export function PinCreationFlow({
   };
 
   if (stage === 'biometric') {
-    const isFace = bioKind === 'face';
+    const unlockFasterCopy =
+      bioKind === 'face'
+        ? t('pinCreation.unlockFasterWithFaceId')
+        : bioKind === 'fingerprint'
+          ? t('pinCreation.unlockFasterWithFingerprint')
+          : t('pinCreation.unlockFasterWithBiometrics');
+    const enableCopy =
+      bioKind === 'face'
+        ? t('pinCreation.enableFaceId')
+        : bioKind === 'fingerprint'
+          ? t('pinCreation.enableFingerprint')
+          : t('pinCreation.enableBiometrics');
     return (
       <View className="flex-1 items-center justify-center px-8">
         <Animated.View entering={FadeInDown.springify()} className="w-full items-center">
           <View className="mb-4">
             <Icon name="padlock" size={56} />
           </View>
-          <Text className="text-2xl font-black text-on-surface mb-2 text-center">
-            {isFace ? t('pinCreation.unlockFasterWithFaceId') : t('pinCreation.unlockFasterWithBiometrics')}
-          </Text>
+          <Text className="text-2xl font-black text-on-surface mb-2 text-center">{unlockFasterCopy}</Text>
           <Text className="text-sm font-medium text-on-surface-variant mb-10 text-center">
             {t('pinCreation.useYourPinInstead')}
           </Text>
           <Button onPress={enrollBiometric} disabled={busy} className="w-full h-14 mb-3">
-            <Text className="text-base font-bold text-primary-foreground">
-              {isFace ? t('pinCreation.enableFaceId') : t('pinCreation.enableBiometrics')}
-            </Text>
+            <Text className="text-base font-bold text-primary-foreground">{enableCopy}</Text>
           </Button>
           <Button variant="ghost" onPress={skipBiometric} disabled={busy} className="w-full">
             <Text className="text-base font-bold text-primary">{t('pinCreation.notNow')}</Text>
