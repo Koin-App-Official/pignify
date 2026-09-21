@@ -4,9 +4,11 @@
  * Biometrics never replace the PIN; they unlock the SAME PIN-derived key. When
  * the user opts in (right after setting/verifying a PIN) we stash the raw derived
  * key in SecureStore behind a biometric gate (requireAuthentication). A later
- * Face/Touch ID success returns the key, which decrypts the session blob exactly
- * as a correct PIN would. PIN entry is always available as a fallback.
+ * Face ID/Touch ID/fingerprint success returns the key, which decrypts the
+ * session blob exactly as a correct PIN would. PIN entry is always available as
+ * a fallback.
  */
+import { Platform } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import i18n from 'i18next';
@@ -29,10 +31,19 @@ export async function isBiometricAvailable(): Promise<boolean> {
   return hasHardware && enrolled;
 }
 
-/** Best-effort label for UI copy ("Use Face ID" / "Use fingerprint"). */
+/**
+ * Best-effort kind to DISPLAY to the user ("Use Face ID" / "Use fingerprint"),
+ * not a literal report of hardware capability. Android never resolves to
+ * 'face': "Face ID" is Apple's product name, and many Android devices report
+ * FACIAL_RECOGNITION support for a manufacturer face-unlock convenience
+ * feature even when the fingerprint sensor is the real enrolled biometric —
+ * so on Android that case is shown as 'fingerprint' instead.
+ */
 export async function getBiometricKind(): Promise<BiometricKind> {
   const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-  if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) return 'face';
+  if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+    return Platform.OS === 'android' ? 'fingerprint' : 'face';
+  }
   if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) return 'fingerprint';
   if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) return 'iris';
   return 'none';
