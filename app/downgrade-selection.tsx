@@ -5,25 +5,35 @@
  * downgrade, so nothing had happened yet and backing out cancelled the whole
  * thing. Plan changes now happen on the web and reach the app through the
  * entitlements sync, so by the time this screen opens the downgrade has already
- * taken effect and the only open question is which goals stay active. Dismissing
- * archives nothing and leaves `retentionRequiredFor` set, so the app asks again
- * later rather than auto-archiving on the user's behalf (C4/C7).
+ * taken effect and the only open question is which goals/incomes stay active.
+ * Dismissing archives nothing and leaves `retentionRequiredFor` set, so the app
+ * asks again later rather than auto-archiving on the user's behalf (C4/C7).
  *
- * Only goals are selectable. `retention.ts` models incomes and devices too,
- * but the client has no multi-income or device-list feature to pick from
- * today (a single `monthlyIncome` scalar, and devices live server-side only),
- * so those two never actually require a choice given real plan quotas — see
- * the guard below for what happens if that ever stops being true.
+ * Goals AND incomes are both selectable as of #191 Phase 9 — Family's 3 income
+ * sources down to Medium/Beginner's 1 is now a real over-limit case (this file
+ * used to say the opposite, back when the client only had a single
+ * `monthlyIncome` scalar and no plan quota could ever exceed it). Devices still
+ * aren't selectable here — they live server-side only and have no client list
+ * to pick from.
+ *
+ * Archiving an income can lower declared savings capacity, which is a Phase 8
+ * apply-to-goals trigger. That prompt is deliberately NOT shown here — see
+ * `applyRetentionSelection` in store.ts: it only sets `capacityApplyPending`,
+ * and Profile is what actually checks and offers it, the next time it's
+ * visited. Keeping the two sheets on different screens is what keeps them
+ * from ever stacking.
  */
 import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { X, Check } from 'lucide-react-native';
-import { useStore, type UserPlan } from '@/lib/store';
+import { X, Check, CreditCard } from 'lucide-react-native';
+import { useStore, formatCurrency, type UserPlan } from '@/lib/store';
 import { getPlanConfig } from '@/lib/entitlements';
 import { evaluateDowngradeRetention, validateRetentionSelection } from '@/lib/retention';
+import { activeIncomes } from '@/lib/income';
+import { archiveIncome } from '@/lib/incomeSync';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/icons/Icon';
 
@@ -33,7 +43,7 @@ export default function DowngradeSelection() {
   const { target: targetParam } = useLocalSearchParams<{ target?: UserPlan }>();
 
   const goals = useStore((s) => s.goals);
-  const monthlyIncome = useStore((s) => s.profile.monthlyIncome);
+  const profile = useStore((s) => s.profile);
   const applyRetentionSelection = useStore((s) => s.applyRetentionSelection);
   const retentionRequiredFor = useStore((s) => s.retentionRequiredFor);
 
@@ -42,16 +52,22 @@ export default function DowngradeSelection() {
   const target = targetParam ?? retentionRequiredFor ?? undefined;
 
   const activeGoals = goals.filter((g) => !g.archived);
+  const activeIncomeList = activeIncomes(profile.incomes);
   const requirement = target
     ? evaluateDowngradeRetention(target, {
         goals: activeGoals.length,
-        incomes: monthlyIncome != null ? 1 : 0,
+        incomes: activeIncomeList.length,
         devices: 0,
       })
     : null;
   const goalLimit = requirement && requirement.limits.goals !== 'unlimited' ? requirement.limits.goals : activeGoals.length;
+  const incomeLimit =
+    requirement && requirement.limits.incomes !== 'unlimited' ? requirement.limits.incomes : activeIncomeList.length;
 
   const [keepIds, setKeepIds] = useState<string[]>(() => activeGoals.slice(0, goalLimit).map((g) => g.id));
+  const [keepIncomeIds, setKeepIncomeIds] = useState<string[]>(() =>
+    activeIncomeList.slice(0, incomeLimit).map((i) => i.id)
+  );
   const [busy, setBusy] = useState(false);
 
   const toggle = (id: string) => {
@@ -62,17 +78,24 @@ export default function DowngradeSelection() {
     });
   };
 
+  const toggleIncome = (id: string) => {
+    setKeepIncomeIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= incomeLimit) return prev;
+      return [...prev, id];
+    });
+  };
+
   const confirm = () => {
     if (!target) return;
     const validation = validateRetentionSelection(
       target,
       {
         keepGoalIds: keepIds,
-        // Neither is user-selectable today (see file header) — an empty
-        // selection always validates, since every real plan's income/device
-        // quota is at least 1 and nothing over-limit can reach this screen for
-        // them yet.
-        keepIncomeIds: [],
+        keepIncomeIds,
+        // Not user-selectable today — devices live server-side only, and no
+        // real plan's device quota can be exceeded by anything the client
+        // itself tracks.
         keepDeviceIds: [],
       },
       t
@@ -82,7 +105,11 @@ export default function DowngradeSelection() {
       return;
     }
     setBusy(true);
-    applyRetentionSelection(keepIds);
+    // Snapshot which incomes are about to be archived before the store write
+    // replaces `profile.incomes` — needed to push the same set to the server.
+    const archivedIncomeIds = activeIncomeList.filter((i) => !keepIncomeIds.includes(i.id)).map((i) => i.id);
+    applyRetentionSelection({ keepGoalIds: keepIds, keepIncomeIds });
+    for (const id of archivedIncomeIds) archiveIncome(id);
     router.back();
   };
 
@@ -97,7 +124,11 @@ export default function DowngradeSelection() {
   }
 
   const planName = getPlanConfig(target).displayName;
-  const canConfirm = keepIds.length > 0 && keepIds.length <= goalLimit;
+  const showIncomeSection = requirement.toArchive.incomes > 0;
+  const canConfirm =
+    keepIds.length > 0 &&
+    keepIds.length <= goalLimit &&
+    (!showIncomeSection || (keepIncomeIds.length > 0 && keepIncomeIds.length <= incomeLimit));
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -127,6 +158,9 @@ export default function DowngradeSelection() {
           })}
         </Text>
 
+        <Text className="mb-1 text-xs font-bold uppercase text-on-surface-variant">
+          {t('downgradeSelection.retentionResource.goals')}
+        </Text>
         <Text className="mb-3 text-sm font-bold text-on-surface">
           {t('downgradeSelection.keepingCountOfLimit', { count: keepIds.length, limit: goalLimit })}
         </Text>
@@ -162,6 +196,61 @@ export default function DowngradeSelection() {
             );
           })}
         </View>
+
+        {showIncomeSection && (
+          <>
+            <Text className="mt-8 mb-2 text-sm font-medium text-on-surface-variant leading-5">
+              {t('downgradeSelection.keepIncomeBody', {
+                pickText:
+                  incomeLimit === 1
+                    ? t('downgradeSelection.pickOne')
+                    : t('downgradeSelection.pickUpTo', { count: incomeLimit }),
+              })}
+            </Text>
+
+            <Text className="mb-1 text-xs font-bold uppercase text-on-surface-variant">
+              {t('downgradeSelection.retentionResource.incomes')}
+            </Text>
+            <Text className="mb-3 text-sm font-bold text-on-surface">
+              {t('downgradeSelection.keepingCountOfLimit', { count: keepIncomeIds.length, limit: incomeLimit })}
+            </Text>
+
+            <View className="gap-3">
+              {activeIncomeList.map((income) => {
+                const kept = keepIncomeIds.includes(income.id);
+                const disabled = !kept && keepIncomeIds.length >= incomeLimit;
+                return (
+                  <TouchableOpacity
+                    key={income.id}
+                    onPress={() => toggleIncome(income.id)}
+                    disabled={disabled}
+                    accessibilityRole="button"
+                    className={`flex-row items-center gap-3 rounded-2xl border px-5 py-4 ${
+                      kept ? 'border-primary bg-primary-container' : 'border-outline bg-surface-container-low'
+                    } ${disabled ? 'opacity-50' : ''}`}
+                  >
+                    <CreditCard size={24} color="#64748B" />
+                    <View className="flex-1">
+                      <Text className="text-base font-bold text-on-surface" numberOfLines={1}>
+                        {income.label}
+                      </Text>
+                      <Text className="text-xs text-on-surface-variant">
+                        {formatCurrency(income.amount, profile.currency)}
+                      </Text>
+                    </View>
+                    <View
+                      className={`h-6 w-6 items-center justify-center rounded-full border-2 ${
+                        kept ? 'border-primary bg-primary' : 'border-outline'
+                      }`}
+                    >
+                      {kept && <Check size={14} color="#ffffff" />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
       </ScrollView>
 
       <View className="px-5 pb-6 pt-2">

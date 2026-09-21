@@ -34,6 +34,7 @@ import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar'
 import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
 import { deriveGoalDate, monthDiff, requiredContribution } from '@/lib/goalMath';
+import { makeIncome } from '@/lib/income';
 import { loadDraft, saveDraft, clearDraft } from '@/lib/onboardingDraft';
 import { fetchEntitlementsSync } from '@/lib/entitlementsSync';
 import { requestNotificationPermission } from '@/lib/notifications';
@@ -507,6 +508,25 @@ export default function Onboarding() {
     setIsLoading(true);
     setNetworkError('');
     try {
+      // Minted once, shared between the webhook payload's `incomeId` and the
+      // local store write below — the same row on both sides (#191 B3). Without
+      // this, CLAUDE_onboarding's own `unique()` id and the client's later
+      // income sync (Phase 5) would create two rows for one income.
+      //
+      // `saveAmount` is seeded from the contribution the user just chose
+      // (#191 D2/Phase 7) — at this point in onboarding there's exactly one
+      // goal and one income, so the contribution they picked *is* their
+      // declared savings capacity. `monthlyContribution` can be 0 if the
+      // ContributionStep math ever produced no valid number; guard against
+      // writing a meaningless $0 "set aside" rather than leaving it unset.
+      const primaryIncome = incomeSkipped
+        ? null
+        : makeIncome({
+            label: 'Primary',
+            amount: incomeNumber,
+            saveAmount: monthlyContribution > 0 ? monthlyContribution : null,
+          });
+
       const payload = {
         userID: userId, // canonical id = Appwrite account $id
         email,
@@ -521,6 +541,7 @@ export default function Onboarding() {
         targetDate: new Date(targetDate).toISOString(),
         monthlyIncome: incomeSkipped ? null : incomeNumber,
         incomeSkipped,
+        incomeId: primaryIncome?.id,
         planningMode,
         monthlyContribution,
         // Deprecated alias, kept for workflows that haven't migrated yet.
@@ -566,7 +587,11 @@ export default function Onboarding() {
         dateOfBirth,
         country,
         currency,
-        monthlyIncome: incomeSkipped ? null : incomeNumber,
+        // Onboarding stays single-income (decision D3, #191). Reuses
+        // `primaryIncome` minted above rather than calling makeIncome() again
+        // — it must be the exact same id the webhook payload's `incomeId`
+        // carried, or CLAUDE_onboarding's row and this local one diverge.
+        incomes: primaryIncome ? [primaryIncome] : [],
         incomeSkipped,
         planningMode,
         monthlyContribution,

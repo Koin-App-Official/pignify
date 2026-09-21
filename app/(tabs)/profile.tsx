@@ -5,17 +5,24 @@ import { Switch } from 'react-native';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bell, CreditCard, RotateCcw, Pencil, Check, Settings as SettingsIcon } from 'lucide-react-native';
+import { Bell, CreditCard, RotateCcw, Pencil, Check, Plus, Trash2, Settings as SettingsIcon } from 'lucide-react-native';
 
-import { useStore, EXPENSE_CATEGORIES, formatCurrency } from '@/lib/store';
+import { useStore, EXPENSE_CATEGORIES, formatCurrency, type UserPlan, type IncomeSource } from '@/lib/store';
 import { useAuthLock } from '@/lib/authLock';
+import { useEntitlements } from '@/hooks/useEntitlements';
+import { gateInfo, type GateInfo } from '@/lib/entitlements';
+import { UpgradeModal } from '@/components/UpgradeModal';
+import { CapacityApplyModal, type CapacityApplyRow } from '@/components/CapacityApplyModal';
 import { Button } from '@/components/ui/button';
 import { CurrencyAmountInput } from '@/components/ui/currency-amount-input';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { requestNotificationPermission, getNotificationPermissionStatus } from '@/lib/notifications';
-import { TEXT_INPUT_CENTERING } from '@/lib/utils';
+import { PLACEHOLDER_COLOR, TEXT_INPUT_CENTERING } from '@/lib/utils';
 import { Mascot } from '@/components/Mascot';
 import { Icon } from '@/components/icons/Icon';
+import { makeIncome, activeIncomes, totalIncome, totalSaveAside } from '@/lib/income';
+import { pushIncome, deleteIncome } from '@/lib/incomeSync';
+import { capacityApplyCandidates, type CapacityApplyCandidate } from '@/lib/goalMath';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -34,14 +41,44 @@ export default function Profile() {
   const goals = useStore((state) => state.goals);
   const achievements = useStore((state) => state.achievements);
   const updateProfile = useStore((state) => state.updateProfile);
+  const updateGoal = useStore((state) => state.updateGoal);
+  const capacityApplyPending = useStore((state) => state.capacityApplyPending);
+  const clearCapacityApplyPending = useStore((state) => state.clearCapacityApplyPending);
   const refreshNotifications = useStore((state) => state.refreshNotifications);
   const resetForDemo = useStore((state) => state.resetForDemo);
   const resetLock = useAuthLock((state) => state.resetToLogin);
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile.name);
-  const [editingIncome, setEditingIncome] = useState(false);
-  const [incomeInput, setIncomeInput] = useState(profile.monthlyIncome != null ? String(profile.monthlyIncome) : '');
+
+  // Multi-income list (#191 Phase 6). `editingIncomeId` is either the id of
+  // the row currently being edited, `'new'` for the add-form, or `null` when
+  // the list is in its plain display state — mirrors the single-inline-edit-
+  // at-a-time pattern the name field already established, extended to "one
+  // row or the add-form at a time".
+  const [editingIncomeId, setEditingIncomeId] = useState<string | 'new' | null>(null);
+  const [labelInput, setLabelInput] = useState('');
+  const [amountInput, setAmountInput] = useState('');
+  const [saveAsideInput, setSaveAsideInput] = useState('');
+  const [gate, setGate] = useState<GateInfo | null>(null);
+  const { t: tPlans } = useTranslation('plans');
+  const { incomes: incomeQuota, plan } = useEntitlements();
+
+  // Goals offered a capacity-based date update (#191 D2/Phase 8). Empty =
+  // sheet closed. Recomputed fresh after every capacity-affecting edit below
+  // — there's no persisted "already asked" flag, so dismissing and then
+  // making another such edit naturally re-offers rather than going silent.
+  const [applyCandidates, setApplyCandidates] = useState<CapacityApplyCandidate[]>([]);
+  const applyRows: CapacityApplyRow[] = applyCandidates.map((c) => ({
+    goalId: c.goalId,
+    goalName: goals.find((g) => g.id === c.goalId)?.name ?? '',
+    oldDate: c.oldDate,
+    newDate: c.newDate,
+  }));
+
+  const activeIncomeList = activeIncomes(profile.incomes);
+  const totalIncomeAmount = totalIncome(profile.incomes);
+  const totalSaveAsideAmount = totalSaveAside(profile.incomes);
 
   const totalSaved = goals.reduce((s, g) => s + g.savedAmount, 0);
   const unlockedBadges = achievements.filter((a) => a.unlocked).length;
@@ -113,23 +150,115 @@ export default function Profile() {
     setEditingName(false);
   };
 
-  const openIncomeEdit = () => {
-    setIncomeInput(profile.monthlyIncome != null ? String(profile.monthlyIncome) : '');
-    setEditingIncome(true);
+  const openEditIncome = (income: IncomeSource) => {
+    setLabelInput(income.label);
+    setAmountInput(String(income.amount));
+    setSaveAsideInput(income.saveAmount != null ? String(income.saveAmount) : '');
+    setEditingIncomeId(income.id);
   };
 
-  const saveIncome = () => {
-    const parsed = Number(incomeInput);
-    if (!(parsed > 0)) return;
-    updateProfile({ monthlyIncome: parsed, incomeSkipped: false });
-    setEditingIncome(false);
+  const openAddIncome = () => {
+    // Family gate (C6/C13): the limit stays visible and tappable, opening the
+    // upgrade popup instead of the form, same pattern as goals.tsx's goal quota.
+    if (!incomeQuota.allowed) {
+      setGate(gateInfo('incomes', plan, tPlans));
+      return;
+    }
+    setLabelInput('');
+    setAmountInput('');
+    setSaveAsideInput('');
+    setEditingIncomeId('new');
+  };
+
+  // After any capacity-affecting edit (income amount/set-aside changed,
+  // added, or removed — Phase 9 will also call this after an archive),
+  // recompute which contribution-mode goals would now reach their target on
+  // a different date and, if any, open the offer sheet. Read-only until the
+  // user actually taps "Update goals" (applyCapacityToGoals below).
+  const checkCapacityApply = (nextIncomes: IncomeSource[]) => {
+    const capacity = totalSaveAside(nextIncomes);
+    setApplyCandidates(capacityApplyCandidates(goals, capacity));
+  };
+
+  // Downgrade retention (#191 Phase 9) can archive incomes from a different
+  // screen (downgrade-selection.tsx), which sets this flag rather than
+  // checking directly — keeping that screen from ever rendering this sheet
+  // itself is what guarantees it can never stack with the retention sheet.
+  // Runs once per true transition (including "already true on mount" after a
+  // restart) and immediately clears the flag either way, so it can't re-fire
+  // on unrelated re-renders — unlike a raw `[profile.incomes]` dependency,
+  // which would also fire from ordinary time passing (a goal's projected
+  // date can drift from its stored one just by the calendar advancing, with
+  // no capacity change at all).
+  useEffect(() => {
+    if (!capacityApplyPending) return;
+    checkCapacityApply(profile.incomes);
+    clearCapacityApplyPending();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capacityApplyPending]);
+
+  const applyCapacityToGoals = () => {
+    for (const c of applyCandidates) {
+      updateGoal(c.goalId, { monthlyContribution: c.newContribution, deadline: c.newDate });
+    }
+    setApplyCandidates([]);
+  };
+
+  const saveIncomeEdit = () => {
+    const parsedAmount = Number(amountInput);
+    if (!(parsedAmount > 0)) return;
+    const trimmedSaveAside = saveAsideInput.trim();
+    const parsedSaveAside = trimmedSaveAside === '' ? null : Number(trimmedSaveAside);
+    const saveAmount =
+      parsedSaveAside != null && !Number.isNaN(parsedSaveAside) && parsedSaveAside >= 0
+        ? parsedSaveAside
+        : null;
+    const label = labelInput.trim() || t('income.defaultLabel');
+
+    let updated: IncomeSource;
+    let nextIncomes: IncomeSource[];
+    if (editingIncomeId === 'new') {
+      updated = makeIncome({ label, amount: parsedAmount, saveAmount });
+      nextIncomes = [...profile.incomes, updated];
+    } else {
+      const existing = profile.incomes.find((i) => i.id === editingIncomeId);
+      if (!existing) return;
+      updated = { ...existing, label, amount: parsedAmount, saveAmount };
+      nextIncomes = profile.incomes.map((i) => (i.id === editingIncomeId ? updated : i));
+    }
+    updateProfile({ incomes: nextIncomes, incomeSkipped: false });
+    if (profile.userID) pushIncome(profile.userID, updated);
+    setEditingIncomeId(null);
+    checkCapacityApply(nextIncomes);
+  };
+
+  const removeIncome = (income: IncomeSource) => {
+    Alert.alert(
+      t('income.removeConfirmTitle'),
+      t('income.removeConfirmBody'),
+      [
+        { text: t('income.removeConfirmCancel'), style: 'cancel' },
+        {
+          text: t('income.removeConfirmConfirm'),
+          style: 'destructive',
+          onPress: () => {
+            const nextIncomes = profile.incomes.filter((i) => i.id !== income.id);
+            updateProfile({ incomes: nextIncomes });
+            deleteIncome(income.id);
+            checkCapacityApply(nextIncomes);
+          },
+        },
+      ]
+    );
   };
 
   // Deep-linked from the dashboard's income-skipped nudge (?editIncome=1) —
-  // open the income card straight into edit mode instead of leaving the user
-  // to find the pencil themselves.
+  // open the first income for editing, or the add-form when the list is
+  // empty, instead of leaving the user to find it themselves.
   useEffect(() => {
-    if (editIncome === '1') openIncomeEdit();
+    if (editIncome !== '1') return;
+    if (profile.incomes.length > 0) openEditIncome(profile.incomes[0]);
+    else openAddIncome();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editIncome]);
 
@@ -209,34 +338,124 @@ export default function Profile() {
             <CreditCard size={16} color="#64748B" />
             <Text className="text-sm font-bold text-on-surface">{t('monthlyIncome')}</Text>
           </View>
-          {editingIncome ? (
-            <View className="flex-row items-center gap-2">
-              <View className="flex-1">
-                <CurrencyAmountInput
-                  currencyCode={profile.currency}
-                  value={incomeInput}
-                  onChangeText={setIncomeInput}
-                  placeholder={t('onboarding:contribution.amountPlaceholder')}
-                  autoFocus
+
+          {profile.incomes.length === 0 && editingIncomeId !== 'new' && (
+            <Text className="mb-3 text-sm font-medium text-on-surface-variant">{t('income.emptyState')}</Text>
+          )}
+
+          <View className="gap-4">
+            {/* All incomes render here, active or archived (C7 — archived
+                stays visible, never deleted; only excluded from totals,
+                capacity and quota via activeIncomes()). Mirrors how goals.tsx
+                already lists archived goals unfiltered. */}
+            {profile.incomes.map((income) =>
+              editingIncomeId === income.id ? (
+                <IncomeEditForm
+                  key={income.id}
+                  currency={profile.currency}
+                  labelInput={labelInput}
+                  onLabelChange={setLabelInput}
+                  amountInput={amountInput}
+                  onAmountChange={setAmountInput}
+                  saveAsideInput={saveAsideInput}
+                  onSaveAsideChange={setSaveAsideInput}
+                  onSave={saveIncomeEdit}
+                  labelPlaceholder={t('income.labelPlaceholder')}
+                  amountPlaceholder={t('onboarding:contribution.amountPlaceholder')}
+                  setAsideCaption={`${t('income.setAsideLabel')} · ${t('income.setAsideHint')}`}
+                  saveA11y={t('common:a11y.save')}
                 />
-              </View>
-              <TouchableOpacity
-                onPress={saveIncome}
-                hitSlop={8}
-                className="h-10 w-10 items-center justify-center rounded-full bg-primary/20"
-                accessibilityRole="button"
-                accessibilityLabel={t('common:a11y.save')}
-              >
-                <Check size={18} color="#1D4ED8" />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity onPress={openIncomeEdit} className="flex-row items-center gap-2">
-              <Text className="text-3xl font-black text-on-surface">
-                {profile.monthlyIncome != null ? formatCurrency(profile.monthlyIncome, profile.currency) : t('notProvided')}
-              </Text>
-              <Pencil size={14} color="#1D4ED8" />
+              ) : (
+                <View
+                  key={income.id}
+                  className={`flex-row items-center gap-2 ${income.archived ? 'opacity-50' : ''}`}
+                >
+                  <TouchableOpacity
+                    onPress={() => openEditIncome(income)}
+                    className="flex-1 flex-row items-center justify-between"
+                  >
+                    <View className="flex-1">
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-sm font-semibold text-on-surface" numberOfLines={1}>
+                          {income.label}
+                        </Text>
+                        {income.archived && (
+                          <View className="rounded-full bg-surface-container px-2 py-0.5">
+                            <Text className="text-[10px] font-bold uppercase text-on-surface-variant">
+                              {t('income.archivedBadge')}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <View className="flex-row items-center gap-1">
+                        <Text className="text-lg font-black text-on-surface">
+                          {formatCurrency(income.amount, profile.currency)}
+                        </Text>
+                        <Pencil size={12} color="#1D4ED8" />
+                      </View>
+                      {income.saveAmount != null && income.saveAmount > 0 && (
+                        <Text className="text-xs text-on-surface-variant">
+                          {t('income.setAsideLabel')}: {formatCurrency(income.saveAmount, profile.currency)}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => removeIncome(income)}
+                    hitSlop={8}
+                    className="h-9 w-9 items-center justify-center rounded-full"
+                    accessibilityRole="button"
+                    accessibilityLabel={t('income.removeA11y')}
+                  >
+                    <Trash2 size={16} color="#DC2626" />
+                  </TouchableOpacity>
+                </View>
+              )
+            )}
+
+            {editingIncomeId === 'new' && (
+              <IncomeEditForm
+                currency={profile.currency}
+                labelInput={labelInput}
+                onLabelChange={setLabelInput}
+                amountInput={amountInput}
+                onAmountChange={setAmountInput}
+                saveAsideInput={saveAsideInput}
+                onSaveAsideChange={setSaveAsideInput}
+                onSave={saveIncomeEdit}
+                labelPlaceholder={t('income.labelPlaceholder')}
+                amountPlaceholder={t('onboarding:contribution.amountPlaceholder')}
+                setAsideCaption={`${t('income.setAsideLabel')} · ${t('income.setAsideHint')}`}
+                saveA11y={t('common:a11y.save')}
+                autoFocus
+              />
+            )}
+          </View>
+
+          {editingIncomeId === null && (
+            <TouchableOpacity onPress={openAddIncome} className="mt-4 flex-row items-center gap-2 py-1">
+              <Plus size={16} color="#1D4ED8" />
+              <Text className="text-sm font-bold text-primary">{t('income.addButton')}</Text>
             </TouchableOpacity>
+          )}
+
+          {activeIncomeList.length > 0 && (
+            <View className="mt-4 pt-4 gap-1" style={{ borderTopWidth: 1, borderTopColor: 'rgba(100,116,139,0.15)' }}>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs font-medium text-on-surface-variant">{t('income.totalIncomeLabel')}</Text>
+                <Text className="text-sm font-bold text-on-surface">
+                  {formatCurrency(totalIncomeAmount, profile.currency)}
+                </Text>
+              </View>
+              {totalSaveAsideAmount > 0 && (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs font-medium text-on-surface-variant">{t('income.totalSetAsideLabel')}</Text>
+                  <Text className="text-sm font-bold text-on-surface">
+                    {formatCurrency(totalSaveAsideAmount, profile.currency)}
+                  </Text>
+                </View>
+              )}
+            </View>
           )}
         </View>
         </FadeInStagger>
@@ -323,7 +542,100 @@ export default function Profile() {
       >
         <SettingsIcon size={22} color="#FFFFFF" />
       </TouchableOpacity>
+
+      <UpgradeModal
+        isVisible={gate !== null}
+        gate={gate}
+        onClose={() => setGate(null)}
+        onViewPlans={(target: UserPlan) => {
+          setGate(null);
+          router.push(`/plans?highlight=${target}`);
+        }}
+      />
+
+      <CapacityApplyModal
+        isVisible={applyRows.length > 0}
+        rows={applyRows}
+        language={profile.language}
+        onApply={applyCapacityToGoals}
+        onDismiss={() => setApplyCandidates([])}
+      />
     </SafeAreaView>
     </ScreenTransition>
+  );
+}
+
+interface IncomeEditFormProps {
+  currency: string;
+  labelInput: string;
+  onLabelChange: (v: string) => void;
+  amountInput: string;
+  onAmountChange: (v: string) => void;
+  saveAsideInput: string;
+  onSaveAsideChange: (v: string) => void;
+  onSave: () => void;
+  labelPlaceholder: string;
+  amountPlaceholder: string;
+  setAsideCaption: string;
+  saveA11y: string;
+  autoFocus?: boolean;
+}
+
+/**
+ * The three-field inline edit form shared by "edit an existing income" and
+ * "add a new income" (#191 Phase 6) — a top-level sibling, not nested inside
+ * Profile(), so its identity is stable across Profile's re-renders and the
+ * TextInputs don't lose focus/remount on every keystroke.
+ */
+function IncomeEditForm({
+  currency,
+  labelInput,
+  onLabelChange,
+  amountInput,
+  onAmountChange,
+  saveAsideInput,
+  onSaveAsideChange,
+  onSave,
+  labelPlaceholder,
+  amountPlaceholder,
+  setAsideCaption,
+  saveA11y,
+  autoFocus,
+}: IncomeEditFormProps) {
+  return (
+    <View className="gap-2 rounded-xl bg-surface-container p-3">
+      <TextInput
+        value={labelInput}
+        onChangeText={onLabelChange}
+        placeholder={labelPlaceholder}
+        placeholderTextColor={PLACEHOLDER_COLOR}
+        autoFocus={autoFocus}
+        className="h-11 rounded-xl bg-surface-container-low border border-outline-variant px-3 text-sm font-semibold text-on-surface"
+      />
+      <CurrencyAmountInput
+        currencyCode={currency}
+        value={amountInput}
+        onChangeText={onAmountChange}
+        placeholder={amountPlaceholder}
+      />
+      <View>
+        <Text className="mb-1 text-xs font-medium text-on-surface-variant">{setAsideCaption}</Text>
+        <CurrencyAmountInput
+          currencyCode={currency}
+          value={saveAsideInput}
+          onChangeText={onSaveAsideChange}
+          placeholder={amountPlaceholder}
+        />
+      </View>
+      <TouchableOpacity
+        onPress={onSave}
+        hitSlop={8}
+        className="self-end h-10 w-10 items-center justify-center rounded-full bg-primary/20"
+        accessibilityRole="button"
+        accessibilityLabel={saveA11y}
+      >
+        <Check size={18} color="#1D4ED8" />
+      </TouchableOpacity>
+    </View>
   );
 }

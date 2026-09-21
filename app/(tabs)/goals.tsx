@@ -18,8 +18,9 @@ import { gateInfo, type GateInfo } from '@/lib/entitlements';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { ScreenTransition } from '@/components/ScreenTransition';
 import { ContributionStep, PlanningMode } from '@/components/ContributionStep';
-import { resolveMonthlyContribution } from '@/lib/goalMath';
+import { resolveMonthlyContribution, capacityShareForGoal, projectedGoalDate } from '@/lib/goalMath';
 import { getTodayString } from '@/lib/deposits';
+import { totalIncome, totalSaveAside } from '@/lib/income';
 import { FadeInStagger } from '@/components/animation/FadeInStagger';
 import { PressableScale } from '@/components/animation/PressableScale';
 import { AnimatedProgressBar } from '@/components/animation/AnimatedProgressBar';
@@ -68,7 +69,9 @@ export default function Goals() {
   const replay = useFocusReplay();
   const { confettiProgress: depositConfettiProgress, celebrate: celebrateDeposit, active: depositConfettiActive } = useCelebrate();
   const { confettiProgress: creationConfettiProgress, celebrate: celebrateCreation, active: creationConfettiActive } = useCelebrate();
-  const monthlyIncome = useStore((state) => state.profile.monthlyIncome);
+  const incomes = useStore((state) => state.profile.incomes);
+  const incomeSkipped = useStore((state) => state.profile.incomeSkipped);
+  const monthlyIncome = totalIncome(incomes);
   const addGoal = useStore((state) => state.addGoal);
   const updateGoal = useStore((state) => state.updateGoal);
   const addXP = useStore((state) => state.addXP);
@@ -106,9 +109,16 @@ export default function Goals() {
 
 
   // Derived
+  const activeGoalCount = useMemo(() => goals.filter((g) => !g.archived).length, [goals]);
+  // Declared monthly savings capacity (#191 D2) — the sum of every active
+  // income's set-aside. This goal's share of it (existing active goals plus
+  // the one being created) is what ContributionStep prefills from below.
+  const savingsCapacity = totalSaveAside(incomes);
+  const capacityShareForNewGoal = capacityShareForGoal(savingsCapacity, activeGoalCount + 1);
+
   // Multiple-goals reality check: sum what every other active goal already
   // sets aside so review can warn if adding this one pushes the total over
-  // income — a check that couldn't exist in the old date-first flow.
+  // affordability — a check that couldn't exist in the old date-first flow.
   const otherActiveGoalsMonthlyTotal = useMemo(
     () =>
       goals
@@ -117,8 +127,12 @@ export default function Goals() {
     [goals]
   );
   const totalMonthlyWithNewGoal = otherActiveGoalsMonthlyTotal + monthlyContribution;
+  // Compares against declared capacity when set — comparing against raw
+  // income was always a weak proxy (nobody saves 100% of income) — falling
+  // back to income when no set-aside has been declared (#191 Phase 7).
+  const affordabilityBasis = savingsCapacity > 0 ? savingsCapacity : monthlyIncome;
   const savingsExceedsIncome =
-    !!monthlyIncome && monthlyIncome > 0 && totalMonthlyWithNewGoal > monthlyIncome;
+    !!affordabilityBasis && affordabilityBasis > 0 && totalMonthlyWithNewGoal > affordabilityBasis;
 
   const goalIcon = getGoalIconKey(goalName);
 
@@ -196,6 +210,23 @@ export default function Goals() {
   if (viewGoal && g) {
     const pct = Math.round((g.savedAmount / g.targetAmount) * 100);
     const monthlySetAside = resolveMonthlyContribution(g.targetAmount, g.deadline, g.createdAt, g.monthlyContribution);
+    // Read-only projection from declared capacity (#191 Phase 7/8) — this
+    // goal's stored plan (above) is never rewritten here; offering to apply
+    // a different date (contribution-mode goals only) is Phase 8's
+    // interactive half, driven from Profile, not this display.
+    const goalCapacityShare = capacityShareForGoal(savingsCapacity, activeGoalCount);
+    // Undefined planningMode means 'deadline' (pre-flip goals — see Goal's own
+    // doc comment in store.ts), so this checks the positive case explicitly
+    // rather than `!== 'deadline'`.
+    const isContributionMode = g.planningMode === 'contribution';
+    const capacityProjection =
+      isContributionMode && savingsCapacity > 0
+        ? projectedGoalDate(g.targetAmount, g.savedAmount, goalCapacityShare)
+        : null;
+    // Deadline-mode goals never get their date rewritten by capacity (D2/
+    // Phase 8) — instead, a shortfall warning when their fixed required
+    // contribution doesn't fit this goal's share of declared capacity.
+    const deadlineShortfall = !isContributionMode && savingsCapacity > 0 && monthlySetAside > goalCapacityShare;
     return (
       <ScreenTransition>
       <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
@@ -240,7 +271,21 @@ export default function Goals() {
                       date: formatMonthYear(g.deadline, language),
                     })}
                   </Text>
+                  {capacityProjection && (
+                    <Text className="text-xs text-on-surface-variant mt-1">
+                      {t('detail.projectedFromCapacity', {
+                        date: formatMonthYear(capacityProjection.date, language),
+                      })}
+                    </Text>
+                  )}
                 </View>
+
+                {deadlineShortfall && (
+                  <View className="flex-row items-start gap-2 rounded-2xl bg-warning-container p-4 mb-6">
+                    <AlertTriangle size={16} color="#92400E" style={{ marginTop: 1 }} />
+                    <Text className="flex-1 text-sm text-warning">{t('detail.capacityShortfallWarning')}</Text>
+                  </View>
+                )}
 
                 <View className="mb-6 flex-row gap-3">
                   <View className="flex-1">
@@ -416,7 +461,8 @@ export default function Goals() {
                   language={language}
                   targetAmount={Number(targetAmount)}
                   monthlyIncome={monthlyIncome}
-                  incomeSkipped={!monthlyIncome}
+                  savingsCapacity={capacityShareForNewGoal}
+                  incomeSkipped={incomeSkipped}
                   planningMode={planningMode}
                   onPlanningModeChange={setPlanningMode}
                   contribution={contributionInput}
