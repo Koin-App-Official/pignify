@@ -36,6 +36,7 @@ import { registerDevice } from './device';
 import { useStore } from './store';
 import { planGateReason, planGateReasonOnUnlock } from './planGate';
 import { fetchServerGoals } from './goalsSync';
+import { fetchServerIncomes } from './incomeSync';
 import { isUsableSecret } from './sessionSecret';
 import { createLogger } from './logger';
 
@@ -167,6 +168,21 @@ function hydrateGoalsIfEmpty(userId: string): void {
 }
 
 /**
+ * Same best-effort reinstall restore as hydrateGoalsIfEmpty, for income
+ * (#191 Phase 5, bug B4). Only when local incomes are empty — a non-empty
+ * local array is never overwritten, same rationale as goalsSync.ts: the
+ * server row can only ever be as fresh as local, never fresher.
+ */
+function hydrateIncomesIfEmpty(userId: string): void {
+  if (useStore.getState().profile.incomes.length > 0) return;
+  fetchServerIncomes(userId).then((incomes) => {
+    if (incomes && incomes.length > 0 && useStore.getState().profile.incomes.length === 0) {
+      useStore.getState().updateProfile({ incomes });
+    }
+  });
+}
+
+/**
  * Every route to `unlocked` goes through here, so a trial that lapses between
  * sessions is caught on the next unlock rather than only at login. Diverting to
  * the gate records `unlocked` as the return target — the PIN has already been
@@ -284,6 +300,7 @@ export const useAuthLock = create<AuthLockState>((set, get) => ({
       set({ userId, sessionSecret: secret, status, planGateReturnTo, loginRequested: false });
     }
     hydrateGoalsIfEmpty(userId);
+    hydrateIncomesIfEmpty(userId);
   },
 
   onPlanAcknowledged: async () => {
