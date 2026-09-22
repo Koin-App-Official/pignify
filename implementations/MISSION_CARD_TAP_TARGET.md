@@ -104,12 +104,12 @@ against the new prop signature — the new props are additive and optional.
 
 The primitive fix alone may be sufficient, but a 40 dp target is still below spec.
 
-- [ ] Move the tap gesture from the status circle to the whole card row in `MissionCard`
-- [ ] Keep `PulsingRing` wrapping the circle visual only, so the breathing animation is unchanged
-- [ ] Keep the existing disabled matrix exactly as-is (`claimed` -> off, `locked` non-quiz -> off,
+- [x] Move the tap gesture from the status circle to the whole card row in `MissionCard`
+- [x] Keep `PulsingRing` wrapping the circle visual only, so the breathing animation is unchanged
+- [x] Keep the existing disabled matrix exactly as-is (`claimed` -> off, `locked` non-quiz -> off,
       `ready` / `manual` / `locked`-quiz -> on)
-- [ ] Verify no nested `GestureDetector` remains inside the card
-- [ ] Run `npm run typecheck`
+- [x] Verify no nested `GestureDetector` remains inside the card
+- [x] Run `npm run typecheck`
 
 **Files modified:** `app/(tabs)/missions.tsx`
 
