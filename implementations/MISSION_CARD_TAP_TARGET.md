@@ -124,11 +124,11 @@ a visual one.
 The project's suite is vitest, pure-logic only — there are no RN render tests and no
 `@testing-library` dependency, so the testable surface is the state machine.
 
-- [ ] Move `getCardState` out of `missions.tsx` into `src/lib/missions.ts` and export it
-- [ ] Add an exported `isMissionActionable(state, def)` encoding the disabled matrix, and use it in
+- [x] Move `getCardState` out of `missions.tsx` into `src/lib/missions.ts` and export it
+- [x] Add an exported `isMissionActionable(state, def)` encoding the disabled matrix, and use it in
       `MissionCard` in place of the inline boolean
-- [ ] Add tests covering all four states plus the locked-money-quiz exception
-- [ ] Run `npm test`
+- [x] Add tests covering all four states plus the locked-money-quiz exception
+- [x] Run `npm test`
 
 **Files modified:** `src/lib/missions.ts`, `src/lib/missions.test.ts`, `app/(tabs)/missions.tsx`
 
