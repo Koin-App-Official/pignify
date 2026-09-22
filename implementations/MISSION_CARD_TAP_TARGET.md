@@ -142,7 +142,7 @@ tap-eligibility logic inline.
 `PressableScale` was written from the animation guide, and the guide's snippet still teaches the
 defect — §5.1's example has neither `shouldCancelWhenOutside` nor `hitSlop`.
 
-- [ ] Update `guides/ANIMATION_GUIDE.md` §5.1 with the Android `shouldCancelWhenOutside` caveat and
+- [x] Update `guides/ANIMATION_GUIDE.md` §5.1 with the Android `shouldCancelWhenOutside` caveat and
       the corrected snippet
 - [ ] **Manual verification on a physical Android device:** ready, manual and locked-quiz cards all
       respond when tapped anywhere on the card; scrolling the list does *not* accidentally claim a
