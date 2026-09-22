@@ -18,9 +18,13 @@ import { useStore, formatCurrency, type ActiveMission } from '@/lib/store';
 import {
   MISSION_CATALOG,
   buildMissionContext,
+  getCardState,
   getMissionProgress,
   getTier,
+  isLockedQuizMission,
+  isMissionActionable,
   renderMissionCopy,
+  type MissionCardState,
   type MissionContext,
   type MissionDef,
   type MissionTier,
@@ -45,14 +49,6 @@ const CARD_SHADOW = {
   shadowRadius: 8,
   elevation: 4,
 };
-
-type CardState = 'claimed' | 'ready' | 'locked' | 'manual';
-
-function getCardState(am: ActiveMission, def: MissionDef, ctx: MissionContext): CardState {
-  if (am.claimed) return 'claimed';
-  if (def.verify === 'manual') return 'manual';
-  return def.verify(ctx) ? 'ready' : 'locked';
-}
 
 interface ResolvedMission {
   am: ActiveMission;
@@ -295,7 +291,7 @@ function PulsingRing({ children }: { children: React.ReactNode }) {
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-const CARD_STATE_STYLES: Record<CardState, { row: string; circle: string; dimmed: boolean }> = {
+const CARD_STATE_STYLES: Record<MissionCardState, { row: string; circle: string; dimmed: boolean }> = {
   claimed: { row: 'bg-tertiary-container', circle: 'border-tertiary bg-tertiary', dimmed: false },
   ready: { row: 'bg-primary-container border border-primary/30', circle: 'border-primary bg-transparent', dimmed: false },
   locked: { row: 'bg-surface border border-outline-variant', circle: 'border-outline bg-transparent', dimmed: true },
@@ -335,14 +331,12 @@ function MissionCard({
   const { t } = useTranslation('missions');
   const { t: tContent } = useTranslation('content');
   const { am, def } = entry;
-  const state = getCardState(am, def, ctx);
+  const state = getCardState(am.claimed, def, ctx);
   const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency), tContent);
   const progress = state === 'locked' || state === 'ready' ? getMissionProgress(def, ctx) : null;
   const styles = CARD_STATE_STYLES[state];
-  // A locked money-quiz card still needs to be tappable — the tap opens the
-  // quiz rather than attempting (and silently failing) a direct claim.
-  const isLockedQuiz = state === 'locked' && def.category === 'learning';
-  const disabled = state === 'claimed' || (state === 'locked' && !isLockedQuiz);
+  const isLockedQuiz = isLockedQuizMission(state, def);
+  const disabled = !isMissionActionable(state, def);
 
   const circle = (
     <View className={`h-10 w-10 items-center justify-center rounded-full border-2 ${styles.circle}`}>
