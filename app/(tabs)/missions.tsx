@@ -18,9 +18,13 @@ import { useStore, formatCurrency, type ActiveMission } from '@/lib/store';
 import {
   MISSION_CATALOG,
   buildMissionContext,
+  getCardState,
   getMissionProgress,
   getTier,
+  isLockedQuizMission,
+  isMissionActionable,
   renderMissionCopy,
+  type MissionCardState,
   type MissionContext,
   type MissionDef,
   type MissionTier,
@@ -45,14 +49,6 @@ const CARD_SHADOW = {
   shadowRadius: 8,
   elevation: 4,
 };
-
-type CardState = 'claimed' | 'ready' | 'locked' | 'manual';
-
-function getCardState(am: ActiveMission, def: MissionDef, ctx: MissionContext): CardState {
-  if (am.claimed) return 'claimed';
-  if (def.verify === 'manual') return 'manual';
-  return def.verify(ctx) ? 'ready' : 'locked';
-}
 
 interface ResolvedMission {
   am: ActiveMission;
@@ -295,7 +291,7 @@ function PulsingRing({ children }: { children: React.ReactNode }) {
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-const CARD_STATE_STYLES: Record<CardState, { row: string; circle: string; dimmed: boolean }> = {
+const CARD_STATE_STYLES: Record<MissionCardState, { row: string; circle: string; dimmed: boolean }> = {
   claimed: { row: 'bg-tertiary-container', circle: 'border-tertiary bg-tertiary', dimmed: false },
   ready: { row: 'bg-primary-container border border-primary/30', circle: 'border-primary bg-transparent', dimmed: false },
   locked: { row: 'bg-surface border border-outline-variant', circle: 'border-outline bg-transparent', dimmed: true },
@@ -335,61 +331,62 @@ function MissionCard({
   const { t } = useTranslation('missions');
   const { t: tContent } = useTranslation('content');
   const { am, def } = entry;
-  const state = getCardState(am, def, ctx);
+  const state = getCardState(am.claimed, def, ctx);
   const copy = renderMissionCopy(def, ctx, (n) => formatCurrency(n, currency), tContent);
   const progress = state === 'locked' || state === 'ready' ? getMissionProgress(def, ctx) : null;
   const styles = CARD_STATE_STYLES[state];
-  // A locked money-quiz card still needs to be tappable — the tap opens the
-  // quiz rather than attempting (and silently failing) a direct claim.
-  const isLockedQuiz = state === 'locked' && def.category === 'learning';
+  const isLockedQuiz = isLockedQuizMission(state, def);
+  const disabled = !isMissionActionable(state, def);
 
   const circle = (
-    <PressableScale onPress={onComplete} disabled={state === 'claimed' || (state === 'locked' && !isLockedQuiz)}>
-      <View className={`h-10 w-10 items-center justify-center rounded-full border-2 ${styles.circle}`}>
-        {state === 'claimed' && (
-          <Animated.View entering={ZoomIn.springify()}>
-            <Check size={16} color="#FFFFFF" />
-          </Animated.View>
-        )}
-        {state === 'locked' && !isLockedQuiz && <Lock size={14} color="#94A3B8" />}
-      </View>
-    </PressableScale>
+    <View className={`h-10 w-10 items-center justify-center rounded-full border-2 ${styles.circle}`}>
+      {state === 'claimed' && (
+        <Animated.View entering={ZoomIn.springify()}>
+          <Check size={16} color="#FFFFFF" />
+        </Animated.View>
+      )}
+      {state === 'locked' && !isLockedQuiz && <Lock size={14} color="#94A3B8" />}
+    </View>
   );
 
   return (
     <FadeInStagger index={index} delayStep={100} replay={replay}>
-      <View
-        className={`gap-3 rounded-2xl p-4 min-h-[72px] ${styles.row}`}
-        style={state === 'claimed' || state === 'ready' ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
-      >
-        <View className="flex-row items-center gap-4">
-          {state === 'ready' ? <PulsingRing>{circle}</PulsingRing> : circle}
-          <View className="flex-1 shrink">
-            <View className="flex-row items-center gap-2 mb-1">
-              <Text
-                numberOfLines={1}
-                className={`flex-shrink text-sm font-bold ${state === 'claimed' ? 'line-through text-on-surface-variant' : styles.dimmed ? 'text-on-surface-variant' : 'text-on-surface'}`}
-              >
-                {copy.title}
+      {/* The whole card is the tap target, not just the status circle — a
+          circle-only target was too small to reliably hit, especially on Android. */}
+      <PressableScale onPress={onComplete} disabled={disabled} accessibilityLabel={copy.title}>
+        <View
+          className={`gap-3 rounded-2xl p-4 min-h-[72px] ${styles.row}`}
+          style={state === 'claimed' || state === 'ready' ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 }}
+        >
+          <View className="flex-row items-center gap-4">
+            {state === 'ready' ? <PulsingRing>{circle}</PulsingRing> : circle}
+            <View className="flex-1 shrink">
+              <View className="flex-row items-center gap-2 mb-1">
+                <Text
+                  numberOfLines={1}
+                  className={`flex-shrink text-sm font-bold ${state === 'claimed' ? 'line-through text-on-surface-variant' : styles.dimmed ? 'text-on-surface-variant' : 'text-on-surface'}`}
+                >
+                  {copy.title}
+                </Text>
+                {state === 'manual' && (
+                  <View className="shrink-0 rounded-full bg-surface-container px-2 py-0.5">
+                    <Text className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant">{t('onYourHonour')}</Text>
+                  </View>
+                )}
+              </View>
+              <Text className="text-xs text-on-surface-variant">
+                {progress ? formatProgress(progress, currency, t) : copy.description}
               </Text>
-              {state === 'manual' && (
-                <View className="shrink-0 rounded-full bg-surface-container px-2 py-0.5">
-                  <Text className="text-[9px] font-bold uppercase tracking-wide text-on-surface-variant">{t('onYourHonour')}</Text>
-                </View>
-              )}
             </View>
-            <Text className="text-xs text-on-surface-variant">
-              {progress ? formatProgress(progress, currency, t) : copy.description}
-            </Text>
+            <View className="bg-primary-container rounded-full px-3 py-1">
+              <Text className="text-xs font-bold text-primary">{t('rewardXp', { reward: def.reward })}</Text>
+            </View>
           </View>
-          <View className="bg-primary-container rounded-full px-3 py-1">
-            <Text className="text-xs font-bold text-primary">{t('rewardXp', { reward: def.reward })}</Text>
-          </View>
+          {progress && progress.target > 0 && (
+            <AnimatedProgressBar progress={Math.max(0, Math.min(1, progress.current / progress.target))} height={6} />
+          )}
         </View>
-        {progress && progress.target > 0 && (
-          <AnimatedProgressBar progress={Math.max(0, Math.min(1, progress.current / progress.target))} height={6} />
-        )}
-      </View>
+      </PressableScale>
     </FadeInStagger>
   );
 }
