@@ -82,6 +82,19 @@ New code should look like this; existing code that deviates should be refactored
 
 ### 5.1 Base pattern — shared value + worklet style
 
+**Android caveat — `shouldCancelWhenOutside` defaults differ by platform.** `Gesture.Tap()`'s
+underlying `TapGestureHandler` defaults `shouldCancelWhenOutside` to `true` on Android and `false`
+on iOS. Left at the default, a tiny finger drift during the press — normal on a touchscreen —
+silently cancels the tap on Android only, while the identical drift fires fine on iOS. This is
+easy to miss in dev (emulators + careful mouse-drag testing don't reproduce it) and shows up in the
+field as "some things aren't clickable on Android" with no error and no visual feedback. Any tap
+gesture built on `Gesture.Tap()` must explicitly set `shouldCancelWhenOutside(false)` paired with
+`maxDistance(...)` (so a real scroll/drag still correctly fails the tap instead of firing on
+release), and should raise `maxDuration` past RNGH's 500ms default so a slower, deliberate press
+still registers — matching RN `Pressable` semantics. Also set `hitSlop` explicitly; unlike RN
+`Pressable`, `Gesture.Tap()` has none by default, and the tappable element is frequently smaller
+than the visual target (e.g. an icon inside a larger card).
+
 ```tsx
 const pressed = useSharedValue(0);
 
@@ -91,6 +104,10 @@ const style = useAnimatedStyle(() => ({
 }));
 
 const tap = Gesture.Tap()
+  .hitSlop(8)
+  .shouldCancelWhenOutside(false) // Android defaults this to true; iOS defaults to false — match iOS everywhere
+  .maxDistance(16) // required alongside the above so a real drag/scroll still fails the tap
+  .maxDuration(10000) // RNGH defaults to 500ms; that's too eager to call a real press a failure
   .onBegin(() => { pressed.value = withSpring(1, { damping: 15, stiffness: 300 }); })
   .onFinalize(() => { pressed.value = withSpring(0, { damping: 15, stiffness: 300 }); });
 
