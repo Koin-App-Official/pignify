@@ -814,3 +814,33 @@ export function renderMissionCopy(
 export function getMissionProgress(def: MissionDef, ctx: MissionContext): MissionProgressState | null {
   return def.progress ? def.progress(ctx) : null;
 }
+
+// ---------------------------------------------------------------------------
+// Card state — the missions-screen tap-eligibility matrix, kept here (rather
+// than inline in the screen component) so it has a single source of truth
+// and is unit-testable without rendering React Native.
+// ---------------------------------------------------------------------------
+
+export type MissionCardState = 'claimed' | 'ready' | 'locked' | 'manual';
+
+/** `claimed` takes priority over everything; manual (honor-system) defs never lock; everything else depends on `def.verify(ctx)`. */
+export function getCardState(claimed: boolean, def: MissionDef, ctx: MissionContext): MissionCardState {
+  if (claimed) return 'claimed';
+  if (def.verify === 'manual') return 'manual';
+  return def.verify(ctx) ? 'ready' : 'locked';
+}
+
+/**
+ * A locked money-quiz card still needs to be tappable — the tap opens the
+ * quiz rather than attempting (and silently failing) a direct claim.
+ */
+export function isLockedQuizMission(state: MissionCardState, def: MissionDef): boolean {
+  return state === 'locked' && def.category === 'learning';
+}
+
+/** Whether a mission card should respond to a tap at all. */
+export function isMissionActionable(state: MissionCardState, def: MissionDef): boolean {
+  if (state === 'claimed') return false;
+  if (state === 'locked') return isLockedQuizMission(state, def);
+  return true;
+}

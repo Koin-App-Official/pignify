@@ -3,8 +3,11 @@ import type { TFunction } from 'i18next';
 import {
   MISSION_CATALOG,
   buildMissionContext,
+  getCardState,
   getMissionProgress,
   getTier,
+  isLockedQuizMission,
+  isMissionActionable,
   microAmount,
   renderMissionCopy,
   roundHuman,
@@ -499,6 +502,74 @@ describe('selectMissions', () => {
     const ctxNoGoals = ctxFrom({ goals: [], profile: PROFILE({ level: 1, streak: 0 }) });
     const picked = selectMissions(ctxNoGoals, { cadence: 'weekly', count: 1, periodKey: 'empty-week' });
     expect(picked.length).toBe(1);
+  });
+});
+
+describe('getCardState', () => {
+  const autoDef = MISSION_CATALOG.find((d) => d.id === 'hit-daily-target')!;
+  const manualDef = MISSION_CATALOG.find((d) => d.id === 'skip-coffee')!;
+  const quizDef = MISSION_CATALOG.find((d) => d.id === 'money-quiz')!;
+
+  it('is claimed regardless of verify, once claimed is true', () => {
+    expect(getCardState(true, autoDef, ctxFrom())).toBe('claimed');
+    expect(getCardState(true, manualDef, ctxFrom())).toBe('claimed');
+    expect(getCardState(true, quizDef, ctxFrom())).toBe('claimed');
+  });
+
+  it('manual (honor-system) defs are always manual, never locked/ready', () => {
+    expect(getCardState(false, manualDef, ctxFrom())).toBe('manual');
+  });
+
+  it('is ready once an auto-verified def passes', () => {
+    const goal = GOAL({ deposits: [{ date: '2026-08-15', amount: 10 }] }); // target = 10/day
+    expect(getCardState(false, autoDef, ctxFrom({ goals: [goal] }))).toBe('ready');
+  });
+
+  it('is locked while an auto-verified def has not passed', () => {
+    expect(getCardState(false, autoDef, ctxFrom({ goals: [GOAL()] }))).toBe('locked');
+  });
+
+  it('the money-quiz def is locked until its lesson is completed', () => {
+    expect(getCardState(false, quizDef, ctxFrom())).toBe('locked');
+  });
+});
+
+describe('isLockedQuizMission', () => {
+  const quizDef = MISSION_CATALOG.find((d) => d.id === 'money-quiz')!;
+  const autoDef = MISSION_CATALOG.find((d) => d.id === 'hit-daily-target')!;
+
+  it('is true only for a locked learning-category def', () => {
+    expect(isLockedQuizMission('locked', quizDef)).toBe(true);
+  });
+
+  it('is false for a locked non-learning def', () => {
+    expect(isLockedQuizMission('locked', autoDef)).toBe(false);
+  });
+
+  it('is false for a learning def in any other state', () => {
+    expect(isLockedQuizMission('ready', quizDef)).toBe(false);
+    expect(isLockedQuizMission('claimed', quizDef)).toBe(false);
+    expect(isLockedQuizMission('manual', quizDef)).toBe(false);
+  });
+});
+
+describe('isMissionActionable', () => {
+  const quizDef = MISSION_CATALOG.find((d) => d.id === 'money-quiz')!;
+  const autoDef = MISSION_CATALOG.find((d) => d.id === 'hit-daily-target')!;
+  const manualDef = MISSION_CATALOG.find((d) => d.id === 'skip-coffee')!;
+
+  it('is never actionable once claimed', () => {
+    expect(isMissionActionable('claimed', autoDef)).toBe(false);
+  });
+
+  it('is not actionable while locked, unless it is the money-quiz exception', () => {
+    expect(isMissionActionable('locked', autoDef)).toBe(false);
+    expect(isMissionActionable('locked', quizDef)).toBe(true);
+  });
+
+  it('is actionable when ready or manual', () => {
+    expect(isMissionActionable('ready', autoDef)).toBe(true);
+    expect(isMissionActionable('manual', manualDef)).toBe(true);
   });
 });
 
