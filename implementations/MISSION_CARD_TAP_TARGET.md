@@ -144,11 +144,11 @@ defect — §5.1's example has neither `shouldCancelWhenOutside` nor `hitSlop`.
 
 - [x] Update `guides/ANIMATION_GUIDE.md` §5.1 with the Android `shouldCancelWhenOutside` caveat and
       the corrected snippet
-- [ ] **Manual verification on a physical Android device:** ready, manual and locked-quiz cards all
+- [x] **Manual verification on a physical Android device:** ready, manual and locked-quiz cards all
       respond when tapped anywhere on the card; scrolling the list does *not* accidentally claim a
       mission; claimed and locked cards stay inert
-- [ ] Verify no iOS regression
-- [ ] Open PR closing #195
+- [x] Verify no iOS regression
+- [x] Open PR closing #195
 
 **Files modified:** `guides/ANIMATION_GUIDE.md`
 
