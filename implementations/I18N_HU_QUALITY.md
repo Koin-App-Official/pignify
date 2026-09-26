@@ -22,7 +22,8 @@ Hungarian attaches case suffixes to words, and the right suffix depends on the w
 |---|---|---|
 | `goals:detail.projectedFromCapacity` | `…{{date}}-ra érnéd el ezt` | `formatDate` renders `2026. augusztus 16.`, which gives `2026. augusztus 16.-ra` (ungrammatical). A deadline also needs `-ig`, not `-ra` |
 | `plans:downgradeSelection.pickUpTo` | `legfeljebb {{count}}-t` | The accusative ending varies with the number: `2-t`, `3-at`, `5-öt`, `10-et`. Only `2` is right |
-| 9× `a(z) {{…}}` (`dashboard`, `plans`, `notifications`, `onboarding`) | `a(z) {{goalName}} célra` | `a(z)` reads like a form letter. Plan names (`Beginner`/`Medium`/`Family`, `src/lib/entitlements.ts`) all start with a consonant, so those can simply use `a`. For user-typed goal names the sentence has to be restructured |
+| 14× `a(z) {{…}}` (`dashboard`, `plans`, `notifications`, `onboarding`) | `a(z) {{goalName}} célra` | `a(z)` reads like a form letter. Plan names (`Beginner`/`Medium`/`Family`, `src/lib/entitlements.ts`) all start with a consonant, so those can simply use `a`. For user-typed goal names the sentence has to be restructured |
+| `onboarding:account.subOtpSent` | `Add meg az e-mailben kapott 6 jegyű kódot…` | **Drops `{{email}}` entirely**, so Hungarian users never see which address the code went to. Found in Phase 0; no existing test checks placeholder parity |
 
 **2. Terminology collisions (one Hungarian word, several meanings)**
 
@@ -100,10 +101,12 @@ Tested live on this account:
 
 **Files modified:** none (the working sheet lives in the session scratchpad, outside the repo)
 
-- [ ] Run `npm run typecheck && npm test` on the fresh branch and record the baseline (expect 0 errors, full suite green)
-- [ ] Generate a flattened EN↔HU side-by-side sheet for all 810 keys (namespace, key, EN, current HU) as a working file in the scratchpad
-- [ ] Auto-flag suspect strings in the sheet: suffix-after-placeholder (`}}-`), `a(z)`, `kerül`, `szüneteltetve`, `frissít`, `szint`, and strings more than 40% longer than English
-- [ ] Confirm the DeepL MCP connection still responds (a single `translate-text` call)
+- [x] Run `npm run typecheck && npm test` on the fresh branch and record the baseline: **typecheck 0 errors, 465/465 tests passing (22 files)** @ `5a6a2e9`
+- [x] Generate a flattened EN↔HU side-by-side sheet for all 810 keys (namespace, key, EN, current HU, length ratio, flags) as `hu_review_sheet.tsv` in the session scratchpad
+- [x] Auto-flag suspect strings in the sheet: suffix-after-placeholder (`}}-`), `a(z)`, `kerül`, `szüneteltetve`, `frissít`, `szint`, and strings more than 40% longer than English. Also flagged: glossary terms and placeholder mismatches against English. **Result: 233 of 810 keys flagged.** Counts: longer than 140% of English 143, `kerül` 23, `frissít` 21, streak terms 17, `a(z)` 14, coach 11, Deep Analysis 10, `szint` 8, `riport` 5, `vészhelyzeti` 4, `szüneteltetve` 3, suffix on placeholder 2, placeholder mismatch 1, `céljelentés` 1, `visszaminősít` 1
+- [x] Confirm the DeepL MCP connection still responds (a single `translate-text` call): responds, Free plan
+
+**Phase 0 finding:** `onboarding:account.subOtpSent` is missing its `{{email}}` placeholder (added to the findings table under Context and to Phase 2).
 
 **Phase complete when:** the baseline passes, the review sheet exists with every flagged key marked, and DeepL responds.
 
@@ -130,9 +133,11 @@ The highest-severity phase: these strings render ungrammatical output today.
 
 - [ ] `goals:detail.projectedFromCapacity`: restructure so `{{date}}` stands alone (e.g. `…ekkorra érnéd el: {{date}}`)
 - [ ] `plans:downgradeSelection.pickUpTo`: remove the `-t` suffix and restructure together with `keepBody_one`/`keepBody_other`/`keepIncomeBody`, which embed `{{pickText}}`. `pickOne`/`pickUpTo` must read correctly in the object slot of those three sentences
-- [ ] Replace all 9 `a(z) {{…}}` occurrences: `a {{plan}}` where the value is a plan name (all consonant-initial); restructure where it's a user-typed `{{goalName}}`/`{{name}}` (e.g. `…a célodra: {{goalName}}`)
+- [ ] `onboarding:account.subOtpSent`: restore the missing `{{email}}` placeholder
+- [ ] Replace all 14 `a(z) {{…}}` occurrences: `a {{plan}}` where the value is a plan name (all consonant-initial); restructure where it's a user-typed `{{goalName}}`/`{{name}}` (e.g. `…a célodra: {{goalName}}`)
 - [ ] Check every remaining Hungarian string containing a placeholder for any suffix or article that depends on the value (full list from the Phase 0 sheet)
 - [ ] Add a `hu`-only regression test to `locales.test.ts`: no Hungarian string may contain `}}-` or `a(z)`, so this bug class can't come back
+- [ ] Add a placeholder-parity test to `locales.test.ts`: every `hu` string must contain exactly the same `{{…}}`/`{…}`/`<bold>` tokens as its English original (this would have caught `subOtpSent`)
 - [ ] Present the before/after table and get approval, then apply
 - [ ] `npm run typecheck && npm test`
 
