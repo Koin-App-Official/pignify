@@ -69,31 +69,37 @@ Tested live on this account:
 
 ---
 
-## Glossary (proposal, finalised in Phase 1)
+## Glossary (FINAL, approved 2026-10-04)
 
-| English | Proposed Hungarian | Replaces | Notes |
-|---|---|---|---|
-| goal | cél | — | keep |
-| savings plan / Piggy Plan | terv / Piggy terv | — | keep; distinct from subscription plan |
-| subscription plan | csomag | — | keep |
-| upgrade (verb / noun) | válts nagyobb csomagra / csomagváltás | `frissíts`, `csomagfrissítés` | frees `frissít` for "update" only |
-| downgrade | kisebb csomagra váltás | `visszaminősítés` | |
-| update (card, goals) | frissítsd a kártyaadataidat / célok módosítása | — | |
-| set aside / monthly set-aside | félretesz / havi félretétel | mixed `megtakarítás` | "savings" stays `megtakarítás` |
-| savings capacity | félretehető összeg | `megtakarítási keret` | |
-| deposit | befizetés | — | keep |
-| income source | jövedelemforrás | — | keep |
-| expense / log an expense | kiadás / rögzíts egy kiadást | — | keep |
-| emergency fund | vésztartalék | `vészhelyzeti alap` | standard Hungarian finance term |
-| streak | sorozat **or** széria | `sorozat`, `egymást követő napok` | **open question**, you pick |
-| Coach / AI Coach | Edző / AI-edző **or** Coach | `Edző` | **open question**, you pick |
-| mission / badge / achievement | küldetés / jelvény / kitüntetés | — | keep |
-| tier (missions) | fokozat | `szint` | resolves the tier/level collision |
-| level (XP) | szint | — | keep |
-| Deep Analysis | Mélyelemzés | `Részletes kiadáselemzés` | one product name everywhere |
-| email report | e-mailes jelentés | `riport` | |
-| free trial | ingyenes próbaidőszak | — | keep |
-| PIN / Face ID | PIN-kód / Face ID | — | keep |
+Decided by you in Phase 1. Where a row differs from my original proposal, it's your decision and it overrides the earlier analysis.
+
+| English | Hungarian | Notes |
+|---|---|---|
+| goal | cél | |
+| savings plan / Piggy Plan | megtakarítási terv / Piggy terv | |
+| subscription plan | előfizetési csomag | may shorten to `csomag` in tight UI where context is clear |
+| upgrade (plan) | fejlesztési terv | noun phrase; in verb contexts ("Upgrade to unlock") sentences are built around it |
+| downgrade (plan) | visszaminősítési terv | noun phrase, same rule as upgrade |
+| update (goal) | cél frissítése | `frissít` now means update only |
+| set (money) aside | pénzt félretenni | verb `félretesz`; monthly set-aside: `havi félretétel` |
+| savings capacity | megtakarítási képesség | replaces `megtakarítási keret` |
+| emergency fund | vésztartalék | replaces `vészhelyzeti alap` |
+| tier (missions) | szint | same word as XP level, by your decision |
+| level (XP) | szint | |
+| Deep Analysis | Mélyreható elemzés | one name everywhere; replaces `Mélyelemzés` / `Részletes kiadáselemzés` |
+| email report | e-mailes jelentés | replaces `riport` |
+| mission | küldetés | |
+| badge | jelvény | |
+| achievement | teljesítmény | replaces `kitüntetés` |
+| deposit | betét | replaces `befizetés` |
+| income source | jövedelemforrás | |
+| expense | költség | replaces `kiadás`; Quick Add label stays one short noun (#175) |
+| free trial | ingyenes próba | replaces `ingyenes próbaidőszak` |
+| streak | sorozat | replaces `egymást követő napok` |
+| Coach / AI Coach | Coach / AI Coach | replaces `Edző` / `AI edző`, including the tab label |
+| PIN / Face ID | PIN-kód / Face ID | unchanged |
+
+**Style rules (locked):** informal `te` form everywhere; no `… kerül` passives; no `a(z)`; no case suffix on placeholders; sentence case in titles (Hungarian doesn't use Title Case); Hungarian quotation marks `„…"` if quotes ever appear.
 
 ---
 
@@ -116,10 +122,10 @@ Tested live on this account:
 
 **Files modified:** `implementations/I18N_HU_QUALITY.md` (this file: the glossary table is updated to the final decisions)
 
-- [ ] Present the glossary above with the two open questions (streak: `sorozat` vs `széria`; Coach: `Edző` vs `Coach`)
-- [ ] You decide both open questions and approve or adjust any other row
-- [ ] Lock the style rules: `te` form; no `… kerül` passives; no `a(z)`; no suffix on placeholders; sentence case in titles (Hungarian doesn't use Title Case); straight Hungarian quotation marks `„…"` if quotes ever appear
-- [ ] Update the glossary table in this file to the final version and mark it **final**
+- [x] Present the glossary above with the two open questions (streak: `sorozat` vs `széria`; Coach: `Edző` vs `Coach`)
+- [x] You decide both open questions and approve or adjust any other row: **streak = `sorozat`, Coach = `Coach`**; you replaced 13 rows (upgrade, downgrade, update, set aside, savings capacity, tier, Deep Analysis, achievement, savings plan, subscription plan, deposit, expense, free trial)
+- [x] Lock the style rules: `te` form; no `… kerül` passives; no `a(z)`; no suffix on placeholders; sentence case in titles (Hungarian doesn't use Title Case); Hungarian quotation marks `„…"` if quotes ever appear
+- [x] Update the glossary table in this file to the final version and mark it **final**
 
 **Phase complete when:** the glossary is marked final in this file with both open questions answered, and you have approved it.
 
@@ -151,12 +157,11 @@ Applies the final glossary across all UI namespaces.
 
 **Files modified:** `src/lib/i18n/locales/hu/plans.json`, `dashboard.json`, `coach.json`, `common.json`, `goals.json`, `missions.json`, `onboarding.json`, `profile.json`, `settings.json`, `notifications.json`
 
-- [ ] Upgrade vs update: every English "upgrade" uses the glossary term; `frissít…` remains only where the English says update/refresh
-- [ ] Tier vs level: `missions:tier1–3` use `fokozat`; XP levels keep `szint`
-- [ ] Deep Analysis: one name (`Mélyelemzés`) across `dashboard`, `plans`, `common:aiConsent`
-- [ ] Email report, downgrade, savings capacity, set-aside: apply the glossary
-- [ ] Streak and Coach: apply your decision from Phase 1 everywhere, including the tab label (`common:tabs.coach`) and onboarding slides
-- [ ] Grep-verify that no replaced term survives (e.g. `grep -c 'frissíts' hu/plans.json` matches only update-meaning keys)
+- [ ] Upgrade/downgrade vs update: every English "upgrade"/"downgrade" uses `fejlesztési terv` / `visszaminősítési terv`; `frissít…` remains only where the English says update/refresh
+- [ ] Deep Analysis: one name (`Mélyreható elemzés`) across `dashboard`, `plans`, `common:aiConsent`
+- [ ] Apply the replaced terms: email report → `e-mailes jelentés`, savings capacity → `megtakarítási képesség`, achievement → `teljesítmény`, deposit → `betét`, expense → `költség`, free trial → `ingyenes próba`, subscription plan → `előfizetési csomag`, savings plan → `megtakarítási terv`
+- [ ] Streak and Coach: `sorozat` everywhere (no `egymást követő napok`); `Coach` / `AI Coach` everywhere, including the tab label (`common:tabs.coach`) and onboarding slides
+- [ ] Grep-verify that no replaced term survives (`Edző`, `edző`, `riport`, `Mélyelemzés`, `kiadáselemzés`, `kitüntetés`, `befizetés`, `próbaidőszak`, `megtakarítási keret`, `visszaminősítés`, and `frissít` with an upgrade meaning)
 - [ ] Present the before/after table and get approval, then apply
 - [ ] `npm run typecheck && npm test`
 
@@ -189,7 +194,7 @@ Every UI string is re-checked against English: meaning first, then naturalness. 
 
 - [ ] `missions` (30): titles are short imperatives; single-brace `{amount}` stays intact and is never suffixed. Check `save-today`'s `Tegyél félre {amount} ma` word order
 - [ ] `lessons` (15): check financial accuracy of question, options and explanation against English. Each `options.a/b/c` must stay aligned with the English `correctKey` (guarded by `contentParity.test.ts`)
-- [ ] `achievements` (12), `goalTemplates` (10), `expenseCategories` (8): glossary terms (`vésztartalék`, `sorozat`/`széria`)
+- [ ] `achievements` (12), `goalTemplates` (10), `expenseCategories` (8): glossary terms (`vésztartalék`, `sorozat`, `teljesítmény`, `költség`)
 - [ ] `countries` (26), `currencies` (20): confirm the standard Hungarian names (e.g. `India` stays India, `Magyar forint`)
 - [ ] DeepL comparison, proposal table, approval, apply
 - [ ] `npm run typecheck && npm test` (including `contentParity.test.ts`)
