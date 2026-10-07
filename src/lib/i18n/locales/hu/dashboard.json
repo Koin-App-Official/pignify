@@ -9,7 +9,7 @@
   "welcomeBanner": {
     "title": "Minden készen áll",
     "body": "A Piggy terved élesben fut.",
-    "bodyGoalSuffix": "Ideje elkezdeni gyűjteni a(z) {{goalName}} célra."
+    "bodyGoalSuffix": "Ideje elkezdeni a gyűjtést a célodra: {{goalName}}."
   },
   "pastDueWarning": "⚠️ A legutóbbi fizetésed nem sikerült. Frissítsd a kártyádat, hogy megtartsd a csomagod — koppints ide az ügyfélszolgálat eléréséhez.",
   "incomeSkippedTip": "💡 Add meg a havi jövedelmedet, hogy személyre szabott megtakarítási elemzéseket kapj.",
@@ -19,7 +19,7 @@
   },
   "motivation": {
     "lowProgress": "Remek kezdés! Minden forint számít 🌱",
-    "midProgress": "Már {{progress}}%-kal közelebb vagy a(z) {{goalName}} célhoz! 💪",
+    "midProgress": "Már {{progress}}%-kal közelebb vagy a célodhoz: {{goalName}}! 💪",
     "highProgress": "Félúton túli hős! Tartsd a lendületet 🚀",
     "almostDone": "Már majdnem ott vagy! A célod karnyújtásnyira van 👑"
   },

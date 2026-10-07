@@ -88,7 +88,7 @@
     }
   },
   "targetAmount": {
-    "headline": "Mennyi kell a(z) {{goalName}} célodhoz?",
+    "headline": "Mennyi kell a célodhoz ({{goalName}})?",
     "sub": "Ne aggódj, ezt bármikor módosíthatod később.",
     "errorEmpty": "Adj meg egy 0-nál nagyobb összeget 💸"
   },
@@ -115,11 +115,11 @@
   },
   "pushPermission": {
     "headline": "Szeretnél egy lökést, amikor számít, {{firstName}}?",
-    "sub": "Havi {{amount}} félretenni könnyű megtervezni, de könnyű elfelejteni is. Egy gyors emlékeztető tartja életben a sorozatodat.",
+    "sub": "Havi {{amount}} összeget félretenni könnyű megtervezni, de könnyű elfelejteni is. Egy gyors emlékeztető tartja életben a sorozatodat.",
     "streakTitle": "Sorozatvédelem",
     "streakBody": "Értesítés, ha a mai félretétel még nincs elintézve.",
     "milestoneTitle": "Mérföldkő-ünneplések",
-    "milestoneBody": "Szólunk, amint a(z) {{goalName}} céljelentése eléri a 25%-ot, 50%-ot, 75%-ot.",
+    "milestoneBody": "Szólunk, amint a célod ({{goalName}}) eléri a 25%-ot, 50%-ot, 75%-ot.",
     "milestoneBodyFallback": "Szólunk, amint a célod eléri a 25%-ot, 50%-ot, 75%-ot.",
     "weeklyTitle": "Heti összefoglaló",
     "weeklyBody": "Egy nyugodt összefoglaló arról, hogyan telt a hét. Sosincs spam.",
@@ -128,9 +128,9 @@
   },
   "account": {
     "headline": "A Piggy terved elkészült!",
-    "subEmailConfirmed": "Az e-mail-címed megerősítve — már csak be kell fejeznünk a(z) {{goalName}} tervedet.",
-    "subOtpSent": "Add meg az e-mailben kapott 6 jegyű kódot a fiókod beállításának befejezéséhez.",
-    "subInitial": "Add meg az e-mail-címedet — küldünk egy bejelentkezési kódot, hogy rögzítsük a(z) {{goalName}} tervedet eddig: {{date}}.",
+    "subEmailConfirmed": "Az e-mail-címed megerősítve — már csak be kell fejeznünk a megtakarítási tervedet ({{goalName}}).",
+    "subOtpSent": "Küldtünk egy 6 jegyű kódot ide: {{email}}. Add meg, hogy befejezd a fiókod beállítását.",
+    "subInitial": "Add meg az e-mail-címedet — küldünk egy bejelentkezési kódot, hogy rögzítsük a megtakarítási tervedet ({{goalName}}, határidő: {{date}}).",
     "emailPlaceholder": "te@pelda.com",
     "emailError": "Adj meg egy érvényes e-mail-címet 📧",
     "codeLabel": "Bejelentkezési kód (ez nem az alkalmazás PIN-kódja)",

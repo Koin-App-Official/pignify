@@ -1,6 +1,6 @@
 {
   "missions": {
-    "save-today": { "title": "Tegyél félre {amount} ma", "description": "Lépj közelebb a célodhoz — nem kell soknak lennie." },
+    "save-today": { "title": "Tegyél félre ma {amount} összeget", "description": "Lépj közelebb a célodhoz — nem kell soknak lennie." },
     "hit-daily-target": { "title": "Érd el a mai célt", "description": "Tegyél félre ma annyit, hogy tartsd a tempót a célod eléréséhez." },
     "log-expense": { "title": "Rögzíts egy kiadást", "description": "Kövess nyomon egy dolgot, amire ma költöttél." },
     "check-in": { "title": "Nézz be", "description": "Nyisd meg az appot, és nézd meg, hol tartasz." },
@@ -8,7 +8,7 @@
     "no-spend-lunch": { "title": "Ebéd költés nélkül", "description": "Vigyél magaddal ebédet ahelyett, hogy vennél." },
     "walk-instead": { "title": "Gyalogolj utazás helyett", "description": "Spórolj ma a közlekedésen." },
     "cook-at-home": { "title": "Főzz otthon vacsorát", "description": "Hagyd ki ma a kiszállítást." },
-    "save-this-week": { "title": "Tegyél félre {amount} ezen a héten", "description": "Egy heti lökés a célod felé." },
+    "save-this-week": { "title": "Tegyél félre {amount} összeget ezen a héten", "description": "Egy heti lökés a célod felé." },
     "first-goal": { "title": "Állítsd be az első célodat", "description": "Hozz létre egy megtakarítási célt a kezdéshez." },
     "log-five-expenses": { "title": "Rögzíts 5 kiadást ezen a héten", "description": "Építsd ki a kiadáskövetés szokását." },
     "no-spend-weekend": { "title": "Költés nélküli hétvége", "description": "Ezen a hétvégén tartsd nullán a nem szükséges kiadásokat." },

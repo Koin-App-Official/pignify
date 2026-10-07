@@ -218,3 +218,33 @@ describe('locale key parity (every locale vs en)', () => {
     });
   }
 });
+
+describe('hu: interpolation grammar (implementations/I18N_HU_QUALITY.md, Phase 2)', () => {
+  // Hungarian case endings and the a/az article depend on how the value
+  // sounds, so neither can be written next to a placeholder: `{{count}}-t`
+  // is right for 2 but wrong for 3 (`3-at`), and `a(z)` is a form-letter
+  // hedge. Sentences must be built so the placeholder stands alone.
+  for (const ns of namespaces) {
+    it(`${ns}: no case suffix or a(z) attached to a placeholder`, () => {
+      for (const [key, value] of collectStringValues(readNamespace('hu', ns))) {
+        expect(value, `hu/${ns}.json: ${key}`).not.toMatch(/\}-[a-zA-ZÀ-ž]/);
+        expect(value, `hu/${ns}.json: ${key}`).not.toMatch(/\ba\(z\)/i);
+      }
+    });
+  }
+});
+
+describe('hu: placeholder parity with en', () => {
+  const tokensOf = (s: string) => (s.match(/\{\{[^}]+\}\}|\{[A-Za-z]+\}|<\/?bold>/g) ?? []).sort();
+
+  for (const ns of namespaces) {
+    it(`${ns}: every hu string keeps exactly the placeholders of its en original`, () => {
+      const en = new Map(collectStringValues(readNamespace('en', ns)));
+      for (const [key, value] of collectStringValues(readNamespace('hu', ns))) {
+        const source = en.get(key) ?? en.get(`${stripPluralSuffix(key)}_other`);
+        expect(source, `hu/${ns}.json: ${key} has no en counterpart`).toBeDefined();
+        expect(tokensOf(value), `hu/${ns}.json: ${key}`).toEqual(tokensOf(source!));
+      }
+    });
+  }
+});

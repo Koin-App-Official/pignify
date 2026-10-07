@@ -9,7 +9,7 @@
     "back": "Vissza",
     "savedOfTarget": "{{saved}} / {{target}}",
     "settingAside": "{{amount}}/hó félretéve · Cél elérve: {{date}}",
-    "projectedFromCapacity": "A jelenlegi félretett összeg alapján {{date}}-ra érnéd el ezt",
+    "projectedFromCapacity": "A jelenlegi havi félretételeddel ekkorra érnéd el: {{date}}",
     "capacityShortfallWarning": "A jelenlegi megtakarítási kereted nem fedezi, amire ennek a célnak havonta szüksége van.",
     "addSavingsPlaceholder": "Megtakarítás hozzáadása...",
     "save": "Mentés",
