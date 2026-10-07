@@ -157,13 +157,13 @@ Applies the final glossary across all UI namespaces.
 
 **Files modified:** `src/lib/i18n/locales/hu/plans.json`, `dashboard.json`, `coach.json`, `common.json`, `goals.json`, `missions.json`, `onboarding.json`, `profile.json`, `settings.json`, `notifications.json`
 
-- [ ] Upgrade/downgrade vs update: every English "upgrade"/"downgrade" uses `fejlesztési terv` / `visszaminősítési terv`; `frissít…` remains only where the English says update/refresh
-- [ ] Deep Analysis: one name (`Mélyreható elemzés`) across `dashboard`, `plans`, `common:aiConsent`
-- [ ] Apply the replaced terms: email report → `e-mailes jelentés`, savings capacity → `megtakarítási képesség`, achievement → `teljesítmény`, deposit → `betét`, expense → `költség`, free trial → `ingyenes próba`, subscription plan → `előfizetési csomag`, savings plan → `megtakarítási terv`
-- [ ] Streak and Coach: `sorozat` everywhere (no `egymást követő napok`); `Coach` / `AI Coach` everywhere, including the tab label (`common:tabs.coach`) and onboarding slides
-- [ ] Grep-verify that no replaced term survives (`Edző`, `edző`, `riport`, `Mélyelemzés`, `kiadáselemzés`, `kitüntetés`, `befizetés`, `próbaidőszak`, `megtakarítási keret`, `visszaminősítés`, and `frissít` with an upgrade meaning)
-- [ ] Present the before/after table and get approval, then apply
-- [ ] `npm run typecheck && npm test`
+- [x] Upgrade/downgrade vs update: every English "upgrade"/"downgrade" uses `fejlesztési terv` / `visszaminősítési terv`; `frissít…` remains only where the English says update/refresh
+- [x] Deep Analysis: one name (`Mélyreható elemzés`) across `dashboard`, `plans`, `common:aiConsent`
+- [x] Apply the replaced terms: email report → `e-mailes jelentés`, savings capacity → `megtakarítási képesség`, achievement → `teljesítmény`, deposit → `betét`, expense → `költség`, free trial → `ingyenes próba`, subscription plan → `előfizetési csomag`, savings plan → `megtakarítási terv`
+- [x] Streak and Coach: `sorozat` everywhere (no `egymást követő napok`); `Coach` / `AI Coach` everywhere, including the tab label (`common:tabs.coach`) and onboarding slides
+- [x] Grep-verify that no replaced term survives (done: zero hits in UI namespaces; the only `visszaminősít` hit is the approved `visszaminősítési terv`) (`Edző`, `edző`, `riport`, `Mélyelemzés`, `kiadáselemzés`, `kitüntetés`, `befizetés`, `próbaidőszak`, `megtakarítási keret`, `visszaminősítés`, and `frissít` with an upgrade meaning)
+- [x] Present the before/after table and get approval, then apply: 64 replacements across 9 files, approved 2026-10-07. Kept on purpose: "spending" stays `kiadás` (only "expense" → `költség`); `csomag` stays in short labels and on the Plans screen, `előfizetési csomag` in explanatory sentences; the `Önerő házra` chip (down payment, not `betét`); `frissít` for card/goals/currency updates
+- [x] `npm run typecheck && npm test`: typecheck clean, 489/489 passing
 
 **Phase complete when:** a grep for each replaced term finds no leftover occurrences with the old meaning, and the suite is green.
 
@@ -238,6 +238,7 @@ Tests catch wrong keys and placeholders, but not text that's cut off or overlapp
 - A word broken mid-word or split awkwardly across lines
 - A headline wrapping onto more lines than intended, pushing content off-screen
 - Push-notification titles cut off on the lock screen (checked with a test notification)
+- Watch item from Phase 3: `dashboard:deepAnalysis.upgradeToUnlock` grew from `Frissíts a feloldáshoz` to `Feloldás fejlesztési tervvel` and buttons cut off at one line
 
 **Screens to check (every state a user can reach):**
 - [ ] Onboarding: the 3 welcome slides, name, date of birth plus its confirm modal, country/currency/language, goal plus chips, target amount, income, contribution (monthly and deadline modes, including warnings), blueprint, notification permission, account/code entry, legal footer
