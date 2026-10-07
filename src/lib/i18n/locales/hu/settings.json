@@ -24,8 +24,8 @@
   "planLabel": "{{plan}} csomag",
   "planStatus": {
     "canceled": "Lemondva — az időszak végéig aktív",
-    "expired": "Az ingyenes próbaidőszak véget ért",
-    "trialing": "Ingyenes próbaidőszak",
+    "expired": "Az ingyenes próba véget ért",
+    "trialing": "Ingyenes próba",
     "pastDue": "Sikertelen fizetés — frissítsd a kártyádat",
     "switchingTo": "Váltás {{plan}} csomagra a következő ciklusban",
     "active": "Aktív"

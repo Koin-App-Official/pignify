@@ -10,11 +10,11 @@
     "savedOfTarget": "{{saved}} / {{target}}",
     "settingAside": "{{amount}}/hó félretéve · Cél elérve: {{date}}",
     "projectedFromCapacity": "A jelenlegi havi félretételeddel ekkorra érnéd el: {{date}}",
-    "capacityShortfallWarning": "A jelenlegi megtakarítási kereted nem fedezi, amire ennek a célnak havonta szüksége van.",
+    "capacityShortfallWarning": "A jelenlegi megtakarítási képességed nem fedezi, amire ennek a célnak havonta szüksége van.",
     "addSavingsPlaceholder": "Megtakarítás hozzáadása...",
     "save": "Mentés",
     "milestones": "Mérföldkövek",
-    "depositHistory": "Befizetési előzmények"
+    "depositHistory": "Betéti előzmények"
   },
   "primary": "Elsődleges",
   "review": {
@@ -26,7 +26,7 @@
   },
   "applyCapacity": {
     "title": "Frissíted a céljaidat?",
-    "body": "Megváltozott a megtakarítási kereted. Ezeket a célokat hamarabb elérheted:",
+    "body": "Megváltozott a megtakarítási képességed. Ezeket a célokat hamarabb elérheted:",
     "notNow": "Most nem",
     "updateGoals": "Célok frissítése"
   }

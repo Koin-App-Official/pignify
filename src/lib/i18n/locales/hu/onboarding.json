@@ -15,8 +15,8 @@
         "sub": "A Piggy soha nem kapcsolódik a bankszámláidhoz. Nincs mit összekötni, és nincs mit ellopni."
       },
       "coach": {
-        "headline": "Edző\na zsebedben",
-        "sub": "Sorozatok, küldetések és egy AI edző, aki ismeri a terved — így a harmadik hónap is olyan jó lesz, mint az első nap."
+        "headline": "Coach\na zsebedben",
+        "sub": "Sorozatok, küldetések és egy AI Coach, aki ismeri a terved — így a harmadik hónap is olyan jó lesz, mint az első nap."
       }
     }
   },
@@ -83,7 +83,7 @@
       "vacation": "Nyaralás",
       "newCar": "Új autó",
       "houseDeposit": "Önerő házra",
-      "emergencyFund": "Vészhelyzeti alap",
+      "emergencyFund": "Vésztartalék",
       "somethingElse": "Valami más"
     }
   },

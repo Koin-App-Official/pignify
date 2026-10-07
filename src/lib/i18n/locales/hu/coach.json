@@ -12,10 +12,10 @@
   "hiGreetingAnonymous": "Szia! {{greeting}}",
   "connectionError": "Sajnos most nehézségeim vannak a kapcsolódással. Próbáld újra egy kicsit később.",
   "cancel": "Mégse",
-  "title": "AI edző",
+  "title": "AI Coach",
   "onlineStatus": "Online • Készen áll a segítségre",
-  "upgradeYourPlan": "Csomag frissítése",
+  "upgradeYourPlan": "Fejlesztési terv",
   "unlimited": "Korlátlan",
   "pctUsedThisPeriod": "{{pct}}% felhasználva ebben az időszakban",
-  "inputPlaceholder": "Kérdezd az edződet..."
+  "inputPlaceholder": "Kérdezz a Coachtól..."
 }

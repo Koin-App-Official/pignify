@@ -25,24 +25,24 @@
   },
   "deepAnalysis": {
     "analyzing": "Elemzés…",
-    "title": "Mélyelemzés",
-    "upgradeToUnlock": "Frissíts a feloldáshoz",
+    "title": "Mélyreható elemzés",
+    "upgradeToUnlock": "Feloldás fejlesztési tervvel",
     "unlimited": "Korlátlan",
     "remainingOfLimit": "{{remaining}} / {{limit}}"
   },
   "deepAnalysisConfirm": {
-    "title": "Elindítod a mélyelemzést?",
+    "title": "Elindítod a Mélyreható elemzést?",
     "bodyValue": "E-mailben elküldjük pénzügyeid teljes áttekintését — bevételek, kiadások és megtakarítások — a legfrissebb adataid alapján.",
-    "bodyLastOne": "Ez az utolsó mélyelemzésed ebben a hónapban. E-mailben elküldjük pénzügyeid teljes áttekintését.",
+    "bodyLastOne": "Ez az utolsó Mélyreható elemzésed ebben a hónapban. E-mailben elküldjük pénzügyeid teljes áttekintését.",
     "notNow": "Most nem",
     "runAnalysis": "Elemzés indítása"
   },
   "todaysSpending": "Mai kiadások",
-  "expenseCount_one": "{{count}} kiadás alapján",
-  "expenseCount_other": "{{count}} kiadás alapján",
+  "expenseCount_one": "{{count}} költség alapján",
+  "expenseCount_other": "{{count}} költség alapján",
   "savedToday": "Ma megtakarítva",
   "savedThisMonth": "E hónapban megtakarítva",
-  "quickAddExpense": "Kiadás",
+  "quickAddExpense": "Költség",
   "quickAddSavings": "Megtakarítás",
   "saverLevel": "Megtakarítói szint {{level}}",
   "xpProgress": "{{xp}}/100 XP",
@@ -52,12 +52,12 @@
   "daysLeft_other": "{{count}} nap van hátra",
   "ofAmount": "/ {{amount}}",
   "addExpense": {
-    "title": "Kiadás hozzáadása",
+    "title": "Költség hozzáadása",
     "amountLabel": "Összeg ({{symbol}})",
     "amountPlaceholder": "0",
     "categoryLabel": "Kategória",
     "notePlaceholder": "Megjegyzés (opcionális)",
-    "save": "Kiadás mentése"
+    "save": "Költség mentése"
   },
   "addSavings": {
     "title": "Megtakarítás hozzáadása",
