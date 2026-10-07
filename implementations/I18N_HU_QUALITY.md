@@ -135,17 +135,17 @@ Decided by you in Phase 1. Where a row differs from my original proposal, it's y
 
 The highest-severity phase: these strings render ungrammatical output today.
 
-**Files modified:** `src/lib/i18n/locales/hu/goals.json`, `plans.json`, `dashboard.json`, `notifications.json`, `onboarding.json`, and `src/lib/i18n/locales.test.ts` (new `hu` guard)
+**Files modified:** `src/lib/i18n/locales/hu/goals.json`, `plans.json`, `dashboard.json`, `notifications.json`, `onboarding.json`, `content.json`, and `src/lib/i18n/locales.test.ts` (new `hu` guards)
 
-- [ ] `goals:detail.projectedFromCapacity`: restructure so `{{date}}` stands alone (e.g. `…ekkorra érnéd el: {{date}}`)
-- [ ] `plans:downgradeSelection.pickUpTo`: remove the `-t` suffix and restructure together with `keepBody_one`/`keepBody_other`/`keepIncomeBody`, which embed `{{pickText}}`. `pickOne`/`pickUpTo` must read correctly in the object slot of those three sentences
-- [ ] `onboarding:account.subOtpSent`: restore the missing `{{email}}` placeholder
-- [ ] Replace all 14 `a(z) {{…}}` occurrences: `a {{plan}}` where the value is a plan name (all consonant-initial); restructure where it's a user-typed `{{goalName}}`/`{{name}}` (e.g. `…a célodra: {{goalName}}`)
-- [ ] Check every remaining Hungarian string containing a placeholder for any suffix or article that depends on the value (full list from the Phase 0 sheet)
-- [ ] Add a `hu`-only regression test to `locales.test.ts`: no Hungarian string may contain `}}-` or `a(z)`, so this bug class can't come back
-- [ ] Add a placeholder-parity test to `locales.test.ts`: every `hu` string must contain exactly the same `{{…}}`/`{…}`/`<bold>` tokens as its English original (this would have caught `subOtpSent`)
-- [ ] Present the before/after table and get approval, then apply
-- [ ] `npm run typecheck && npm test`
+- [x] `goals:detail.projectedFromCapacity`: restructure so `{{date}}` stands alone (e.g. `…ekkorra érnéd el: {{date}}`)
+- [x] `plans:downgradeSelection.pickUpTo`: remove the `-t` suffix and restructure together with `keepBody_one`/`keepBody_other`/`keepIncomeBody`, which embed `{{pickText}}`. `pickOne`/`pickUpTo` must read correctly in the object slot of those three sentences
+- [x] `onboarding:account.subOtpSent`: restore the missing `{{email}}` placeholder
+- [x] Replace all 14 `a(z) {{…}}` occurrences: `a {{plan}}` where the value is a plan name (all consonant-initial); restructure where it's a user-typed `{{goalName}}`/`{{name}}` (e.g. `…a célodra: {{goalName}}`)
+- [x] Check every remaining Hungarian string containing a placeholder for any suffix or article that depends on the value (full list from the Phase 0 sheet). Found 3 more: money amounts missing the accusative `összeget` in `onboarding:pushPermission.sub` and `content:missions.save-today.title` / `save-this-week.title`; fixed in this phase. `%-kal`/`%-nál`/`%-a` endings are safe because `%` is always read as `százalék`
+- [x] Add a `hu`-only regression test to `locales.test.ts`: no Hungarian string may contain `}}-` or `a(z)`, so this bug class can't come back
+- [x] Add a placeholder-parity test to `locales.test.ts`: every `hu` string must contain exactly the same `{{…}}`/`{…}`/`<bold>` tokens as its English original (this would have caught `subOtpSent`)
+- [x] Present the before/after table and get approval, then apply: 21 strings, all approved 2026-10-07
+- [x] `npm run typecheck && npm test`: typecheck clean, **489/489 passing** (465 baseline + 24 new `hu` checks). Both new tests failed on the old copy at exactly the target strings before the fix was applied
 
 **Phase complete when:** no `hu` string attaches a suffix or `a(z)` to a placeholder, the new regression test passes, and the full suite is green.
 
