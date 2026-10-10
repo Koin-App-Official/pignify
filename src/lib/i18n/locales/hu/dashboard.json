@@ -26,7 +26,7 @@
   "deepAnalysis": {
     "analyzing": "Elemzés…",
     "title": "Mélyreható elemzés",
-    "upgradeToUnlock": "Feloldás fejlesztési tervvel",
+    "upgradeToUnlock": "Fejlesztési terv",
     "unlimited": "Korlátlan",
     "remainingOfLimit": "Maradt: {{remaining}}/{{limit}}"
   },

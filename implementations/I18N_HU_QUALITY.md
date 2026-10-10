@@ -209,9 +209,9 @@ Every UI string is re-checked against English: meaning first, then naturalness. 
 
 **Files modified:** `languages/hu.json`
 
-- [ ] `ios.NSFaceIDUsageDescription`: re-check against English (current: `Engedélyezd a Piggy számára, hogy Face ID-val oldja fel az alkalmazást.`)
-- [ ] Length audit: list every changed string that got longer than its previous HU version and is used in a constrained UI element (tabs, chips, buttons, headlines with `\n`), and shorten any that exceed their old length
-- [ ] `npm run typecheck && npm test && npm run check:bundle-size`
+- [x] `ios.NSFaceIDUsageDescription`: re-check against English (current: `Engedélyezd a Piggy számára, hogy Face ID-val oldja fel az alkalmazást.`). **Kept:** accurate against the English source in `app.json` (`faceIDPermission`), informal, `Face ID-val` consistent
+- [x] Length audit: list every changed string that got longer than its previous HU version and is used in a constrained UI element (tabs, chips, buttons, headlines with `\n`), and shorten any that exceed their old length. **Done 2026-10-10:** 113 strings grew vs `main`; ~100 are wrapping body text. Two single-line spots would cut text off on a 375 pt screen: the Deep Analysis card row (`app/(tabs)/index.tsx:374`, fixed `h-14`) and mission card titles (`app/(tabs)/missions.tsx:366`, `numberOfLines={1}`, ~22 chars). 10 approved shortenings: `dashboard:deepAnalysis.upgradeToUnlock` → `Fejlesztési terv`; 9 mission titles shortened, with `{amount}` placed first so it stays visible
+- [x] `npm run typecheck && npm test && npm run check:bundle-size`: typecheck clean, 489/489 passing, iOS bundle 6.41 MB / 7.63 MB (within budget)
 
 **Phase complete when:** the native string has been reviewed, no constrained-UI string got longer, and all three commands pass.
 
@@ -240,7 +240,8 @@ Tests catch wrong keys and placeholders, but not text that's cut off or overlapp
 - A word broken mid-word or split awkwardly across lines
 - A headline wrapping onto more lines than intended, pushing content off-screen
 - Push-notification titles cut off on the lock screen (checked with a test notification)
-- Watch item from Phase 3: `dashboard:deepAnalysis.upgradeToUnlock` grew from `Frissíts a feloldáshoz` to `Feloldás fejlesztési tervvel` and buttons cut off at one line
+- Watch item from Phase 3/6: `dashboard:deepAnalysis.upgradeToUnlock` (now `Fejlesztési terv`) shares a fixed-height row with `Mélyreható elemzés`
+- Watch item from Phase 6: mission card titles are single-line (~22 chars on a 375 pt screen); several unchanged titles are ~30 chars, as are their English originals
 
 **Screens to check (every state a user can reach):**
 - [ ] Onboarding: the 3 welcome slides, name, date of birth plus its confirm modal, country/currency/language, goal plus chips, target amount, income, contribution (monthly and deadline modes, including warnings), blueprint, notification permission, account/code entry, legal footer
