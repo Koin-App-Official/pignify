@@ -229,9 +229,9 @@ Tests catch wrong keys and placeholders, but not text that's cut off or overlapp
 - Fixed-width elements: the tab bar labels, onboarding chips (`goal.chips.*`, `suggestionChip`), Quick Add labels (constrained since [#175](https://github.com/Koin-App-Official/pignify/issues/175)), plan cards and the `currentPlanChip`, and headlines with a manual `\n` break.
 
 **Setup:**
-- [ ] Run the dev build in the iOS Simulator with the app language set to Hungarian, on a **small screen** (iPhone SE, 375 pt wide, the worst case) and a standard one (e.g. iPhone 17)
-- [ ] Repeat on an Android emulator if one is available, since Android font metrics differ and have caused layout bugs before ([#193](https://github.com/Koin-App-Official/pignify/issues/193))
-- [ ] One pass with the largest standard system text size (iOS Dynamic Type / Android font scale), on the screens with the most text
+- [x] Run the dev build in the iOS Simulator with the app language set to Hungarian, on a **small screen** (iPhone SE, 375 pt wide, the worst case) and a standard one (e.g. iPhone 17). **Done 2026-10-10 on an iPhone SE (3rd gen, iOS 26.5).** The standard-size pass was skipped by your decision: every defect found was width-related and a standard iPhone (402 pt) is wider, so the SE result covers it
+- [ ] Repeat on an Android emulator if one is available, since Android font metrics differ and have caused layout bugs before ([#193](https://github.com/Koin-App-Official/pignify/issues/193)). **Not done** in this session
+- [ ] One pass with the largest standard system text size (iOS Dynamic Type / Android font scale), on the screens with the most text. **Not done** in this session
 
 **What counts as a defect:**
 - Text cut off with `…` or clipped at a container edge
@@ -244,22 +244,28 @@ Tests catch wrong keys and placeholders, but not text that's cut off or overlapp
 - Watch item from Phase 6: mission card titles are single-line (~22 chars on a 375 pt screen); several unchanged titles are ~30 chars, as are their English originals
 
 **Screens to check (every state a user can reach):**
-- [ ] Onboarding: the 3 welcome slides, name, date of birth plus its confirm modal, country/currency/language, goal plus chips, target amount, income, contribution (monthly and deadline modes, including warnings), blueprint, notification permission, account/code entry, legal footer
-- [ ] Auth: PIN creation and confirmation, lock screen including the lockout message, forgot-PIN alert, login with email/code/password, biometric enrolment
-- [ ] Home tab: greeting, welcome banner, past-due warning, income tip, motivation banners, Deep Analysis card and confirm modal, spending/savings stats, Quick Add buttons and both Add modals, goal cards
-- [ ] Goals tab and goal detail: empty state, the set-aside/projection lines, shortfall warning, milestones, deposit history, review screen warnings, capacity-apply modal
-- [ ] Missions tab: tier headers, daily/weekly lists, progress text, the badges tab, quiz claim/try-again buttons
-- [ ] Coach tab: greeting, online status, usage/limit line, input placeholder, upgrade gate
-- [ ] Profile tab: level, stats, income list plus add/remove, notification toggles, the reset confirmation
-- [ ] Plans and paywall: plan cards and quota lists, trial banners, pending-change banner, upgrade modal, every feature gate, downgrade selection, plan-gate lock screen, trial intro, billing terms
-- [ ] Settings: all sections, plan status lines, currency convert modal, biometric/auto-lock options, delete-account flow
+- [x] Onboarding: the 3 welcome slides, name, date of birth plus its confirm modal, country/currency/language, goal plus chips, target amount, income, contribution (monthly and deadline modes, including warnings), blueprint, notification permission, account/code entry, legal footer
+- [~] Auth: PIN creation and confirmation, lock screen including the lockout message, forgot-PIN alert, login with email/code/password, biometric enrolment. Checked: PIN creation, lock screen, wrong-PIN message. Not reached: lockout, forgot-PIN alert, password login, biometric enrolment
+- [x] Home tab: greeting, welcome banner, past-due warning, income tip, motivation banners, Deep Analysis card and confirm modal, spending/savings stats, Quick Add buttons and both Add modals, goal cards
+- [~] Goals tab and goal detail: empty state, the set-aside/projection lines, shortfall warning, milestones, deposit history, review screen warnings, capacity-apply modal. Checked: list, detail, projection lines, milestones. Not reached: empty state, shortfall warning, deposit history, review screen, capacity-apply modal
+- [~] Missions tab: tier headers, daily/weekly lists, progress text, the badges tab, quiz claim/try-again buttons. Checked: lists, badges tab. Not reached: quiz modal (claiming would change account data)
+- [~] Coach tab: greeting, online status, usage/limit line, input placeholder, upgrade gate. Checked all but the upgrade gate (account is unlocked)
+- [x] Profile tab: level, stats, income list plus add/remove, notification toggles, the reset confirmation
+- [~] Plans and paywall: plan cards and quota lists, trial banners, pending-change banner, upgrade modal, every feature gate, downgrade selection, plan-gate lock screen, trial intro, billing terms. Checked: plan cards, trial banner, plan-gate lock screen, trial intro, billing terms. Not reached: pending-change banner, upgrade modal, feature gates, downgrade selection
+- [~] Settings: all sections, plan status lines, currency convert modal, biometric/auto-lock options, delete-account flow. Checked: all sections, plan status, auto-lock, AI-consent modal. Not reached: currency convert modal, delete-account flow
 
 **Process:**
-- [ ] I drive the Simulator and capture a screenshot of each screen and state above, and flag every defect I find. You make the final call on each screen (per your preference to judge visual changes yourself). A known blocker from [#124](https://github.com/Koin-App-Official/pignify/issues/124): automated taps stopped working on the date-of-birth confirm alert, so you may need to tap past it by hand
-- [ ] For each defect, shorten the Hungarian copy first (proposal table, your approval). Must keep the meaning and the glossary terms
-- [ ] If a string can't be shortened without losing meaning, don't change code in this branch: open a separate issue for the layout fix and link it from #197
-- [ ] Re-check every screen touched by a fix
-- [ ] `npm run typecheck && npm test` after any copy change
+- [x] I drive the Simulator and capture a screenshot of each screen and state above, and flag every defect I find. You make the final call on each screen (per your preference to judge visual changes yourself). A known blocker from [#124](https://github.com/Koin-App-Official/pignify/issues/124): automated taps stopped working on the date-of-birth confirm alert, so you may need to tap past it by hand
+- [x] For each defect, shorten the Hungarian copy first (proposal table, your approval). Must keep the meaning and the glossary terms
+- [~] If a string can't be shortened without losing meaning, don't change code in this branch: open a separate issue for the layout fix and link it from #197. Flagged as 4 separate task suggestions in the Claude session (each opens its own issue when started); not yet linked from #197
+- [x] Re-check every screen touched by a fix (6 of 9 re-displayed on the SE; the welcome slide 2, notification-permission milestone line and trial perk only appear before sign-in or once per account)
+- [x] `npm run typecheck && npm test` after any copy change: clean, 489/489
+
+**Result (2026-10-10):** 9 copy fixes (10 strings) approved and applied in `6f4d71e`: missions tab label `Küldetés` (was cut off), welcome banner title `Készen vagy` (Batch B had produced `Készen vagy!, Anna!`), honour badge `Becsszóra`, soft hyphen in `Küldetés\u00admester`, `25, 50 és 75%-ot`, `Banki belépés?\nSoha.`, `Előfizetés kezelése: piggnify.com/account`, `Felhasználva: {{pct}}%`, non-breaking space in `AI Coachot`.
+
+**Out of scope, flagged as separate tasks:** goal names from onboarding chips stay English (`GOAL_CHIPS` labels in `src/lib/catalogs.ts`); hardcoded `'Primary'` income label (`app/onboarding.tsx:525`, `src/lib/storeMigrations.ts`); honour badge truncating mission titles in every language (`app/(tabs)/missions.tsx:366`); English month names in the DOB wheel (`src/components/ui/dob-picker.tsx:10`) and Sunday week start in the calendar (`src/lib/i18n/calendarLocale.ts`).
+
+**Test setup note:** the test account's entitlement row in Appwrite (`piggnify_mobile_db.entitlements`, user `6aaa4514001e397d931e`) was set to `trialing` until 2026-10-24 so the signed-in screens could be reached; kept by your decision (testing account).
 
 **Phase complete when:** every screen and state in the list has been checked on the small and standard screen sizes, no truncation or overlap remains (or each remaining case has its own linked issue), and you have signed off.
 
