@@ -329,9 +329,10 @@ export default function Settings() {
               </View>
             </TouchableOpacity>
 
-            {/* The one tappable route to web billing in the whole app (#173,
-                decision D3). Everything else — the plan detail screen, the
-                upgrade gates, the locked gate — states where billing lives
+            {/* One of the app's two tappable routes to web billing (#173,
+                decision D3 as amended by #199) — the other is the locked plan
+                gate, which can't reach this screen. Everything else — the plan
+                detail screen, the upgrade gates — states where billing lives
                 without linking to it. */}
             <View className="mt-3 mb-7 rounded-2xl bg-surface-container-low px-6" style={CARD_SHADOW}>
               <Row

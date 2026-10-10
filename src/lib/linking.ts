@@ -24,8 +24,9 @@ export const AI_TRANSPARENCY_URL = 'https://piggnify.com/ai-transparency';
  * locked-out user can get their subscription back.
  */
 export const ACCOUNT_URL = 'https://piggnify.com/account/';
-/** `ACCOUNT_URL` as something a user can read off the screen and type — used
- * where the address has to be shown rather than linked (the locked plan gate). */
+/** `ACCOUNT_URL` as something a user can read off the screen and type — the
+ * locked plan gate shows it as the label of its link, so the address is still
+ * visible if the in-app browser can't open. */
 export const ACCOUNT_URL_DISPLAY = ACCOUNT_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
 export async function safeOpenURL(url: string, notAvailableMessage: string, notAvailableTitle: string) {

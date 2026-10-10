@@ -213,8 +213,9 @@ export default function Plans() {
             })}
           </View>
 
-          {/* Deliberately not a link: under decision D3 the single tappable route
-              to web billing lives in Settings, so this only says where to go. */}
+          {/* Deliberately not a link: under decision D3 the tappable routes to web
+              billing are Settings and the locked gate only, so this just says
+              where to go. */}
           <Text className="mt-6 text-center text-sm font-medium text-on-surface-variant">
             {t('managedOnWeb')}
           </Text>
