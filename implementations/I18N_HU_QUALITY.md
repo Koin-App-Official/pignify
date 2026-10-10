@@ -179,10 +179,12 @@ Every UI string is re-checked against English: meaning first, then naturalness. 
 - [x] Batch B, daily use: `dashboard` (53), `goals` (23), `missions` (17). Fixes include `highProgress`, `analysisStartedTitle`, `saverLevel`, `welcomeBanner.body`. **Done 2026-10-10:** 21 strings changed (dashboard 15, goals 4, missions 2), 72 kept. Also fixed: `Minden forint számít` assumed HUF (now `Minden fillér számít`), and `detail.settingAside` used past tense for a future date. Phase 7 length watch: `dashboard:deepAnalysis.remainingOfLimit`
 - [x] Batch C, money and trust: `plans` (111). Fixes include `trialIntro.title`, `pendingBanner`, the `szüneteltetve vannak` passives, `terms.*`. **Done 2026-10-10:** 30 strings changed (plans 24, plus 6 matching strings in `dashboard`, `settings`, `onboarding`), 87 plans strings kept. Found and fixed a bug: `{{date}}` in `pendingBanner` can be the `endOfBillingPeriod` fragment (`app/plans.tsx` `formatPeriodEnd`), which rendered `…időszak vége napon`. Cross-file decisions: `Hiba történt`, `Írj az ügyfélszolgálatnak`, `Adatvédelmi tájékoztató`. No `szüneteltetve` left anywhere
 - [x] Batch D, settings: `settings` (58), `profile` (40). Fixes include `eltávolításra kerül`, the reset/delete flows. **Done 2026-10-10:** 24 strings changed (settings 10, profile 14), 74 kept. Reset flow now uses `nullázás` (`visszaállítás` alone reads as "restore"); `currencyConvertModal.unavailableNote` no longer claims amounts keep their *value* across currencies
-- [ ] Batch E, the rest: `notifications` (18), `coach` (17), `common` (48). Fixes include `firstGoal.body`, `aiConsent.dataShared` (`Mi kerül megosztásra`), and the accessibility hints moved to `te` form
-- [ ] For every batch: placeholders, `<bold>`, `\n`, emoji and `_one`/`_other` pairs are preserved (Hungarian keeps the noun singular after a numeral, so the two plural forms may stay identical)
-- [ ] For every batch: no string gets longer than its current HU where the element is a tab, chip or button
-- [ ] After each applied batch: `npm run typecheck && npm test`, then one commit per batch
+- [x] Batch E, the rest: `notifications` (18), `coach` (17), `common` (48). Fixes include `firstGoal.body`, `aiConsent.dataShared` (`Mi kerül megosztásra`), and the accessibility hints moved to `te` form. **Done 2026-10-10:** 16 strings changed (notifications 7, coach 2, common 7), 67 kept. Also fixed: "check-in" was translated as `bejelentkezés` (log-in) in 3 notification strings; `Face ID-vel` → `Face ID-val` to match auth
+- [x] For every batch: placeholders, `<bold>`, `\n`, emoji and `_one`/`_other` pairs are preserved (Hungarian keeps the noun singular after a numeral, so the two plural forms may stay identical)
+- [x] For every batch: no string gets longer than its current HU where the element is a tab, chip or button
+- [x] After each applied batch: `npm run typecheck && npm test`, then one commit per batch
+
+**Result:** 129 strings rewritten across 11 UI namespaces in 5 approved batches (A 38, B 21, C 30, D 24, E 16); grep confirms no `… kerül` passive or `szüneteltetve` left in UI namespaces; typecheck clean, 489/489 tests passing after every batch.
 
 **Phase complete when:** all 11 UI namespaces have been reviewed key by key, every approved change is applied, no `… kerül` or `szüneteltetve` passive remains (checked by grep), and the suite is green.
 

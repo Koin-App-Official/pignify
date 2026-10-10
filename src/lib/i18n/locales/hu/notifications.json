@@ -1,25 +1,25 @@
 {
   "firstGoal": {
-    "title": "🎯 Kezdd el az első célodat",
+    "title": "🎯 Hozd létre az első célodat",
     "body": "Állíts be egy megtakarítási célt, hogy elkezdhesd építeni a sorozatodat — még egy kis havi összeg is számít."
   },
   "checkin": {
-    "titleStreak": "🔥 Sorozat-bejelentkezés",
-    "titlePlain": "💰 Napi bejelentkezés",
+    "titleStreak": "🔥 Tartsd életben a sorozatod",
+    "titlePlain": "💰 Napi ellenőrzés",
     "bodyStreak": "{{streak}} napos sorozatod veszélyben van! Rögzítsd a mai kiadásaidat, és tegyél félre {{remaining}} összeget a célodhoz, hogy megőrizd.",
-    "bodyPlain": "Gyors bejelentkezés — költöttél ma valamit? Rögzítsd, hogy tartsd a tempót."
+    "bodyPlain": "Gyors kérdés — költöttél ma valamit? Rögzítsd, hogy tartsd a tempót."
   },
   "weeklyReflection": {
     "title": "📊 Heti összefoglaló",
-    "body_one": "A heted: {{saved}} megtakarítva, {{count}} költség rögzítve. Koppints az összefoglaló megtekintéséhez.",
-    "body_other": "A heted: {{saved}} megtakarítva, {{count}} költség rögzítve. Koppints az összefoglaló megtekintéséhez."
+    "body_one": "A heted: {{saved}} megtakarítva, {{count}} költség rögzítve. Koppints, és nézd meg az összefoglalót.",
+    "body_other": "A heted: {{saved}} megtakarítva, {{count}} költség rögzítve. Koppints, és nézd meg az összefoglalót."
   },
   "trialEnding": {
     "title": "⏳ Az ingyenes próbád 2 nap múlva véget ér",
     "body": "A {{plan}} próbád 2 nap múlva lejár. Nézd meg, mi változik — a megtakarításaid biztonságban vannak."
   },
   "milestone": {
-    "goalCrushedTitle": "👑 Cél teljesítve!",
+    "goalCrushedTitle": "👑 Célba értél!",
     "goalCrushedBody": "Épp most érted el ezt a célt: {{name}} — {{amount}} megtakarítva.",
     "progressTitle": "{{emoji}} {{percent}}%-nál tartasz!",
     "progressBody": "Már {{percent}}%-nál tartasz ezzel a céllal: {{name}}! Így tovább.",

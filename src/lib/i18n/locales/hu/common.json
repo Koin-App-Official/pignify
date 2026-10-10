@@ -1,5 +1,5 @@
 {
-  "noEmailApp": "Ezen az eszközön nincs beállítva e-mail alkalmazás. Írj nekünk: {{email}}.",
+  "noEmailApp": "Ezen az eszközön nincs beállítva e-mail-alkalmazás. Írj nekünk: {{email}}.",
   "notAvailable": "Nem elérhető",
   "cancel": "Mégse",
   "confirm": "Megerősítés",
@@ -20,7 +20,7 @@
     "quickJump5yr": "+5év"
   },
   "dobConfirmModal": {
-    "title": "Ez helyes?",
+    "title": "Biztosan jó így?",
     "body": "Megerősítés után ez már nem módosítható.",
     "edit": "Szerkesztés"
   },
@@ -33,20 +33,20 @@
   "aiConsent": {
     "title": "Mielőtt AI-funkciókat használnál",
     "intro": "A Coach és a Mélyreható elemzés bizonyos adataidat külső AI-szolgáltatóknak küldi el, hogy választ vagy jelentést készítsen.",
-    "dataShared": "Mi kerül megosztásra: a keresztneved, megtakarítási céljaid és azok állása, havi jövedelmed, valamint az elküldött üzeneteid vagy kéréseid.",
+    "dataShared": "Megosztott adatok: a keresztneved, a megtakarítási céljaid és azok állása, a havi jövedelmed, valamint az elküldött üzeneteid vagy kéréseid.",
     "providers": "Ki kapja meg: a Coach üzeneteit az OpenAI dolgozza fel. A Mélyreható elemzés jelentéseit az OpenAI és az Anthropic dolgozza fel.",
-    "retention": "Nincs ráhatásunk arra, hogy ezek a szolgáltatók meddig őrzik meg a kérési naplókat a válasz elkészítése után.",
+    "retention": "Nincs ráhatásunk arra, hogy ezek a szolgáltatók meddig őrzik meg a kérésnaplókat a válasz elkészítése után.",
     "learnMore": "Olvasd el az AI átláthatóságról szóló irányelvünket",
     "learnMoreError": "Nem sikerült megnyitni az AI átláthatóságról szóló irányelv hivatkozását.",
     "notNow": "Most nem",
     "allow": "Engedélyezem",
-    "allowHint": "Lehetővé teszi, hogy a Coach és a Mélyreható elemzés elküldje adataidat AI-szolgáltatóinknak.",
-    "notNowHint": "Egyelőre elutasítja az AI-funkciókat. Ezt később a Beállításokban bekapcsolhatod."
+    "allowHint": "Engedélyezed, hogy a Coach és a Mélyreható elemzés elküldje az adataidat AI-szolgáltatóinknak.",
+    "notNowHint": "Egyelőre elutasítod az AI-funkciókat. Később a Beállításokban bekapcsolhatod."
   },
   "a11y": {
     "digit": "{{digit}}",
     "deleteDigit": "Számjegy törlése",
-    "unlockWithFaceId": "Feloldás Face ID-vel",
+    "unlockWithFaceId": "Feloldás Face ID-val",
     "unlockWithFingerprint": "Feloldás ujjlenyomattal",
     "pinProgress": "{{filled}} / {{length}} számjegy megadva",
     "goalProgress": "A cél {{percent}} százaléka teljesült",
