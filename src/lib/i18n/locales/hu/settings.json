@@ -7,26 +7,26 @@
   },
   "currencyConvertModal": {
     "title": "Pénznem frissítése",
-    "body": "{{from}} pénznemben mentett összegeid vannak. Váltasz erre: {{to}} — mi történjen velük?",
+    "body": "Vannak {{from}} pénznemben mentett összegeid. Most erre váltasz: {{to}} — mi legyen velük?",
     "rateLine": "1 {{from}} ≈ {{rate}} {{to}}",
-    "unavailableNote": "Most nem tudjuk lekérni a mai árfolyamot ehhez: {{to}}, ezért az összegek megtartják jelenlegi értéküket.",
+    "unavailableNote": "Most nem tudjuk lekérni a mai árfolyamot ({{to}}), ezért az összegek számértéke változatlan marad.",
     "convert": "Átváltás",
-    "keepNumbers": "Nincs átváltás"
+    "keepNumbers": "Ne váltsd át"
   },
   "title": "Beállítások",
   "sections": {
     "subscription": "Előfizetés",
     "security": "Biztonság",
     "account": "Fiók",
-    "supportAndAbout": "Támogatás és névjegy",
+    "supportAndAbout": "Súgó és névjegy",
     "privacy": "Adatvédelem"
   },
   "planLabel": "{{plan}} csomag",
   "planStatus": {
     "canceled": "Lemondva — az időszak végéig aktív",
-    "expired": "Az ingyenes próbaidőszak véget ért",
-    "trialing": "Ingyenes próbaidőszak",
-    "pastDue": "Sikertelen fizetés — frissítsd a kártyádat",
+    "expired": "Az ingyenes próba véget ért",
+    "trialing": "Ingyenes próba",
+    "pastDue": "Sikertelen fizetés — frissítsd a kártyaadataidat",
     "switchingTo": "Váltás {{plan}} csomagra a következő ciklusban",
     "active": "Aktív"
   },
@@ -37,7 +37,7 @@
     "irisUnlock": "Íriszfeloldás",
     "fingerprintUnlock": "Ujjlenyomatos feloldás",
     "turnOffTitle": "Kikapcsolod ezt: {{label}}?",
-    "turnOffBody": "Ezután PIN-kóddal fogsz feloldani.",
+    "turnOffBody": "Ezután a PIN-kódoddal oldod fel az appot.",
     "turnOff": "Kikapcsolás"
   },
   "autoLock": {
@@ -55,22 +55,22 @@
     "enrollFailed": "Nem sikerült bekapcsolni a biometrikus feloldást. Próbáld újra."
   },
   "deleteAccountFlow": {
-    "confirmPinSubtitle": "Add meg a PIN-kódodat a fiók törlésének folytatásához",
+    "confirmPinSubtitle": "A fiókod törléséhez add meg a PIN-kódodat",
     "warningTitle": "Fiók törlése",
-    "warningBody": "Ez véglegesen törli a profilodat, céljaidat és előfizetésedet a szervereinkről. Ez nem vonható vissza.",
+    "warningBody": "Ez véglegesen törli a profilodat, a céljaidat és az előfizetésedet a szervereinkről. Ez nem vonható vissza.",
     "deleting": "Fiók törlése…",
     "confirmAlertBody": "Ez véglegesen törli a fiókodat és minden adatodat a szervereinkről. Ez nem vonható vissza.",
     "delete": "Törlés",
-    "errorTitle": "Valami hiba történt",
+    "errorTitle": "Hiba történt",
     "errorBody": "Nem sikerült törölni a fiókodat. Próbáld újra."
   },
   "support": {
-    "privacyPolicy": "Adatvédelmi irányelvek",
-    "privacyPolicyError": "Nem sikerült megnyitni az Adatvédelmi irányelvek hivatkozását.",
+    "privacyPolicy": "Adatvédelmi tájékoztató",
+    "privacyPolicyError": "Nem sikerült megnyitni az Adatvédelmi tájékoztató hivatkozását.",
     "termsOfService": "Felhasználási feltételek",
     "termsOfServiceError": "Nem sikerült megnyitni a Felhasználási feltételek hivatkozását.",
-    "contactSupport": "Kapcsolatfelvétel az ügyfélszolgálattal",
-    "notConfigured": "A támogatási hivatkozások még nincsenek beállítva."
+    "contactSupport": "Írj az ügyfélszolgálatnak",
+    "notConfigured": "A súgóhivatkozások még nincsenek beállítva."
   },
   "versionLabel": "Piggy v{{version}}",
   "aiFeatures": {
@@ -78,5 +78,5 @@
   },
   "viewDetails": "Megtekintés",
   "manageOnWeb": "Előfizetés kezelése a weben",
-  "manageOnWebError": "Nem sikerült megnyitni a fiókoldalt. Látogass el a piggnify.com/account oldalra a böngésződben."
+  "manageOnWebError": "Nem sikerült megnyitni a fiókoldalt. Nyisd meg a böngésződben: piggnify.com/account."
 }
