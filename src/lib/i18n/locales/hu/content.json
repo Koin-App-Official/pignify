@@ -127,7 +127,7 @@
     "a1": { "title": "Első lépés", "description": "Hozd létre az első megtakarítási célodat" },
     "a2": { "title": "Sorozatkezdő", "description": "Tegyél félre 3 egymást követő napon" },
     "a3": { "title": "Heti harcos", "description": "Teljesíts egy 7 napos sorozatot" },
-    "a4": { "title": "Küldetésmester", "description": "Teljesíts 5 küldetést" },
+    "a4": { "title": "Küldetés\u00admester", "description": "Teljesíts 5 küldetést" },
     "a5": { "title": "Negyedúton", "description": "Érj el egy cél 25%-át" },
     "a6": { "title": "Félúti hős", "description": "Érj el egy cél 50%-át" },
     "a7": { "title": "Már majdnem ott", "description": "Érj el egy cél 75%-át" },

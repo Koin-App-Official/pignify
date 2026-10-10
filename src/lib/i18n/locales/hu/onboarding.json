@@ -11,7 +11,7 @@
         "sub": "Mondd el a Piggynek, mire gyűjtesz, mi pedig havi bontású tervet készítünk belőle, amit tényleg be is tudsz tartani."
       },
       "noBank": {
-        "headline": "Nincs banki belépés.\nSoha.",
+        "headline": "Banki belépés?\nSoha.",
         "sub": "A Piggy soha nem kapcsolódik a bankszámláidhoz. Nincs mit összekötni, és nincs mit ellopni."
       },
       "coach": {
@@ -119,8 +119,8 @@
     "streakTitle": "Sorozatvédelem",
     "streakBody": "Szólunk, ha a mai félretétel még hátravan.",
     "milestoneTitle": "Mérföldkő-ünneplések",
-    "milestoneBody": "Szólunk, amint a célod ({{goalName}}) eléri a 25%-ot, 50%-ot, 75%-ot.",
-    "milestoneBodyFallback": "Szólunk, amint a célod eléri a 25%-ot, 50%-ot, 75%-ot.",
+    "milestoneBody": "Szólunk, amint a célod ({{goalName}}) eléri a 25, 50 és 75%-ot.",
+    "milestoneBodyFallback": "Szólunk, amint a célod eléri a 25, 50 és 75%-ot.",
     "weeklyTitle": "Heti összefoglaló",
     "weeklyBody": "Egy nyugodt összefoglaló arról, hogyan telt a hét. Spam soha.",
     "footerNote": "Ezeket később bármikor módosíthatod a Beállításokban.",

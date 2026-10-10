@@ -136,7 +136,7 @@
     "trialIntro": {
       "title": "{{days}} nap {{plan}}\najándékba tőlünk",
       "body": "Mától minden funkció elérhető. Kártyát nem kértünk, így nincs mit lemondanod.",
-      "perk1": "A Piggy minden funkciója, beleértve az AI Coachot is",
+      "perk1": "A Piggy minden funkciója, beleértve az AI\u00a0Coachot is",
       "perk2": "Korlátlan számú cél, így egyszerre több dologra is gyűjthetsz",
       "perk3": "Szólunk, mielőtt véget ér — semmi meglepetés",
       "cta": "Kezdjük"
@@ -151,5 +151,5 @@
     "linkError": "Nem sikerült megnyitni ezt a hivatkozást."
   },
   "currentPlanChip": "Jelenlegi",
-  "managedOnWeb": "Az előfizetésedet a weben kezelheted: piggnify.com/account."
+  "managedOnWeb": "Előfizetés kezelése: piggnify.com/account"
 }

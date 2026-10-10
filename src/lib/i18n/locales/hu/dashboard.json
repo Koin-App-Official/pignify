@@ -7,7 +7,7 @@
   "analysisErrorTitle": "Hiba történt",
   "analysisErrorBody": "Nem sikerült elindítani az elemzést. Próbáld újra.",
   "welcomeBanner": {
-    "title": "Készen vagy!",
+    "title": "Készen vagy",
     "body": "A Piggy terved elindult.",
     "bodyGoalSuffix": "Ideje elkezdeni a gyűjtést a célodra: {{goalName}}."
   },
