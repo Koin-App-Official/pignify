@@ -2,15 +2,15 @@
   "yourGoals": "A céljaid",
   "empty": {
     "title": "Még nincs célod",
-    "body": "Hozd létre az első megtakarítási célodat a kezdéshez!",
+    "body": "Kezdésnek hozd létre az első megtakarítási célodat!",
     "cta": "Cél létrehozása"
   },
   "detail": {
     "back": "Vissza",
     "savedOfTarget": "{{saved}} / {{target}}",
-    "settingAside": "{{amount}}/hó félretéve · Cél elérve: {{date}}",
+    "settingAside": "{{amount}}/hó félretétel · Cél elérése: {{date}}",
     "projectedFromCapacity": "A jelenlegi havi félretételeddel ekkorra érnéd el: {{date}}",
-    "capacityShortfallWarning": "A jelenlegi megtakarítási képességed nem fedezi, amire ennek a célnak havonta szüksége van.",
+    "capacityShortfallWarning": "A jelenlegi megtakarítási képességed nem fedezi azt az összeget, amelyre ennek a célnak havonta szüksége van.",
     "addSavingsPlaceholder": "Megtakarítás hozzáadása...",
     "save": "Mentés",
     "milestones": "Mérföldkövek",
@@ -20,7 +20,7 @@
   "review": {
     "headline": "Jól néz ki!",
     "sub": "Íme a megtakarítási terved áttekintése.",
-    "warningMultiGoal": "Az összes aktív célodat figyelembe véve ez meghaladja a havi jövedelmedet. Bármikor módosíthatod.",
+    "warningMultiGoal": "Az összes aktív célodat figyelembe véve így a havi félretételed meghaladja a jövedelmedet. Bármikor módosíthatod.",
     "warningSingleGoal": "Ehhez a célhoz a havi jövedelmednél többet kell félretenned. Bármikor módosíthatod.",
     "createGoal": "Cél létrehozása 🎉"
   },

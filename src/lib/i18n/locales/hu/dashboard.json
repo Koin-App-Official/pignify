@@ -2,25 +2,25 @@
   "greetingMorning": "Jó reggelt",
   "greetingAfternoon": "Jó napot",
   "greetingEvening": "Jó estét",
-  "analysisStartedTitle": "Elemzés elindult",
-  "analysisStartedBody": "Dolgozunk a számaidon — nézd meg az e-mailjeidet kicsit később.",
+  "analysisStartedTitle": "Elindult az elemzés",
+  "analysisStartedBody": "Már dolgozunk a számaidon — hamarosan nézz rá az e-mailjeidre.",
   "analysisErrorTitle": "Valami hiba történt",
   "analysisErrorBody": "Nem sikerült elindítani az elemzést. Próbáld újra.",
   "welcomeBanner": {
-    "title": "Minden készen áll",
-    "body": "A Piggy terved élesben fut.",
+    "title": "Készen vagy!",
+    "body": "A Piggy terved elindult.",
     "bodyGoalSuffix": "Ideje elkezdeni a gyűjtést a célodra: {{goalName}}."
   },
-  "pastDueWarning": "⚠️ A legutóbbi fizetésed nem sikerült. Frissítsd a kártyádat, hogy megtartsd a csomagod — koppints ide az ügyfélszolgálat eléréséhez.",
+  "pastDueWarning": "⚠️ A legutóbbi fizetésed nem sikerült. Frissítsd a kártyaadataidat, hogy megtartsd az előfizetési csomagodat — koppints ide, és írj az ügyfélszolgálatnak.",
   "incomeSkippedTip": "💡 Add meg a havi jövedelmedet, hogy személyre szabott megtakarítási elemzéseket kapj.",
   "emptyGoals": {
     "title": "Hozd létre az első célodat",
     "newGoal": "Új cél"
   },
   "motivation": {
-    "lowProgress": "Remek kezdés! Minden forint számít 🌱",
+    "lowProgress": "Remek kezdés! Minden fillér számít 🌱",
     "midProgress": "Már {{progress}}%-kal közelebb vagy a célodhoz: {{goalName}}! 💪",
-    "highProgress": "Félúton túli hős! Tartsd a lendületet 🚀",
+    "highProgress": "Már túl vagy a felén! Tartsd a lendületet 🚀",
     "almostDone": "Már majdnem ott vagy! A célod karnyújtásnyira van 👑"
   },
   "deepAnalysis": {
@@ -28,26 +28,26 @@
     "title": "Mélyreható elemzés",
     "upgradeToUnlock": "Feloldás fejlesztési tervvel",
     "unlimited": "Korlátlan",
-    "remainingOfLimit": "{{remaining}} / {{limit}}"
+    "remainingOfLimit": "Maradt: {{remaining}}/{{limit}}"
   },
   "deepAnalysisConfirm": {
     "title": "Elindítod a Mélyreható elemzést?",
-    "bodyValue": "E-mailben elküldjük pénzügyeid teljes áttekintését — bevételek, kiadások és megtakarítások — a legfrissebb adataid alapján.",
-    "bodyLastOne": "Ez az utolsó Mélyreható elemzésed ebben a hónapban. E-mailben elküldjük pénzügyeid teljes áttekintését.",
+    "bodyValue": "E-mailben elküldjük a pénzügyeid teljes áttekintését — bevételek, kiadások, megtakarítások — a legfrissebb adataid alapján.",
+    "bodyLastOne": "Ez az utolsó Mélyreható elemzésed ebben a hónapban. E-mailben elküldjük a pénzügyeid teljes áttekintését.",
     "notNow": "Most nem",
     "runAnalysis": "Elemzés indítása"
   },
   "todaysSpending": "Mai kiadások",
   "expenseCount_one": "{{count}} költség alapján",
   "expenseCount_other": "{{count}} költség alapján",
-  "savedToday": "Ma megtakarítva",
-  "savedThisMonth": "E hónapban megtakarítva",
+  "savedToday": "Mai megtakarítás",
+  "savedThisMonth": "E havi megtakarítás",
   "quickAddExpense": "Költség",
   "quickAddSavings": "Megtakarítás",
-  "saverLevel": "Megtakarítói szint {{level}}",
+  "saverLevel": "{{level}}. szintű megtakarító",
   "xpProgress": "{{xp}}/100 XP",
   "yourGoals": "A céljaid",
-  "seeAll": "Összes megtekintése",
+  "seeAll": "Összes",
   "daysLeft_one": "{{count}} nap van hátra",
   "daysLeft_other": "{{count}} nap van hátra",
   "ofAmount": "/ {{amount}}",
@@ -56,7 +56,7 @@
     "amountLabel": "Összeg ({{symbol}})",
     "amountPlaceholder": "0",
     "categoryLabel": "Kategória",
-    "notePlaceholder": "Megjegyzés (opcionális)",
+    "notePlaceholder": "Megjegyzés (nem kötelező)",
     "save": "Költség mentése"
   },
   "addSavings": {
