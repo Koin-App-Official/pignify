@@ -175,7 +175,7 @@ Every UI string is re-checked against English: meaning first, then naturalness. 
 
 **Files modified:** `src/lib/i18n/locales/hu/onboarding.json`, `auth.json`, `dashboard.json`, `goals.json`, `missions.json`, `plans.json`, `settings.json`, `profile.json`, `notifications.json`, `coach.json`, `common.json`
 
-- [ ] Batch A, first run: `onboarding` (119 keys), `auth` (68). Fixes include `noBank.headline`, `pushPermission.headline`/`keepMeOnTrack`, `milestoneBody` (`céljelentése`), `income.skip`
+- [x] Batch A, first run: `onboarding` (119 keys), `auth` (68). Fixes include `noBank.headline`, `pushPermission.headline`/`keepMeOnTrack`, `milestoneBody` (`céljelentése`), `income.skip`. **Done 2026-10-10:** 38 strings changed (auth 8, onboarding 30), 144 kept; DeepL defaulted to formal `Ön` and mangled placeholders, so it was used as a reference only. Phase 7 length watch: `auth:pinCreation.securing`, `onboarding:pushPermission.headline`, buttons `blueprint.createAccount` and `pushPermission.keepMeOnTrack`
 - [ ] Batch B, daily use: `dashboard` (53), `goals` (23), `missions` (17). Fixes include `highProgress`, `analysisStartedTitle`, `saverLevel`, `welcomeBanner.body`
 - [ ] Batch C, money and trust: `plans` (111). Fixes include `trialIntro.title`, `pendingBanner`, the `szüneteltetve vannak` passives, `terms.*`
 - [ ] Batch D, settings: `settings` (58), `profile` (40). Fixes include `eltávolításra kerül`, the reset/delete flows
