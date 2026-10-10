@@ -194,12 +194,12 @@ Every UI string is re-checked against English: meaning first, then naturalness. 
 
 **Files modified:** `src/lib/i18n/locales/hu/content.json`
 
-- [ ] `missions` (30): titles are short imperatives; single-brace `{amount}` stays intact and is never suffixed. Check `save-today`'s `Tegyél félre {amount} ma` word order
-- [ ] `lessons` (15): check financial accuracy of question, options and explanation against English. Each `options.a/b/c` must stay aligned with the English `correctKey` (guarded by `contentParity.test.ts`)
-- [ ] `achievements` (12), `goalTemplates` (10), `expenseCategories` (8): glossary terms (`vésztartalék`, `sorozat`, `teljesítmény`, `költség`)
-- [ ] `countries` (26), `currencies` (20): confirm the standard Hungarian names (e.g. `India` stays India, `Magyar forint`)
-- [ ] DeepL comparison, proposal table, approval, apply
-- [ ] `npm run typecheck && npm test` (including `contentParity.test.ts`)
+- [x] `missions` (30): titles are short imperatives; single-brace `{amount}` stays intact and is never suffixed. Check `save-today`'s `Tegyél félre {amount} ma` word order
+- [x] `lessons` (15): check financial accuracy of question, options and explanation against English. Each `options.a/b/c` must stay aligned with the English `correctKey` (guarded by `contentParity.test.ts`)
+- [x] `achievements` (12), `goalTemplates` (10), `expenseCategories` (8): glossary terms (`vésztartalék`, `sorozat`, `teljesítmény`, `költség`)
+- [x] `countries` (26), `currencies` (20): confirm the standard Hungarian names (e.g. `India` stays India, `Magyar forint`)
+- [x] DeepL comparison, proposal table, approval, apply: 37 strings changed, 201 kept, approved 2026-10-10. Fixed a reversed meaning in `missions.beat-last-week.title` (`Múld felül…` = "exceed"; DeepL got it wrong too); daily "target" now `célösszeg` instead of `cél`; currency-neutral `opportunity-cost.explanation`; credit-score options corrected
+- [x] `npm run typecheck && npm test` (including `contentParity.test.ts`): typecheck clean, 489/489 passing
 
 **Phase complete when:** all 238 content keys have been reviewed, lesson answer keys still pass the parity test, and the suite is green.
 

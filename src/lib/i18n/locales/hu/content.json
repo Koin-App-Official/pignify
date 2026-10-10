@@ -1,42 +1,42 @@
 {
   "missions": {
     "save-today": { "title": "Tegyél félre ma {amount} összeget", "description": "Lépj közelebb a célodhoz — nem kell soknak lennie." },
-    "hit-daily-target": { "title": "Érd el a mai célt", "description": "Tegyél félre ma annyit, hogy tartsd a tempót a célod eléréséhez." },
-    "log-expense": { "title": "Rögzíts egy kiadást", "description": "Kövess nyomon egy dolgot, amire ma költöttél." },
+    "hit-daily-target": { "title": "Teljesítsd a mai célösszeget", "description": "Tegyél félre ma annyit, hogy tartsd a tempót a célod eléréséhez." },
+    "log-expense": { "title": "Rögzíts egy költséget", "description": "Kövess nyomon egy dolgot, amire ma költöttél." },
     "check-in": { "title": "Nézz be", "description": "Nyisd meg az appot, és nézd meg, hol tartasz." },
     "skip-coffee": { "title": "Hagyd ki a kávét", "description": "Készítsd el ma otthon." },
-    "no-spend-lunch": { "title": "Ebéd költés nélkül", "description": "Vigyél magaddal ebédet ahelyett, hogy vennél." },
-    "walk-instead": { "title": "Gyalogolj utazás helyett", "description": "Spórolj ma a közlekedésen." },
-    "cook-at-home": { "title": "Főzz otthon vacsorát", "description": "Hagyd ki ma a kiszállítást." },
-    "save-this-week": { "title": "Tegyél félre {amount} összeget ezen a héten", "description": "Egy heti lökés a célod felé." },
-    "first-goal": { "title": "Állítsd be az első célodat", "description": "Hozz létre egy megtakarítási célt a kezdéshez." },
-    "log-five-expenses": { "title": "Rögzíts 5 kiadást ezen a héten", "description": "Építsd ki a kiadáskövetés szokását." },
-    "no-spend-weekend": { "title": "Költés nélküli hétvége", "description": "Ezen a hétvégén tartsd nullán a nem szükséges kiadásokat." },
-    "save-1-5x-target": { "title": "Tegyél félre a mai cél 1,5×-ösét", "description": "Előzd meg ma a saját tempódat." },
-    "log-three-expenses": { "title": "Rögzíts minden mai kiadást", "description": "Kövess nyomon legalább 3 dolgot, amire ma költöttél." },
-    "expense-with-note": { "title": "Adj hozzá egy megjegyzést egy kiadáshoz", "description": "Adj kontextust az egyik mai kiadásodhoz." },
+    "no-spend-lunch": { "title": "Ebéd költés nélkül", "description": "Vásárlás helyett vigyél magaddal ebédet." },
+    "walk-instead": { "title": "Járj gyalog jármű helyett", "description": "Spórolj ma a közlekedésen." },
+    "cook-at-home": { "title": "Főzz otthon vacsorát", "description": "Ma este ne rendelj ételt." },
+    "save-this-week": { "title": "Tegyél félre {amount} összeget ezen a héten", "description": "Heti extra a célod felé." },
+    "first-goal": { "title": "Állítsd be az első célodat", "description": "Kezdésnek hozz létre egy megtakarítási célt." },
+    "log-five-expenses": { "title": "Rögzíts 5 költséget ezen a héten", "description": "Építsd ki a kiadáskövetés szokását." },
+    "no-spend-weekend": { "title": "Költés nélküli hétvége", "description": "Ezen a hétvégén tartsd nullán a nem feltétlenül szükséges kiadásokat." },
+    "save-1-5x-target": { "title": "Tegyél félre a mai célösszeg 1,5-szeresét", "description": "Előzd meg ma a saját tempódat." },
+    "log-three-expenses": { "title": "Rögzíts minden mai költséget", "description": "Kövess nyomon legalább 3 dolgot, amire ma költöttél." },
+    "expense-with-note": { "title": "Fűzz megjegyzést egy költséghez", "description": "Fűzz pár szót az egyik mai költségedhez." },
     "save-almost-bought": { "title": "Tedd félre, amit majdnem megvettél", "description": "Lemondtál valamiről, amit szerettél volna? Tedd félre azt az összeget." },
-    "beat-last-week": { "title": "Múld felül a múlt heti kiadásaidat", "description": "Költs kevesebbet ezen a héten, mint a múlt héten." },
-    "dine-out-detox": { "title": "Étteremmentes hét", "description": "Hagyd ki ezen a héten az étteremben evést." },
-    "cancel-subscription": { "title": "Mondj le egy előfizetést", "description": "Nézz át és mondj le egy nem használt előfizetést." },
+    "beat-last-week": { "title": "Kevesebb kiadás, mint múlt héten", "description": "Költs kevesebbet ezen a héten, mint a múlt héten." },
+    "dine-out-detox": { "title": "Étteremmentes hét", "description": "Ezen a héten ne egyél étteremben." },
+    "cancel-subscription": { "title": "Mondj le egy előfizetést", "description": "Nézd át az előfizetéseidet, és mondj le egy nem használtat." },
     "streak-seven": { "title": "Érj el egy 7 napos sorozatot", "description": "Tegyél félre a célod felé 7 egymást követő napon." },
-    "save-20-percent-over": { "title": "Tegyél félre 20%-kal többet a heti célnál", "description": "Lépd túl ezen a héten a szokásos tempódat." },
+    "save-20-percent-over": { "title": "Tegyél félre 20%-kal többet a heti célösszegnél", "description": "Lépd túl ezen a héten a szokásos tempódat." },
     "money-quiz": { "title": "A mai pénzügyi kvíz", "description": "Válaszolj egy 30 másodperces pénzügyi kérdésre." },
-    "save-2x-target": { "title": "Tegyél félre a mai cél 2×-esét", "description": "Egy komoly lökés mára." },
-    "two-deposits-today": { "title": "Két befizetés ma", "description": "Tegyél félre ma kétszer, egyszer helyett." },
+    "save-2x-target": { "title": "Tegyél félre a mai célösszeg kétszeresét", "description": "Ma húzz bele igazán." },
+    "two-deposits-today": { "title": "Két betét ma", "description": "Ma kétszer tegyél félre, ne csak egyszer." },
     "pantry-day": { "title": "Kamranap", "description": "Csak abból főzz, ami már megvan." },
-    "push-goal-ten-percent": { "title": "Told a célodat a következő 10%-ra", "description": "Lépj át ezen a héten a célod új tizedébe." },
-    "streak-thirty": { "title": "Érj el egy 30 napos sorozatot", "description": "Egy teljes hónap, amikor eléred a célodat." },
-    "review-contribution": { "title": "Vizsgáld felül a következő havi hozzájárulást", "description": "Nézd meg, hogy a havi összeged még mindig megfelelő-e." },
+    "push-goal-ten-percent": { "title": "Érd el a célod következő 10%-át", "description": "Lépj át ezen a héten a célod új tizedébe." },
+    "streak-thirty": { "title": "Érj el egy 30 napos sorozatot", "description": "Egy teljes hónapon át teljesíted a napi célösszeget." },
+    "review-contribution": { "title": "Nézd át a jövő havi félretételt", "description": "Nézd meg, hogy a havi összeged még mindig megfelelő-e." },
     "add-second-goal": { "title": "Adj hozzá egy második célt", "description": "Kezdj el gyűjteni valami másra is." },
-    "negotiate-bill": { "title": "Tárgyalj le vagy csökkents egy számlát", "description": "Hívj fel egy szolgáltatót, és kérj jobb árat." }
+    "negotiate-bill": { "title": "Csökkentsd az egyik számlád összegét", "description": "Hívj fel egy szolgáltatót, és kérj jobb árat." }
   },
   "lessons": {
     "emergency-fund": {
-      "topic": "Vészhelyzeti alap",
-      "question": "Mire szolgál elsősorban egy vészhelyzeti alap?",
+      "topic": "Vésztartalék",
+      "question": "Mire szolgál elsősorban a vésztartalék?",
       "options": { "a": "Váratlan kiadások fedezésére", "b": "Befektetések vásárlására áresés esetén", "c": "A legmagasabb kamat megszerzésére" },
-      "explanation": "Ez a váratlan helyzetekre — munkahelyvesztés, orvosi számla, autójavítás — félretett készpénz, amit könnyen elérhetően tartunk, nem pedig befektetünk növekedés reményében."
+      "explanation": "Ez a váratlan helyzetekre — munkahelyvesztés, orvosi számla, autójavítás — félretett készpénz, amit könnyen elérhető helyen tartasz, és nem fektetsz be a hozamért."
     },
     "apy": {
       "topic": "Effektív éves kamat",
@@ -71,8 +71,8 @@
     "credit-score": {
       "topic": "Hitelpontszám",
       "question": "Melyik szokás segíti leginkább a hitelpontszámot?",
-      "options": { "a": "A számlák időben fizetése", "b": "Sok kártya gyors megnyitása", "c": "Szándékos egyenleg fenntartása" },
-      "explanation": "A fizetési előzmények általában a legfontosabb egyedi tényező — a következetes, időben történő fizetés fontosabb, mint bármelyik trükk."
+      "options": { "a": "A számlák időben fizetése", "b": "Sok hitelkártya gyors igénylése", "c": "Szándékos tartozás görgetése" },
+      "explanation": "A fizetési múlt általában a legfontosabb tényező — a következetes, időben történő fizetés fontosabb, mint bármelyik trükk."
     },
     "diversification": {
       "topic": "Diverzifikáció",
@@ -96,7 +96,7 @@
       "topic": "Alternatív költség",
       "question": "Mit jelent az „alternatív költség” pénzköltéskor?",
       "options": { "a": "A vásárlás után fizetett adót", "b": "Amiről lemondasz azzal, hogy a pénzt nem máshol használod fel", "c": "Egy bolt árrését egy terméken" },
-      "explanation": "Minden elköltött forint, amit egy dologra fordítasz, egy olyan forint, ami nem mehet valami másra — a valódi költség magában foglalja azt is, amit emiatt nem tehettél meg."
+      "explanation": "Minden pénz, amit egy dologra költesz, már nem mehet valami másra — a valódi költség magában foglalja azt is, amit emiatt nem tehettél meg."
     },
     "net-worth": {
       "topic": "Nettó vagyon",
@@ -120,28 +120,28 @@
       "topic": "Indexalapok",
       "question": "Mit csinál egy indexalap?",
       "options": { "a": "Kiválaszt néhány „nyerő” részvényt", "b": "Egy széles piaci indexet követ le teljes egészében", "c": "Garantál egy fix éves hozamot" },
-      "explanation": "Ahelyett, hogy egyedi cégekre fogadna, egy indexalap a piac széles szeletét tartja, egyszerre sok elemre szétosztva a kockázatot."
+      "explanation": "Ahelyett, hogy egyedi cégekre fogadna, egy indexalap a piac széles szeletébe fektet, így egyszerre sok befektetésre osztja szét a kockázatot."
     }
   },
   "achievements": {
     "a1": { "title": "Első lépés", "description": "Hozd létre az első megtakarítási célodat" },
-    "a2": { "title": "Sorozatkezdő", "description": "Takaríts meg 3 egymást követő napon" },
+    "a2": { "title": "Sorozatkezdő", "description": "Tegyél félre 3 egymást követő napon" },
     "a3": { "title": "Heti harcos", "description": "Teljesíts egy 7 napos sorozatot" },
     "a4": { "title": "Küldetésmester", "description": "Teljesíts 5 küldetést" },
     "a5": { "title": "Negyedúton", "description": "Érj el egy cél 25%-át" },
     "a6": { "title": "Félúti hős", "description": "Érj el egy cél 50%-át" },
     "a7": { "title": "Már majdnem ott", "description": "Érj el egy cél 75%-át" },
     "a8": { "title": "Célteljesítő", "description": "Teljesíts egy megtakarítási célt" },
-    "a9": { "title": "Költségvetés-főnök", "description": "Kövesd nyomon a kiadásaidat 7 napig" },
+    "a9": { "title": "Költségvetés-főnök", "description": "Kövesd nyomon a költségeidet 7 napig" },
     "a10": { "title": "Szintlépés", "description": "Érd el a 3. megtakarítói szintet" },
     "a11": { "title": "Kitartás királya", "description": "30 napos sorozat" },
-    "a12": { "title": "Okos megtakarító", "description": "Teljesítsd az AI személyiségkvízt" }
+    "a12": { "title": "Okos megtakarító", "description": "Töltsd ki az AI személyiségkvízt" }
   },
   "goalTemplates": {
     "holiday": "Nyaralás",
     "concert": "Koncert",
     "car": "Autó",
-    "emergency": "Vészhelyzeti alap",
+    "emergency": "Vésztartalék",
     "laptop": "Laptop",
     "education": "Oktatás",
     "apartment": "Lakás",
