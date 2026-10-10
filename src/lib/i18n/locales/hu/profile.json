@@ -3,7 +3,7 @@
   "levelLabel": "{{level}}. szint",
   "personalitySuffix": "{{type}} személyiség",
   "financialExplorer": "Pénzügyi felfedező",
-  "totalSaved": "Összesen megtakarítva",
+  "totalSaved": "Összes megtakarítás",
   "goals": "Célok",
   "badges": "Jelvények",
   "monthlyIncome": "Havi jövedelem",
@@ -13,36 +13,36 @@
     "addButton": "Jövedelem hozzáadása",
     "defaultLabel": "Jövedelem",
     "labelPlaceholder": "pl. Fizetés",
-    "setAsideLabel": "Megtakarításra félretéve",
-    "setAsideHint": "Opcionális",
+    "setAsideLabel": "Megtakarításra félretett összeg",
+    "setAsideHint": "Nem kötelező",
     "totalIncomeLabel": "Összes havi jövedelem",
-    "totalSetAsideLabel": "Összesen félretéve",
-    "emptyState": "Még nincs hozzáadott jövedelem.",
+    "totalSetAsideLabel": "Összes félretétel",
+    "emptyState": "Még nem adtál meg jövedelmet.",
     "archivedBadge": "Archiválva",
     "removeA11y": "Jövedelem eltávolítása",
     "removeConfirmTitle": "Eltávolítod a jövedelmet?",
-    "removeConfirmBody": "Ez a jövedelemforrás eltávolításra kerül a költségvetésedből.",
+    "removeConfirmBody": "Ezt a jövedelemforrást eltávolítjuk a költségvetésedből.",
     "removeConfirmCancel": "Mégse",
     "removeConfirmConfirm": "Eltávolítás"
   },
   "notifications": {
     "title": "Értesítések",
     "paydayReminder": "Fizetésnapi megtakarítási emlékeztető",
-    "streakProtection": "Sorozatvédő figyelmeztetés",
+    "streakProtection": "Sorozatvédelmi figyelmeztetés",
     "milestoneAlerts": "Mérföldkő-ünneplések",
     "weeklyReflection": "Heti összefoglaló",
-    "softAskTitle": "Maradj a helyes úton",
-    "softAskBody": "A Piggy emlékeztetőket használ, hogy segítsen megtartani a sorozatodat és elérni a megtakarítási céljaidat. Bekapcsolod az értesítéseket?",
+    "softAskTitle": "Tartsd az irányt",
+    "softAskBody": "A Piggy emlékeztetőkkel segít, hogy megtartsd a sorozatodat, és elérd a megtakarítási céljaidat. Bekapcsolod az értesítéseket?",
     "notNow": "Most nem",
     "enable": "Bekapcsolás",
     "disabledTitle": "Az értesítések ki vannak kapcsolva",
-    "disabledBody": "Kapcsold be a Piggy értesítéseit az eszközöd beállításaiban ennek aktiválásához."
+    "disabledBody": "Ehhez kapcsold be a Piggy értesítéseit az eszközöd beállításaiban."
   },
   "reset": {
-    "title": "Adatok visszaállítása",
-    "body": "Biztosan visszaállítod az összes adatot? Ez nem vonható vissza.",
+    "title": "Adatok nullázása",
+    "body": "Biztosan nullázod az összes adatot? Ez nem vonható vissza.",
     "cancel": "Mégse",
-    "confirm": "Visszaállítás",
-    "button": "Összes adat visszaállítása"
+    "confirm": "Nullázás",
+    "button": "Összes adat nullázása"
   }
 }
