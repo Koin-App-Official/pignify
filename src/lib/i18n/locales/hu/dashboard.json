@@ -4,7 +4,7 @@
   "greetingEvening": "Jó estét",
   "analysisStartedTitle": "Elindult az elemzés",
   "analysisStartedBody": "Már dolgozunk a számaidon — hamarosan nézz rá az e-mailjeidre.",
-  "analysisErrorTitle": "Valami hiba történt",
+  "analysisErrorTitle": "Hiba történt",
   "analysisErrorBody": "Nem sikerült elindítani az elemzést. Próbáld újra.",
   "welcomeBanner": {
     "title": "Készen vagy!",

@@ -61,15 +61,15 @@
     "deleting": "Fiók törlése…",
     "confirmAlertBody": "Ez véglegesen törli a fiókodat és minden adatodat a szervereinkről. Ez nem vonható vissza.",
     "delete": "Törlés",
-    "errorTitle": "Valami hiba történt",
+    "errorTitle": "Hiba történt",
     "errorBody": "Nem sikerült törölni a fiókodat. Próbáld újra."
   },
   "support": {
-    "privacyPolicy": "Adatvédelmi irányelvek",
-    "privacyPolicyError": "Nem sikerült megnyitni az Adatvédelmi irányelvek hivatkozását.",
+    "privacyPolicy": "Adatvédelmi tájékoztató",
+    "privacyPolicyError": "Nem sikerült megnyitni az Adatvédelmi tájékoztató hivatkozását.",
     "termsOfService": "Felhasználási feltételek",
     "termsOfServiceError": "Nem sikerült megnyitni a Felhasználási feltételek hivatkozását.",
-    "contactSupport": "Kapcsolatfelvétel az ügyfélszolgálattal",
+    "contactSupport": "Írj az ügyfélszolgálatnak",
     "notConfigured": "A támogatási hivatkozások még nincsenek beállítva."
   },
   "versionLabel": "Piggy v{{version}}",
