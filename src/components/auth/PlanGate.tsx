@@ -10,10 +10,9 @@
  * thing a user in this state actually worries about.
  *
  * There is no way to subscribe from here (#173): the app carries no purchase
- * path, and under decision D3 the single tappable link to web billing lives in
- * Settings — which a locked user can't reach, since this gate replaces the whole
- * navigation stack. So this screen names the web address as plain text and
- * leans on the refresh below to notice when the subscription comes back.
+ * path. It does link to web billing, though — this gate replaces the whole
+ * navigation stack, so the Settings row is out of reach and without a link here
+ * a locked user had no way forward at all (#199, reversing D3 for this screen).
  *
  * A user who subscribes on the web is unlocked by the entitlements read, never
  * by their own say-so: the AppState listener re-reads on every return from the
@@ -87,6 +86,25 @@ export function PlanGate() {
       if (planStatus === 'expired' || planStatus === 'canceled') {
         setError(t('planGate.locked.noActiveSubscription'));
       }
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  /**
+   * Same shape as Settings' openWebBilling: `safeOpenURL` routes https through
+   * `expo-web-browser`, which resolves on dismissal without ever backgrounding
+   * the app — so the AppState listener below never sees this round trip, and
+   * the re-read has to happen here. Quiet on purpose: closing the page without
+   * subscribing isn't an error worth showing.
+   */
+  const openWebBilling = async () => {
+    await safeOpenURL(ACCOUNT_URL, t('settings:manageOnWebError'), t('common:notAvailable'));
+    if (!profile.userID) return;
+    setChecking(true);
+    setError('');
+    try {
+      await syncEntitlements({ force: true });
     } finally {
       setChecking(false);
     }
@@ -192,17 +210,23 @@ export function PlanGate() {
               </Text>
             </View>
 
-            {/* Plain text, not a link (#173, decision D3): the single tappable
-                route to web billing is the Settings row, which this screen
-                deliberately doesn't duplicate. */}
-            <View className="mt-6 rounded-2xl bg-surface-container-low p-4">
+            {/* The second of the app's two links to web billing (#199) — the
+                Settings row is unreachable from behind this gate. Neutral
+                wording, no prices, no purchase CTA. */}
+            <TouchableOpacity
+              onPress={openWebBilling}
+              disabled={checking}
+              accessibilityRole="link"
+              accessibilityLabel={t('settings:manageOnWeb')}
+              className="mt-6 rounded-2xl bg-surface-container-low p-4"
+            >
               <Text className="text-sm leading-5 text-on-surface-variant text-center">
                 {t('planGate.locked.managedOnWeb')}
               </Text>
-              <Text className="mt-1 text-sm font-bold text-on-surface text-center">
+              <Text className="mt-1 text-sm font-bold text-primary text-center underline">
                 {ACCOUNT_URL_DISPLAY}
               </Text>
-            </View>
+            </TouchableOpacity>
 
             {error ? (
               <View className="mt-4 rounded-2xl bg-destructive/10 p-4">

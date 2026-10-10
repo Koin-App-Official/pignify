@@ -14,7 +14,7 @@
 |---|---|---|
 | **D1** | The web billing page already exists at `https://piggnify.com/account/`. | No web code in this repo. Phase 0 still *verifies* it, because piggnify.com currently returns HTTP 200 with the marketing homepage for **every** path (`/account/`, `/zzz-does-not-exist-123`), so its existence could not be confirmed from here. |
 | **D2** | `/plans` survives as a **read-only subscription screen**: current plan, status, renewal date, and what each tier includes — **no prices, no purchase buttons**. | Prices + a CTA are exactly what reads as an external purchase flow under 3.1.1. Feature comparison (which the upgrade gates point at) is kept. |
-| **D3** | Exactly **one tappable link** to the web account page, in **Settings only**. | Upgrade gates and the locked screen explain the situation in text and offer a refresh, but contain no link and no CTA. |
+| **D3** | Exactly **one tappable link** to the web account page, in **Settings only**. **Amended by #199 (2026-10-10):** the locked screen gets a second link, since a locked user can't reach Settings. | Upgrade gates explain the situation in text but contain no link and no CTA. The locked screen links to the account page with neutral wording (no prices, no purchase CTA) and re-reads entitlements when the browser is dismissed. |
 | **D4** | The Coach's "Buy 1 more message · $2.99" add-on is **removed from the app**. The balance is still read from the server and still spent normally; buying happens on the web. | The add-on rail (`CLAUDE_billing_addon` + the webhook's `addon` branch) stays live for the website. |
 | **D5** | **No StoreKit / IAP** is added. | Deliberate. See [Appendix A](#appendix-a--app-review-posture) for what this costs and what it buys. |
 
@@ -507,6 +507,9 @@ confirms `safeOpenURL(ACCOUNT_URL, …)` appears exactly **once** in the whole a
 mechanically, not just by intent. `PlanGate` references the constant only for the `lockoutEnforced`
 check and renders `ACCOUNT_URL_DISPLAY` as unlinked text.
 
+> **Superseded by #199:** `safeOpenURL(ACCOUNT_URL, …)` now appears **twice** — Settings and
+> `PlanGate`'s locked screen, where `ACCOUNT_URL_DISPLAY` is the label of a link.
+
 `openWebBilling` awaits `safeOpenURL` — which routes https through `expo-web-browser`, so it
 resolves on dismissal — then calls `syncEntitlements({ force: true })`. That dismissal is the exact
 moment a change made on the web should appear, and the forced read is what stops the hourly throttle
@@ -653,12 +656,15 @@ payment URL, displays no prices, and contains no purchase button. Guideline 3.1.
 **Residual risk 1 — the Settings link.** 3.1.1 also covers *"buttons, external links, or other calls
 to action that direct customers to purchasing mechanisms other than IAP."* One neutral "Manage
 subscription" row is the mildest form of this, and is how reader-model apps have long behaved, but it
-is not zero risk outside the US. If review pushes back, the smallest possible retreat is D3's third
-option: make it plain text rather than a link. Decide that *before* submitting, not during an appeal.
+is not zero risk outside the US. Since #199 there are two such links (Settings and the locked screen), both
+neutral, with no prices and no purchase CTA. If review pushes back, the smallest possible retreat is
+D3's third option: make them plain text rather than links. Decide that *before* submitting, not
+during an appeal.
 
 **Residual risk 2 — a locked user has no in-app path forward.** This is the known cost of Option 3
 and was called out in the audit: an iPhone user who has not subscribed elsewhere cannot use the app,
-which can attract 2.1 or 4.2. Mitigations already in place: the 14-day no-card trial means a new
+which can attract 2.1 or 4.2. #199 softens this: the locked screen now links to the account page,
+so getting the subscription back is one tap away rather than a URL to type. Mitigations already in place: the 14-day no-card trial means a new
 reviewer is never locked; the reviewer demo account must be seeded with an **active entitlement**;
 and the review notes should state plainly that subscriptions are sold only on the web and the app is
 a client for an existing subscription.
