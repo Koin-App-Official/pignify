@@ -275,10 +275,10 @@ Tests catch wrong keys and placeholders, but not text that's cut off or overlapp
 
 **Files modified:** `implementations/I18N_HU_QUALITY.md` (tick boxes), `implementations/I18N_HU.md` (mark the native-review item as handed over to [#197](https://github.com/Koin-App-Official/pignify/issues/197))
 
-- [ ] Final `npm run typecheck && npm test && npm run check:bundle-size`
-- [ ] Native-speaker read-through (if available) of the proposal tables or the running app
-- [ ] Fix anything the review surfaces, then re-run the verification
-- [ ] Tick every checkbox in [#197](https://github.com/Koin-App-Official/pignify/issues/197), close it with a completion comment, open the PR (`fix(#197): Improve Hungarian translation quality`, body `Closes #197`)
+- [x] Final `npm run typecheck && npm test && npm run check:bundle-size`: typecheck clean, 489/489 tests, iOS bundle 6.41 MB / 7.63 MB
+- [ ] Native-speaker read-through (if available) of the proposal tables or the running app. **Not available in this round**; still outstanding (also noted in `I18N_HU.md`)
+- [ ] Fix anything the review surfaces, then re-run the verification. Pending the native-speaker read-through
+- [x] Tick every checkbox in [#197](https://github.com/Koin-App-Official/pignify/issues/197), close it with a completion comment, open the PR (`fix(#197): Improve Hungarian translation quality`, body `Closes #197`)
 
 **Phase complete when:** all checks pass, the on-device review is done with its findings fixed, and the PR is open and linked to #197.
 
